@@ -1,51 +1,51 @@
-﻿ID_espece;Nom_verna;Nom_scientifique;Famille;Habitat;Statut;Type_feuille;Forme_feuille;Insertion_feuille;Texture_feuille;Type_ecorce;Forme_croissance;Inflammabilite_presume;Lieu_recolte;date_recolte;remarque;;;;;;;;;;
-1;Manguier;Mangifera_indica;Anacardiaceae;Cultivée;Introduite;Simple;Lancéollée;;Douce;Crevace;Arbre;Faible;IRD;26-mars;;;;;;;;;;;
-2;Badamier;Terminalia_catappa;Combretaceae;Littoral;Introduite;Simple;Spatullée;pseudo-verticilée;Douce;Crevace;Arbre;Forte;IRD;26-mars;;;;;;;;;;;
-3;Bois savon;Alphitonia_neocaledonica;Rhamnaceae;Maquis;Endemique;Simple;Oblongue;;Coriace;Lisse;Arbuste;Forte;Dzumac;01-avr;;;;;;;;;;;
-4;Brosse à dents du Sud;Grevillea_rubiginosa;Proteaceae;Maquis;Endemique;Simple;Lancéollée;;Douce;Fissure;Arbuste;Forte;Dzumac;01-avr;;;;;;;;;;;Type d'écorce
-5;;Codia_spatulata;Cunoniaceae;Maquis;Endemique;Simple;spatulée;;Coriace;Fissure;Arbuste/arbre;;Dzumac;01-avr;;;;;;;;;;;Lisse
-6;Batcho ;Geissois_pruinosa;Cunoniaceae;Maquis;Endemique;Composée;Oblongue;;Coriace;Lisse;Arbuste;;Dzumac;01-avr;;;;;;;;;;;Ecaille
-7;Pin colonaire;Araucaria_columnaris;Araucariaceae;Humide;Endemique;;;;Dure;Ecaille;Arbre;Forte;IRD;03-avr;;;;;;;;;;;Crevasse
-8;Filao;Casuarina_collina;Casuarinaceae;Sec;Endemique;;Aiguille;;Coriace;Fibre;Arbre;Très forte;IRD;03-avr;;;;;;;;;;;Fissure
-9;Chêne gomme;Arillastrum_gummiferum ;Myrtaceae;Maquis;Endemique;Simple;Oblongue;;Coriace;Fissure;Arbre;Moyenne;Demazure;10-avr;;;;;;;;;;;Lanière
-10;Go;Hibbertia_lucens;Dilleniaceae;Maquis;Endemique;Simple;Lancéollée;;Dure;Fibre;Arbuste;;Demazure;10-avr;;;;;;;;;;;Plaque
-11;;Metrosideros_laurifolia;Myrtaceae;Maquis;Endemique;Simple;Spatulée;;Coriace;Fibre;Arbuste;Faible;Demazure;10-avr;;;;;;;;;;;Fibreuse
-12;;Tristaniopsis_glauca;Myrtaceae;Maquis;Endemique;Simple;Lancéollée;;Coriace;Plaque;Arbuste;;Demazure;10-avr;;;;;;;;;;;
-13;;;;;;;;;;;;;;;;;;;;;;;;;
-14;;;;;;;;;;;;;;;;;;;;;;;;;
-15;;;;;;;;;;;;;;;;;;;;;;;;;
-16;;;;;;;;;;;;;;;;;;;;;;;;;
-17;;;;;;;;;;;;;;;;;;;;;;;;;
-18;;;;;;;;;;;;;;;;;;;;;;;;;
-19;;;;;;;;;;;;;;;;;;;;;;;;;
-20;;;;;;;;;;;;;;;;;;;;;;;;;
-21;;;;;;;;;;;;;;;;;;;;;;;;;
-22;;;;;;;;;;;;;;;;;;;;;;;;;
-23;;;;;;;;;;;;;;;;;;;;;;;;;
-24;;;;;;;;;;;;;;;;;;;;;;;;;
-25;;;;;;;;;;;;;;;;;;;;;;;;;
-26;;;;;;;;;;;;;;;;;;;;;;;;;
-27;;;;;;;;;;;;;;;;;;;;;;;;;
-28;;;;;;;;;;;;;;;;;;;;;;;;;
-29;;;;;;;;;;;;;;;;;;;;;;;;;
-30;;;;;;;;;;;;;;;;;;;;;;;;;
-31;;;;;;;;;;;;;;;;;;;;;;;;;
-32;;;;;;;;;;;;;;;;;;;;;;;;;
-33;;;;;;;;;;;;;;;;;;;;;;;;;
-34;;;;;;;;;;;;;;;;;;;;;;;;;
-35;;;;;;;;;;;;;;;;;;;;;;;;;
-36;;;;;;;;;;;;;;;;;;;;;;;;;
-37;;;;;;;;;;;;;;;;;;;;;;;;;
-38;;;;;;;;;;;;;;;;;;;;;;;;;
-39;;;;;;;;;;;;;;;;;;;;;;;;;
-40;;;;;;;;;;;;;;;;;;;;;;;;;
-41;;;;;;;;;;;;;;;;;;;;;;;;;
-42;;;;;;;;;;;;;;;;;;;;;;;;;
-43;;;;;;;;;;;;;;;;;;;;;;;;;
-44;;;;;;;;;;;;;;;;;;;;;;;;;
-45;;;;;;;;;;;;;;;;;;;;;;;;;
-46;;;;;;;;;;;;;;;;;;;;;;;;;
-47;;;;;;;;;;;;;;;;;;;;;;;;;
-48;;;;;;;;;;;;;;;;;;;;;;;;;
-49;;;;;;;;;;;;;;;;;;;;;;;;;
-50;;;;;;;;;;;;;;;;;;;;;;;;;
+﻿ID_espece;Nom_verna;Nom_scientifique;Famille;Habitat;Statut;Type_feuille;Forme_feuille;Insertion_feuille;Texture_feuille;Type_ecorce;Forme_croissance;Inflammabilite_presume
+1;Manguier;Mangifera_indica;Anacardiaceae;Cultivée;Introduite;Simple;Lancéollée;;Douce;Crevace;Arbre;Faible
+2;Badamier;Terminalia_catappa;Combretaceae;Littoral;Introduite;Simple;Spatullée;pseudo-verticilée;Douce;Crevace;Arbre;Forte
+3;Bois savon;Alphitonia_neocaledonica;Rhamnaceae;Maquis;Endemique;Simple;Oblongue;;Coriace;Lisse;Arbuste;Forte
+4;Brosse à dents du Sud;Grevillea_rubiginosa;Proteaceae;Maquis;Endemique;Simple;Lancéollée;;Douce;Fissure;Arbuste;Forte
+5;;Codia_spatulata;Cunoniaceae;Maquis;Endemique;Simple;spatulée;;Coriace;Fissure;Arbuste/arbre;
+6;Batcho ;Geissois_pruinosa;Cunoniaceae;Maquis;Endemique;Composée;Oblongue;;Coriace;Lisse;Arbuste;
+7;Pin colonaire;Araucaria_columnaris;Araucariaceae;Humide;Endemique;;;;Dure;Ecaille;Arbre;Forte
+8;Filao;Casuarina_collina;Casuarinaceae;Sec;Endemique;;Aiguille;;Coriace;Fibre;Arbre;Très forte
+9;Chêne gomme;Arillastrum_gummiferum ;Myrtaceae;Maquis;Endemique;Simple;Oblongue;;Coriace;Fissure;Arbre;Moyenne
+10;Go;Hibbertia_lucens;Dilleniaceae;Maquis;Endemique;Simple;Lancéollée;;Dure;Fibre;Arbuste;
+11;;Metrosideros_laurifolia;Myrtaceae;Maquis;Endemique;Simple;Spatulée;;Coriace;Fibre;Arbuste;Faible
+12;;Tristaniopsis_glauca;Myrtaceae;Maquis;Endemique;Simple;Lancéollée;;Coriace;Plaque;Arbuste;
+13;;;;;;;;;;;;
+14;;;;;;;;;;;;
+15;;;;;;;;;;;;
+16;;;;;;;;;;;;
+17;;;;;;;;;;;;
+18;;;;;;;;;;;;
+19;;;;;;;;;;;;
+20;;;;;;;;;;;;
+21;;;;;;;;;;;;
+22;;;;;;;;;;;;
+23;;;;;;;;;;;;
+24;;;;;;;;;;;;
+25;;;;;;;;;;;;
+26;;;;;;;;;;;;
+27;;;;;;;;;;;;
+28;;;;;;;;;;;;
+29;;;;;;;;;;;;
+30;;;;;;;;;;;;
+31;;;;;;;;;;;;
+32;;;;;;;;;;;;
+33;;;;;;;;;;;;
+34;;;;;;;;;;;;
+35;;;;;;;;;;;;
+36;;;;;;;;;;;;
+37;;;;;;;;;;;;
+38;;;;;;;;;;;;
+39;;;;;;;;;;;;
+40;;;;;;;;;;;;
+41;;;;;;;;;;;;
+42;;;;;;;;;;;;
+43;;;;;;;;;;;;
+44;;;;;;;;;;;;
+45;;;;;;;;;;;;
+46;;;;;;;;;;;;
+47;;;;;;;;;;;;
+48;;;;;;;;;;;;
+49;;;;;;;;;;;;
+50;;;;;;;;;;;;

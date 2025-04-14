@@ -38,8 +38,13 @@ LT<-((1/SLA)*LDMC)
 LT<-round(LT,4)
 LT
 
+#Perte en eau des feuilles (PEF)(%)
+PEF<-(1-(BDD_leaf$Masse_F_T24/BDD_leaf$Masse_F_T0))*100
+PEF<-round(PEF,2)
+PEF
+
 # création d'une nouvelle base de données "feuille" calculée avec ajout des colonnes calculées
-BDD_leaf_calcule<-data.frame(BDD_leaf,LMC_t0,LMC_t24,LDMC,SLA,LT)
+BDD_leaf_calcule<-data.frame(BDD_leaf,LMC_t0,LMC_t24,PEF,LDMC,SLA,LT)
 View(BDD_leaf_calcule) #pour voir la BDD finale
 
 ###### Export de la BDD_Leaf_F CSV
@@ -86,8 +91,13 @@ TDMC<-((BDD_traits$Masse_T_Tsec * 1000)/BDD_traits$Masse_T_T0)
 TDMC<-round(TDMC,2)
 TDMC
 
+#Perte en eau de la Tige (PET)(%)
+PET<-(1-(BDD_traits$Masse_T_T24/BDD_traits$Masse_T_T0))*100
+PET<-round(PET,2)
+PET
+
 # création d'une nouvelle base de données calculée avec ajout des colonnes
-BDD_traits_calcule<-data.frame(BDD_traits,V_tige,D_tige,TMC_t0,TMC_t24,TDMC)
+BDD_traits_calcule<-data.frame(BDD_traits,V_tige,D_tige,TMC_t0,TMC_t24,PET,TDMC)
 View(BDD_traits_calcule) #pour voir la BDD finale
 
 ###### Export de la BDD traits calculée CSV
@@ -133,23 +143,42 @@ write.csv2(BDD_infla_calcule,"Data/BDD_infla_calcule.csv")
 
 ######### Assembler les bases de données calculée en une seule base #########
 
-#assemblage : BDD traits et leaf
-data1<-merge(BDD_leaf_calcule,BDD_traits_calcule)
+##  importation BDD_esp CSV
+BDD_esp<-read.csv2("Data/BDD_Espece.csv")
+View(BDD_esp)
+#importation de la base échantillonnage
+BDD_ech<-read.csv2("Data/BDD_Echantillonnage.csv")
+View(BDD_ech)
+
+#assemblage : BDD esp et ech
+data1<-merge(BDD_ech,BDD_esp)
 View(data1)
-data1<-data.frame(data1)
 
 #assemblage data1 avec BDD inflammabilité calculée
 data2<-merge(data1,BDD_infla_calcule)
 View(data2)
 
+#assemblage data2 avec BDD traits
+data3<-merge(data2,BDD_traits_calcule)
+View(data3)
 
-#importation de la base échantillonnage
-BDD_ech<-read.csv2("Data/BDD_Echantillonnage.csv")
-
-#assemblage data2 avec BDD Echantillonnage
-BDD_finale<-merge(data2,BDD_ech)
+#assemblage data2 avec BDD Feuille
+BDD_finale<-merge(data3,BDD_leaf_calcule)
 View(BDD_finale)
 
 #export de la BDD finale 
-
 write.csv2(BDD_finale,"Data/BDD_finale.csv")
+
+
+############# Base à l'échelle de l'espèce #######
+
+#on veut la moyenne pour chaque espèce
+moyennes <- aggregate(cbind(DI,MT,BB,BT,V_Ech,Bulk,TMC_t0,TMC_t24,PET,TDMC,D_tige,Gmin,LMC_t0,LMC_t24,PEF,LDMC,Surface_F,SLA,LT)~Nom_scientifique, data = BDD_finale, FUN = mean)
+moyennes
+
+# Écart-type
+ecarts<-aggregate(cbind(DI,MT,BB,BT,V_Ech,Bulk,TMC_t0,TMC_t24,PET,TDMC,D_tige,Gmin,LMC_t0,LMC_t24,PEF,LDMC,Surface_F,SLA,LT)~Nom_scientifique, data = BDD_finale, FUN = sd)
+ecarts
+
+resultat <- merge(moyennes, ecarts, by = "Nom_scientifique")
+resultat
