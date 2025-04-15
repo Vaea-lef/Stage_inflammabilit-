@@ -1,4 +1,4 @@
-"";"ID_echantillon";"Masse_T_T0";"Masse_T_T24";"Masse_T_Tsec";"Longeur_T_cm";"diametre_T_1_mm";"diametre_T_2_mm";"Nb_ramifications";"mat_mort";"Gmin";"V_tige";"D_tige";"TMC_t0";"TMC_t24";"PET";"TDMC"
+"";"ID_echantillon";"Masse_T_T0";"Masse_T_T24";"Masse_T_Tsec";"Longeur_T_cm";"diametre_T_1_mm";"diametre_T_2_mm";"Nb_ramifications";"mat_mort";"Gmin";"TV";"TD";"TMC_t0";"TMC_t24";"PET";"TDMC"
 "1";"01_1";7,906;7,403;3,476;14,7;8,19;6,46;11;0;6,348360496;16,91;0,47;127,45;112,97;6,36;439,67
 "2";"01_2";4,4;3,987;1,896;11,4;6,53;6,97;13;0;6,968544682;12,09;0,36;132,07;110,28;9,39;430,91
 "3";"01_3";4,635;3,742;1,298;12,1;5,7;6,33;6;0;9,564029917;11,43;0,41;257,09;188,29;19,27;280,04
