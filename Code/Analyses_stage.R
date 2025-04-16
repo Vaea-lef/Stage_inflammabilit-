@@ -37,7 +37,7 @@ summary(res.pca)
 
 # Graphique des contributions des variables aux composantes principales
 fviz_pca_var(res.pca, col.var = "contrib",
-             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             gradient.cols = c("#6fec00", "#ff9e00", "#Ff0000"),
              repel = TRUE)
 
 
@@ -67,6 +67,38 @@ summary(res.pca)
 
 # Graphique des contributions des variables aux composantes principales
 fviz_pca_var(res.pca, col.var = "contrib",
+             gradient.cols = c("#0536d0", "#05d096", "#08d005"),
+             repel = TRUE)
+
+
+# Graphique des individus 
+fviz_pca_ind(res.pca, col.ind = "cos2", gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),repel = TRUE)
+
+# Graphique combiné des variables et des individus
+fviz_pca_biplot(res.pca, repel = TRUE)
+
+# Afficher l'ébouli
+fviz_screeplot(res.pca, addlabels = TRUE, ylim = c(0, 50), main="Graphique de l'ébouli")
+
+
+
+
+############ ACP de tout ###########
+
+# Sélectionner uniquement les colonnes des pourcentages
+colonnes_all <- BDD_esp[,c(3,4,5,6,11,13,14,17,19)]
+
+# Vérifier les données
+colonnes_all
+
+# Appliquer l'ACP
+res.pca <- PCA(colonnes_all, scale.unit = TRUE, graph = FALSE)
+
+# Résumé des résultats
+summary(res.pca)
+
+# Graphique des contributions des variables aux composantes principales
+fviz_pca_var(res.pca, col.var = "contrib",
              gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
              repel = TRUE)
 
@@ -79,4 +111,3 @@ fviz_pca_biplot(res.pca, repel = TRUE)
 
 # Afficher l'ébouli
 fviz_screeplot(res.pca, addlabels = TRUE, ylim = c(0, 50), main="Graphique de l'ébouli")
-
