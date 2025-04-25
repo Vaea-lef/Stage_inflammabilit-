@@ -126,3 +126,8 @@ m<-lm(BT~LT,data=BDD_ech)
 summary(m)
 plot(m)
 anova(m)
+
+hist(BDD_ech$MT)
+hist(BDD_ech$BT)
+hist(BDD_ech$DI)
+hist(BDD_ech$BB)
