@@ -41,7 +41,7 @@ fviz_pca_var(res.pca, col.var = "contrib",
              repel = TRUE)
 
 
-# Graphique des individus (facultatif, si vous analysez chaque observation)
+# Graphique des individus 
 fviz_pca_ind(res.pca, col.ind = "cos2", gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),repel = TRUE)
 
 # Graphique combiné des variables et des individus
@@ -53,7 +53,7 @@ fviz_screeplot(res.pca, addlabels = TRUE, ylim = c(0, 50), main="Graphique de l'
 # Ajouter un score d'inflammabilité basé sur la coordonnée de l'axe 1 ou axe 1 et 2
 coord <- res.pca$ind$coord  # coordonnées des individus
 BDD_esp$score <- coord[, 1]  # Dim 1 = axe 1
-BDD_esp$score2 <- (0.63*coord[,1] + 0.25*coord[,2]) / 2
+BDD_esp$score2 <- (0.8*coord[,1] + 0.2*coord[,2]) / 2
 View(BDD_esp)
 
 #################### ACP TRAITS ################
@@ -71,7 +71,7 @@ summary(res.pca)
 
 # Graphique des contributions des variables aux composantes principales
 fviz_pca_var(res.pca, col.var = "contrib",
-             gradient.cols = c("#0536d0", "#05d096", "#08d005"),
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
              repel = TRUE)
 
 
@@ -90,7 +90,7 @@ fviz_screeplot(res.pca, addlabels = TRUE, ylim = c(0, 50), main="Graphique de l'
 ############ ACP de tout ###########
 
 # Sélectionner uniquement les colonnes des pourcentages
-colonnes_all <- BDD_esp[,c(3:21)]
+colonnes_all <-na.omit(BDD_esp[,c(3:21)])
 
 # Vérifier les données
 colonnes_all
@@ -121,6 +121,7 @@ fviz_screeplot(res.pca, addlabels = TRUE, ylim = c(0, 50), main="Graphique de l'
 
 
 #### PLOT ######
+hist(BDD_esp$score2)
 plot(BDD_esp$score,BDD_esp$SLA)
 m<-lm(BT~LT,data=BDD_ech)
 summary(m)

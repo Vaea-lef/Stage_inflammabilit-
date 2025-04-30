@@ -9,7 +9,7 @@ setwd("C:/IRD/Stage_inflammabilit-") #définition du répertoire de travail
 BDD_leaf<-read.csv2("Data/BDD_Feuille.csv", header = TRUE) #importation de la base
 
 # pour éventuellement visualiser la base importée
-View(BDD_leaf) 
+BDD_leaf
 
 ## Manipulation des données : calcul de Leaf Moisture Content (LMC) à t0 et t24,Leaf Dry Matter Content (LDMC) et Specific leaf area (SLA) 
 
@@ -45,7 +45,7 @@ PEF
 
 # création d'une nouvelle base de données "feuille" calculée avec ajout des colonnes calculées
 BDD_leaf_calcule<-data.frame(BDD_leaf,LMC_t0,LMC_t24,PEF,LDMC,SLA,LT)
-View(BDD_leaf_calcule) #pour voir la BDD finale
+BDD_leaf_calcule #pour voir la BDD finale
 
 ###### Export de la BDD_Leaf_F CSV
 write.csv2(BDD_leaf_F,"Data/BDD_leaf_calcule.csv")
@@ -61,7 +61,7 @@ write.csv2(BDD_leaf_F,"Data/BDD_leaf_calcule.csv")
 BDD_traits<-read.csv2("Data/BDD_Traits.csv")
 
 # pour éventuellement visualiser la base importée
-View(BDD_traits) 
+BDD_traits 
 
 ## Manipulation des données : calcul du Volume et de la densité de la tige ainsi que Twig Moisture Content (TMC) et Twig Dry Matter Content (TDMC)
 
@@ -98,7 +98,7 @@ PET
 
 # création d'une nouvelle base de données calculée avec ajout des colonnes
 BDD_traits_calcule<-data.frame(BDD_traits,TV,TD,TMC_t0,TMC_t24,PET,TDMC)
-View(BDD_traits_calcule) #pour voir la BDD finale
+BDD_traits_calcule #pour voir la BDD finale
 
 ###### Export de la BDD traits calculée CSV
 
@@ -112,7 +112,7 @@ write.csv2(BDD_traits_calcule,"Data/BDD_traits_calcule.csv")
 
 
 BDD_infla<-read.csv2("Data/BDD_Inflammabilite.csv")
-View(BDD_infla)
+BDD_infla
 
 #calcul du volume des échantillons (m3)
 SV<-((2/3)*pi*BDD_infla$longeur*((BDD_infla$largeur/2)*(BDD_infla$hauteur/2)))/1000000
@@ -131,7 +131,7 @@ BT
 
 # création d'une nouvelle base de données calculée avec ajout des colonnes
 BDD_infla_calcule<-data.frame(BDD_infla,BT,SV,SD)
-View(BDD_infla_calcule) #pour voir la BDD finale
+BDD_infla_calcule #pour voir la BDD finale
 
 ###### Export de la base infla calculée CSV
 # Exporter les données avec les colonnes calculées CSV
@@ -145,26 +145,26 @@ write.csv2(BDD_infla_calcule,"Data/BDD_infla_calcule.csv")
 
 ##  importation BDD_esp CSV
 BDD_esp<-read.csv2("Data/BDD_Espece.csv")
-View(BDD_esp)
+BDD_esp
 #importation de la base échantillonnage
 BDD_ech<-read.csv2("Data/BDD_Echantillonnage.csv")
-View(BDD_ech)
+BDD_ech
 
 #assemblage : BDD esp et ech
 data1<-merge(BDD_ech,BDD_esp,"ID_espece","ID_espece",all.x=T)
-View(data1)
+data1
 
 #assemblage data1 avec BDD inflammabilité calculée
 data2<-merge(data1,BDD_infla_calcule,"ID_echantillon","ID_echantillon",all.x=T)
-View(data2)
+data2
 
 #assemblage data2 avec BDD traits
 data3<-merge(data2,BDD_traits_calcule,"ID_echantillon","ID_echantillon",all.x=T)
-View(data3)
+data3
 
 #assemblage data2 avec BDD Feuille
 BDD_finale<-merge(data3,BDD_leaf_calcule,"ID_echantillon","ID_echantillon",all.x=T)
-View(BDD_finale)
+BDD_finale
 
 #export de la BDD finale 
 write.csv2(BDD_finale,"Data/BDD_finale.csv")
@@ -173,7 +173,7 @@ write.csv2(BDD_finale,"Data/BDD_finale.csv")
 ############# création d'une BDD avec seulement les infos pour les analyses ############
 
 BDD_ana_ech<-subset(BDD_finale, select=c(Nom_scientifique,ID_espece,ID_echantillon,ID_Feuille,DI,BT,MT,BB,SV,SD,TMC_t0,TMC_t24,PET,TDMC,TD,Gmin,LMC_t0,LMC_t24,PEF,LDMC,Surface_F,SLA,LT))
-View(BDD_ana_ech)
+BDD_ana_ech
 #export de la BDD 
 write.csv2(BDD_ana_ech,"Data/BDD_ana_ech.csv")
 
