@@ -172,7 +172,7 @@ write.csv2(BDD_finale,"Data/BDD_finale.csv")
 
 ############# création d'une BDD avec seulement les infos pour les analyses ############
 
-BDD_ana_ech<-subset(BDD_finale, select=c(Nom_scientifique,ID_espece,ID_echantillon,ID_Feuille,DI,BT,MT,BB,SV,SD,TMC_t0,TMC_t24,PET,TDMC,TD,Gmin,LMC_t0,LMC_t24,PEF,LDMC,Surface_F,SLA,LT))
+BDD_ana_ech<-subset(BDD_finale, select=c(Nom_scientifique,ID_espece,ID_echantillon,ID_Feuille,Nb_ramifications,DI,BT,MT,BB,SV,SD,TMC_t0,TMC_t24,PET,TDMC,TD,Gmin,LMC_t0,LMC_t24,PEF,LDMC,Surface_F,SLA,LT))
 BDD_ana_ech
 #export de la BDD 
 write.csv2(BDD_ana_ech,"Data/BDD_ana_ech.csv")
