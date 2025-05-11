@@ -48,7 +48,8 @@ fviz_pca_var(res.pca, col.var = "contrib",
 fviz_pca_ind(res.pca, col.ind = "cos2", gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),repel = TRUE)
 
 # Graphique combiné des variables et des individus
-fviz_pca_biplot(res.pca, repel = TRUE)
+fviz_pca_biplot(res.pca,col.var = "contrib",
+                gradient.cols =c("#00AFBB", "#E7B800", "#FC4E07") , repel = TRUE)
 
 # Afficher l'ébouli
 fviz_screeplot(res.pca, addlabels = TRUE, ylim = c(0, 50), main="Graphique de l'ébouli")
@@ -66,7 +67,7 @@ View(BDD_esp)
 
 #################### ACP TRAITS ################
 # Sélectionner uniquement les colonnes des pourcentages
-colonnes_traits <- na.omit(BDD_esp[,c(7:21)])
+colonnes_traits <- na.omit(BDD_esp[,c(7:22)])
 
 # Vérifier les données
 colonnes_traits
@@ -130,8 +131,34 @@ fviz_screeplot(res.pca, addlabels = TRUE, ylim = c(0, 50), main="Graphique de l'
 
 #### PLOT ######
 hist(BDD_esp$score2)
+
+### LMC-t24 avec les 4 composantes infla ####
 plot(BDD_esp$LMC_t24,BDD_esp$BT)
 text(BDD_esp$LMC_t24,BDD_esp$BT,BDD_esp$Nom_scientifique)
+
+plot(BDD_esp$LMC_t24,BDD_esp$BB)
+text(BDD_esp$LMC_t24,BDD_esp$BB,BDD_esp$Nom_scientifique)
+
+plot(BDD_esp$LMC_t24,BDD_esp$MT)
+text(BDD_esp$LMC_t24,BDD_esp$MT,BDD_esp$Nom_scientifique)
+
+plot(BDD_esp$LMC_t24,BDD_esp$DI)
+text(BDD_esp$LMC_t24,BDD_esp$DI,BDD_esp$Nom_scientifique)
+
+#### SLA ####
+plot(BDD_esp$SLA,BDD_esp$BT)
+text(BDD_esp$SLA,BDD_esp$BT,BDD_esp$Nom_scientifique)
+
+#### Nb rami #####
+plot(BDD_esp$Nb_ramifications,BDD_esp$BB)
+text(BDD_esp$Nb_ramifications,BDD_esp$BB,BDD_esp$Nom_scientifique)
+
+#### surface #####
+plot(BDD_esp$Surface_F,BDD_esp$DI)
+text(BDD_esp$Surface_F,BDD_esp$DI,BDD_esp$Nom_scientifique)
+
+
+
 
 m<-lm(score2~LT,data=BDD_esp)
 summary(m)
