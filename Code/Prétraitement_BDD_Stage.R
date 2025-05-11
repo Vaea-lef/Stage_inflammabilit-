@@ -172,8 +172,9 @@ write.csv2(BDD_finale,"Data/BDD_finale.csv")
 
 ############# création d'une BDD avec seulement les infos pour les analyses ############
 
-BDD_ana_ech<-subset(BDD_finale, select=c(Nom_scientifique,ID_espece,ID_echantillon,ID_Feuille,Nb_ramifications,DI,BT,MT,BB,SV,SD,TMC_t0,TMC_t24,PET,TDMC,TD,Gmin,LMC_t0,LMC_t24,PEF,LDMC,Surface_F,SLA,LT))
+BDD_ana_ech<-subset(BDD_finale, select=c(Nom_scientifique,ID_espece,ID_echantillon,ID_Feuille,DI,BT,MT,BB,Nb_ramifications,SV,SD,TMC_t0,TMC_t24,PET,TDMC,TD,Gmin,LMC_t0,LMC_t24,PEF,LDMC,Surface_F,SLA,LT))
 BDD_ana_ech
+dim(BDD_ana_ech)
 #export de la BDD 
 write.csv2(BDD_ana_ech,"Data/BDD_ana_ech.csv")
 
@@ -185,8 +186,8 @@ write.csv2(BDD_ana_ech,"Data/BDD_ana_ech.csv")
 ############# Base à l'échelle de l'espèce ######################################
 
 #création de table avec moyenne, sd, min et max pour chaque variable en fonction du nom de l'espèce
-temp<-BDD_ana_ech[,5:23] ###sélection des colonnes comprenant les variables pour les intégrer dans la boucle
-
+temp<-BDD_ana_ech[,5:24] ###sélection des colonnes comprenant les variables pour les intégrer dans la boucle
+temp
 #création d'un bdd d'origine pour moyenne (sert pour merge)
 BDD_moy_esp<-aggregate(temp[,1]~Nom_scientifique, data = BDD_finale, FUN = mean)
 BDD_moy_esp[,2]<-round(BDD_moy_esp[,2],2)
