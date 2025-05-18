@@ -154,13 +154,13 @@ plot(BDD_esp$Nb_ramifications,BDD_esp$BB)
 text(BDD_esp$Nb_ramifications,BDD_esp$BB,BDD_esp$Nom_scientifique)
 
 #### surface #####
-plot(BDD_esp$Surface_F,BDD_esp$DI)
-text(BDD_esp$Surface_F,BDD_esp$DI,BDD_esp$Nom_scientifique)
+plot(BDD_esp$Surface_F,BDD_esp$BT)
+text(BDD_esp$Surface_F,BDD_esp$BT,BDD_esp$Nom_scientifique)
 
 
 
 
-m<-lm(score2~LT,data=BDD_esp)
+m<-lm(score2~LMC_t24,data=BDD_esp)
 summary(m)
 plot(m)
 
