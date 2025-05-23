@@ -14,7 +14,7 @@
 13;Tamanou bord de mer;Calophyllum inophyllum;Calophyllaceae;Littoral;Autochtone;Simple;Oblongue;Coriace;Crevace;Arbre;Faible
 14;Santal;Santalum austrocaledonicum;Santalaceae;Cultivée;Autochtone;Simple;spatulée;Douce;Fissure;Arbre;
 15;Jamelonier;Syzygium cumini;Myrtaceae;;Introduite;Simple;Oblongue;Douce;Lisse;Arbre;Faible
-16;Bourao;Hibiscus tiliaceus;Malvaceae;;Autochtone;Simple;Coeur;Douce;Crevace;Arbuste/arbre;Très faible
+16;Bourao;Hibiscus tiliaceus V;Malvaceae;;Autochtone;Simple;Coeur;Douce;Crevace;Arbuste/arbre;Très faible
 17;Bonnet d'evêque;Barringtonia asiatica;Lecythidaceae;Littoral;Autochtone;Simple;Spatullée;Coriace;Lisse;Arbre;Très faible
 18;Faux mimosa;Leucaena leucocephala;Fabaceae;Sec;Introduite;Composée;;Douce;Lisse;Arbuste/arbre;Faible
 19;;Acropogon bullatus;Malvaceae;Large;Endemique;Simple;Coeur;Coriace;Lisse;Arbuste/arbre;
@@ -31,3 +31,6 @@
 30;Bois bleu;Hernandia cordigera;Hernandiaceae;Humide;Endemique;Simple;Oblongue;Coriace;Lisse;Arbre;
 31;Potr;Fagraea berteroana;Gentianaceae;Large;Autochtone;Simple;Oblongue;Douce;Lisse;Arbre;Faible
 32;;guioa villosa;Sapindaceae;Maquis;Endemique;Composée;;Coriace;Lisse;Arbuste;Forte
+33;Bourao panaché;Hibiscus tiliaceus P;Malvaceae;;Autochtone;Simple;Coeur;Douce;Crevace;Arbuste/arbre;Faible
+34;Bourao rouge;Hibiscus tiliaceus R;Malvaceae;;Autochtone;Simple;Coeur;Douce;Crevace;Arbuste/arbre;Faible
+35;Bourao grande feuille;Hibiscus tiliaceus G;Malvaceae;;Autochtone;Simple;Coeur;Douce;Crevace;Arbuste/arbre;Faible
