@@ -58,6 +58,13 @@ fviz_screeplot(res.pca, addlabels = TRUE, ylim = c(0, 50), main="Graphique de l'
 coord <- res.pca$ind$coord  # coordonnées des individus
 BDD_esp$score <- coord[, 1]  # Dim 1 = axe 1
 BDD_esp$score2 <- (0.8*coord[,1] + 0.2*coord[,2]) / 2
+
+min_score <- min(BDD_esp$score2, na.rm = TRUE)
+max_score <- max(BDD_esp$score2, na.rm = TRUE)
+
+BDD_esp$score_normalise <- -1 + (BDD_esp$score2 - min_score) * 2 / (max_score - min_score)
+
+
 View(BDD_esp)
 
 
@@ -131,6 +138,7 @@ fviz_screeplot(res.pca, addlabels = TRUE, ylim = c(0, 50), main="Graphique de l'
 
 #### PLOT ######
 hist(BDD_esp$score2)
+text(BDD_esp$Nom_scientifique)
 
 ### LMC-t24 avec les 4 composantes infla ####
 plot(BDD_esp$LMC_t24,BDD_esp$BT)
@@ -156,9 +164,23 @@ text(BDD_esp$Nb_ramifications,BDD_esp$BB,BDD_esp$Nom_scientifique)
 #### surface #####
 plot(BDD_esp$Surface_F,BDD_esp$BT)
 text(BDD_esp$Surface_F,BDD_esp$BT,BDD_esp$Nom_scientifique)
+plot(BDD_esp$Surface_F,BDD_esp$score2)
+text(BDD_esp$Surface_F,BDD_esp$score2,BDD_esp$Nom_scientifique,)
 
+#### score ###
+plot(BDD_esp$score2,BDD_esp$score2)
+text(BDD_esp$score2,BDD_esp$score2,BDD_esp$Nom_scientifique,)
 
+plot(BDD_esp$score2, BDD_esp$score2, type = "n")  # Ne trace que l'espace vide
+text(BDD_esp$score2, BDD_esp$score2, BDD_esp$Nom_scientifique, cex = 0.5, srt = -45, pos = 4)
 
+library(ggplot2)
+library(ggrepel)
+
+ggplot(BDD_esp, aes(x = score2, y = score2)) + 
+  geom_point() +
+  geom_text_repel(aes(Nom_scientifique), size = 3) +
+  theme_minimal()
 
 m<-lm(score2~LMC_t24,data=BDD_esp)
 summary(m)
@@ -185,3 +207,34 @@ segments(x0=BDD_esp$LMC_t24,
 points(BDD_esp$LMC_t24,BDD_esp$MT,pch=21,bg="lightblue",cex=2)
 
 
+##### matrice de corrélation #####
+library (corrplot)
+mat_cor<-cor(colonnes_all)
+mat_sub <- mat_cor[1:4, ]
+corrplot(mat_sub)
+## afficher les valeurs
+round(mat_sub, 2)
+
+#### graphique pour visualiser les espèces et leur inflammabilité #######
+library(ggplot2)
+
+# définition du min et du max pour le graph 
+scoremin <- min(BDD_esp$score_normalise)
+scoremax <- max(BDD_esp$score_normalise)
+
+
+# graphique
+ggplot(BDD_esp, aes(x = reorder(Nom_scientifique, score_normalise), y = score_normalise, fill = score_normalise)) +
+  geom_bar(stat = "identity", color = NA) +  
+  coord_flip() +
+  scale_fill_gradient2(
+    low = "darkgreen",
+    mid = "yellow",
+    high = "red",
+    midpoint = 0,
+    limits = c(scoremin, scoremax),) +
+  labs(x = "Espèces",
+       y = "Score d'inflammabilité",
+       fill = "Score",
+       title = "Score d'inflammabilité par espèce"
+      ) 

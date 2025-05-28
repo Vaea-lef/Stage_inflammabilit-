@@ -142,16 +142,19 @@ write.csv2(BDD_infla_calcule,"Data/BDD_infla_calcule.csv")
 
 
 ######### Assembler les bases de données en une seule base avec TOUTES les infos  #########
+print(BDD_esp$Nom.scientifique)
 
 ##  importation BDD_esp CSV
 BDD_esp<-read.csv2("Data/BDD_Espece.csv")
+names(BDD_esp)[which(names(BDD_esp) == "Nom.scientifique")] <- "Nom_scientifique"
+
 BDD_esp
 #importation de la base échantillonnage
 BDD_ech<-read.csv2("Data/BDD_Echantillonnage.csv")
 BDD_ech
 
 #assemblage : BDD esp et ech
-data1<-merge(BDD_ech,BDD_esp,"ID_espece","ID_espece",all.x=T)
+data1 <- merge(BDD_ech, BDD_esp, by.x = "ID_espece", by.y = "ID.espece", all.x = TRUE)
 data1
 
 #assemblage data1 avec BDD inflammabilité calculée
