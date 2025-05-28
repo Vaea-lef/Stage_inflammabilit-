@@ -13,6 +13,7 @@ BDD_sd_esp
 ##  importation BDD_moy_esp en format CSV
 BDD_esp<-read.csv2("Data/BDD_moy_esp.csv", header = TRUE) #importation de la base
 BDD_esp
+names(BDD_esp)[which(names(BDD_esp) == "Nb_ramifications")] <- "Nb_rami"
 dim(BDD_esp)
 
 
