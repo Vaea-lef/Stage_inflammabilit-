@@ -137,7 +137,7 @@ fviz_screeplot(res.pca, addlabels = TRUE, ylim = c(0, 50), main="Graphique de l'
 
 
 
-#### PLOT ######
+#################### PLOT ##################################
 hist(BDD_esp$score2)
 text(BDD_esp$Nom_scientifique)
 
@@ -196,6 +196,11 @@ hist(BDD_ech$BB)
 
 
 
+
+
+
+############### plot avec ecart-type #######################
+
 plot(BDD_esp$LMC_t24,BDD_esp$MT,xlim=c(0,1000),ylim=c(100,900))
 segments(x0=BDD_esp$LMC_t24-BDD_sd_esp$LMC_t24,
          x1=BDD_esp$LMC_t24+BDD_sd_esp$LMC_t24,
@@ -208,7 +213,12 @@ segments(x0=BDD_esp$LMC_t24,
 points(BDD_esp$LMC_t24,BDD_esp$MT,pch=21,bg="lightblue",cex=2)
 
 
-##### matrice de corrélation #####
+
+
+
+
+####################### matrice de corrélation ######################
+
 library (corrplot)
 mat_cor<-cor(colonnes_all)
 mat_sub <- mat_cor[1:4, ]
@@ -216,7 +226,12 @@ corrplot(mat_sub)
 ## afficher les valeurs
 round(mat_sub, 2)
 
-#### graphique pour visualiser les espèces et leur inflammabilité #######
+
+
+
+
+
+################ graphique pour visualiser les espèces et leur inflammabilité ####################
 library(ggplot2)
 
 # définition du min et du max pour le graph 
@@ -239,3 +254,51 @@ ggplot(BDD_esp, aes(x = reorder(Nom_scientifique, score_normalise), y = score_no
        fill = "Score",
        title = "Score d'inflammabilité par espèce"
       ) 
+
+
+################# Heatmap (couleur en fonction de chaque composante d'inflammabilité) ##################
+
+# packages nécessaires
+library(ggplot2)
+library(tidyr)  # pour changer le format de la BDD en format "long"
+
+# Copier la BDD
+df_prep <- BDD_esp
+
+# Inverser DI 
+df_prep$DI <- max(df_prep$DI, na.rm = TRUE) - df_prep$DI
+
+# Normalisser les valeur entre 0 et 1 : fonction
+normalize <- function(x) {  return((x - min(x)) / (max(x) - min(x)))}
+
+df_norm <- df_prep
+df_norm$MT <- normalize(df_prep$MT)
+df_norm$DI <- normalize(df_prep$DI)
+df_norm$BB <- normalize(df_prep$BB)
+df_norm$BT <- normalize(df_prep$BT)
+
+# Transformer en format long
+df_long <- pivot_longer(df_norm,
+                        cols = c("MT", "DI", "BB", "BT"),
+                        names_to = "Variable",
+                        values_to = "Valeur")
+#définir lordre des espèces en fonction du score d'inflammabilité calculé plus haut
+ordre_esp <- BDD_esp[order(BDD_esp$score_normalise), "Nom_scientifique"]
+
+
+# Facteur pour trier les espèces de haut en bas (du plus inflammable au moins inflammable)
+df_long$Nom_scientifique <- factor(df_long$Nom_scientifique, levels = rev(ordre_esp))
+
+# Générer la heatmap
+ggplot(df_long, aes(x = Variable, y = Nom_scientifique, fill = Valeur)) +
+  geom_tile(color = "black") +
+  scale_fill_gradientn(
+    colors = c("darkgreen", "yellow", "red"),
+    breaks = c(0.1, 0.5, 0.9),
+    labels = c("Faible", "Moyenne", "Élevée"),
+    name = "Inflammabilité"
+  ) +
+  labs(title = "Heatmap des composantes d’inflammabilité",
+       x = "Composantes",
+       y = "Espèces") 
+
