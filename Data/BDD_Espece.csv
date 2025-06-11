@@ -1,44 +1,46 @@
 ﻿ID espece;Nom verna;Nom scientifique;Famille;Habitat;Statut;Type feuille;Forme feuille;Texture feuille;Type ecorce;Forme croissance;Inflammabilite presume
-22;Gaiac;Acacia spirorbis;Fabaceae;L;Autochtone;Simple;Lancéollée;Coriace;Fissure;Arbre;Très forte
-41;Bolé;Acronychia laevis;Rutaceae;L;Autochtone;Simple;Oblongue;Douce;Lisse;Arbre;Faible
-19;;Acropogon bullatus;Malvaceae;Large;Endemique;Simple;Coeur;Coriace;Lisse;Arbuste/arbre;
-38;Kaori;Agathis lanceolata;Araucariaceae;F;Endemique;Simple;Oblongue;Dure;Plaque;Arbre;Forte
+1;Manguier;Mangifera indica;Anacardiaceae;Cultivée;Introduite;Simple;Lancéollée;Douce;Crevace;Arbre;Faible
+2;Badamier;Terminalia catappa;Combretaceae;G;Introduite;Simple;Spatullée;Douce;Crevace;Arbre;Forte
 3;Bois savon;Alphitonia neocaledonica;Rhamnaceae;Large;Endemique;Simple;Oblongue;Coriace;Lisse;Arbuste;Forte
-29;Arbre a sagaïes;Alstonia balansae;Apocynaceae;Large;Endemique;Simple;Oblongue;Douce;Lisse;Arbre;
-7;Pin colonaire;Araucaria columnaris;Araucariaceae;F;Endemique;;Ecaille;Dure;Ecaille;Arbre;Forte
-28;Acacia noir;Archidendropsis granulosa;Mimosoideae;F;Endemique;Composée;;Douce;Lisse;Arbre;
-9;Chêne gomme;Arillastrum gummiferum ;Myrtaceae;M;Endemique;Simple;Oblongue;Coriace;Fissure;Arbre;Moyenne
-17;Bonnet d'evêque;Barringtonia asiatica;Lecythidaceae;G;Autochtone;Simple;Spatullée;Coriace;Lisse;Arbre;Très faible
-39;Tamanu de Forêt;Calophyllum caledonicum;Calophyllaceae;F;Endemique;Simple;Lancéollée;Dure;Fissure;Arbre;
-13;Tamanou bord de mer;Calophyllum inophyllum;Calophyllaceae;G;Autochtone;Simple;Oblongue;Coriace;Crevace;Arbre;Faible
-8;Filao;Casuarina collina;Casuarinaceae;Large;Endemique;;Aiguille;Coriace;Fibre;Arbre;Très forte
-20;Faux manguier vert ;Cerbera manghas;Apocynaceae;Large;Autochtone;Simple;Lancéollée;Douce;Lisse;Arbre;Très faible
-5;;Codia spatulata;Cunoniaceae;M;Endemique;Simple;spatulée;Coriace;Fissure;Arbuste/arbre;
-42;Croton sauvage;Codiaeum peltatum;Euphorbiaceae;L;Endemique;Simple;Lancéollée;Douce;Lisse;Arbre;
-40;Faux caféier;Diospyros fasciculosa;Ebenaceae;L;Autochtone;Simple;Oblongue;Coriace;Lisse;Arbre;
-26;Faux chêne blanc;Elattostachys apetala;Sapindaceae;Large;Autochtone;Composée;;Douce;Lisse;Arbre;Moyenne
-31;Potr;Fagraea berteroana;Gentianaceae;Large;Autochtone;Simple;Oblongue;Douce;Lisse;Arbre;Faible
-25;;Ficus habrophyla;Moraceae;Large;Autochtone;Simple;Oblongue;Coriace;Lisse;Arbre;Faible
-43;Tiaré de forêt sèche;Gardenia urvillei;Rubiaceae;L;Endemique;Simple;Lancéollée;Coriace;Lisse;Arbre;Faible
-6;Batcho ;Geissois pruinosa;Cunoniaceae;M;Endemique;Composée;Oblongue;Coriace;Lisse;Arbuste;
 4;Brosse à dents du Sud;Grevillea rubiginosa;Proteaceae;M;Endemique;Simple;Lancéollée;Douce;Fissure;Arbuste;Forte
-32;;guioa villosa;Sapindaceae;M;Endemique;Composée;;Coriace;Lisse;Arbuste;Forte
-30;Bois bleu;Hernandia cordigera;Hernandiaceae;F;Endemique;Simple;Oblongue;Coriace;Lisse;Arbre;
+5;;Codia spatulata;Cunoniaceae;M;Endemique;Simple;spatulée;Coriace;Fissure;Arbuste/arbre;
+6;Batcho ;Geissois pruinosa;Cunoniaceae;M;Endemique;Composée;Oblongue;Coriace;Lisse;Arbuste;
+7;Pin colonaire;Araucaria columnaris;Araucariaceae;F;Endemique;;Ecaille;Dure;Ecaille;Arbre;Forte
+8;Filao;Casuarina collina;Casuarinaceae;Large;Endemique;;Aiguille;Coriace;Fibre;Arbre;Très forte
+9;Chêne gomme;Arillastrum gummiferum ;Myrtaceae;M;Endemique;Simple;Oblongue;Coriace;Fissure;Arbre;Moyenne
 10;Go;Hibbertia lucens;Dilleniaceae;M;Endemique;Simple;Lancéollée;Dure;Fibre;Arbuste;
-35;Bourao grande feuille;Hibiscus tiliaceus G;Malvaceae;G;Autochtone;Simple;Coeur;Douce;Crevace;Arbuste/arbre;Faible
+11;;Metrosideros laurifolia;Myrtaceae;Large;Endemique;Simple;Spatulée;Coriace;Fibre;Arbuste;Faible
+12;;Tristaniopsis glauca;Myrtaceae;M;Endemique;Simple;Lancéollée;Douce;Plaque;Arbuste;
+13;Tamanou bord de mer;Calophyllum inophyllum;Calophyllaceae;G;Autochtone;Simple;Oblongue;Coriace;Crevace;Arbre;Faible
+14;Santal;Santalum austrocaledonicum;Santalaceae;Large;Autochtone;Simple;spatulée;Douce;Fissure;Arbre;
+15;Jamelonier;Syzygium cumini;Myrtaceae;Large;Introduite;Simple;Oblongue;Douce;Lisse;Arbre;Faible
+16;Bourao;Hibiscus tiliaceus V;Malvaceae;G;Autochtone;Simple;Coeur;Douce;Crevace;Arbuste/arbre;Très faible
+17;Bonnet d'evêque;Barringtonia asiatica;Lecythidaceae;G;Autochtone;Simple;Spatullée;Coriace;Lisse;Arbre;Très faible
+18;Faux mimosa;Leucaena leucocephala;Fabaceae;Large;Introduite;Composée;;Douce;Lisse;Arbuste/arbre;Faible
+19;;Acropogon bullatus;Malvaceae;Large;Endemique;Simple;Coeur;Coriace;Lisse;Arbuste/arbre;
+20;Faux manguier vert ;Cerbera manghas;Apocynaceae;Large;Autochtone;Simple;Lancéollée;Douce;Lisse;Arbre;Très faible
+21;Patte de poule;Scaevola taccada;Goodeniaceae;G;Autochtone;Simple;Spatulée;Douce;Lisse;Arbuste;Très faible
+22;Gaiac;Acacia spirorbis;Fabaceae;L;Autochtone;Simple;Lancéollée;Coriace;Fissure;Arbre;Très forte
+23;Niaouli;Melaleuca quinquenervia;Myrtaceae;M;Autochtone;Simple;Lancéollée;Coriace;lamelle;Arbre;Forte
+24;Pin des caraibes;Pinus caribea;Pinaceae;Cultivée;Introduite;;Aiguille;Coriace;crevaces;Arbre;Très forte
+25;;Ficus habrophyla;Moraceae;Large;Autochtone;Simple;Oblongue;Coriace;Lisse;Arbre;Faible
+26;Faux chêne blanc;Elattostachys apetala;Sapindaceae;Large;Autochtone;Composée;;Douce;Lisse;Arbre;Moyenne
+27;Graine blanche;Neuburgia novocaledonica;Loganiaceae;F;Autochtone;Simple;Spatulée;Douce;Lisse;Arbre;
+28;Acacia noir;Archidendropsis granulosa;Mimosoideae;F;Endemique;Composée;;Douce;Lisse;Arbre;
+29;Arbre a sagaïes;Alstonia balansae;Apocynaceae;Large;Endemique;Simple;Oblongue;Douce;Lisse;Arbre;
+30;Bois bleu;Hernandia cordigera;Hernandiaceae;F;Endemique;Simple;Oblongue;Coriace;Lisse;Arbre;
+31;Potr;Fagraea berteroana;Gentianaceae;Large;Autochtone;Simple;Oblongue;Douce;Lisse;Arbre;Faible
+32;;guioa villosa;Sapindaceae;M;Endemique;Composée;;Coriace;Lisse;Arbuste;Forte
 33;Bourao panaché;Hibiscus tiliaceus P;Malvaceae;G;Autochtone;Simple;Coeur;Douce;Crevace;Arbuste/arbre;Faible
 34;Bourao rouge;Hibiscus tiliaceus R;Malvaceae;G;Autochtone;Simple;Coeur;Douce;Crevace;Arbuste/arbre;Faible
-16;Bourao;Hibiscus tiliaceus V;Malvaceae;G;Autochtone;Simple;Coeur;Douce;Crevace;Arbuste/arbre;Très faible
-18;Faux mimosa;Leucaena leucocephala;Fabaceae;Large;Introduite;Composée;;Douce;Lisse;Arbuste/arbre;Faible
-1;Manguier;Mangifera indica;Anacardiaceae;Cultivée;Introduite;Simple;Lancéollée;Douce;Crevace;Arbre;Faible
-23;Niaouli;Melaleuca quinquenervia;Myrtaceae;M;Autochtone;Simple;Lancéollée;Coriace;lamelle;Arbre;Forte
-11;;Metrosideros laurifolia;Myrtaceae;Large;Endemique;Simple;Spatulée;Coriace;Fibre;Arbuste;Faible
-37;;Myodocarpus fraxinifolius;Myodocarpaceae;F;Endemique;Composée;;Douce;Lisse;Arbuste/arbre;Faible
-27;Graine blanche;Neuburgia novocaledonica;Loganiaceae;F;Autochtone;Simple;Spatulée;Douce;Lisse;Arbre;
-24;Pin des caraibes;Pinus caribea;Pinaceae;Cultivée;Introduite;;Aiguille;Coriace;crevaces;Arbre;Très forte
-14;Santal;Santalum austrocaledonicum;Santalaceae;Large;Autochtone;Simple;spatulée;Douce;Fissure;Arbre;
-21;Patte de poule;Scaevola taccada;Goodeniaceae;G;Autochtone;Simple;Spatulée;Douce;Lisse;Arbuste;Très faible
-15;Jamelonier;Syzygium cumini;Myrtaceae;Large;Introduite;Simple;Oblongue;Douce;Lisse;Arbre;Faible
+35;Bourao grande feuille;Hibiscus tiliaceus G;Malvaceae;G;Autochtone;Simple;Coeur;Douce;Crevace;Arbuste/arbre;Faible
 36;Arbre à cire;Tabernaemontana cerifera;Apocynaceae;F;Endemique;Simple;Lancéollée;Coriace;Fissure;Arbre;
-2;Badamier;Terminalia catappa;Combretaceae;G;Introduite;Simple;Spatullée;Douce;Crevace;Arbre;Forte
-12;;Tristaniopsis glauca;Myrtaceae;M;Endemique;Simple;Lancéollée;Douce;Plaque;Arbuste;
+37;;Myodocarpus fraxinifolius;Myodocarpaceae;F;Endemique;Composée;;Douce;Lisse;Arbuste/arbre;Faible
+38;Kaori;Agathis lanceolata;Araucariaceae;F;Endemique;Simple;Oblongue;Dure;Plaque;Arbre;Forte
+39;Tamanu de Forêt;Calophyllum caledonicum;Calophyllaceae;F;Endemique;Simple;Lancéollée;Dure;Fissure;Arbre;
+40;Faux caféier;Diospyros fasciculosa;Ebenaceae;L;Autochtone;Simple;Oblongue;Coriace;Lisse;Arbre;
+41;Bolé;Acronychia laevis;Rutaceae;L;Autochtone;Simple;Oblongue;Douce;Lisse;Arbre;Faible
+42;Croton sauvage;Codiaeum peltatum;Euphorbiaceae;L;Endemique;Simple;Lancéollée;Douce;Lisse;Arbre;
+43;Tiaré de forêt sèche;Gardenia urvillei;Rubiaceae;L;Endemique;Simple;Lancéollée;Coriace;Lisse;Arbre;Faible
+44;Arbre à colle;Cordia dichotoma;Boraginaceae;L;Autochtone;Simple;Oblongue;Douce;;Arbre;Très faible
+45;;Lepidocupania arcuata;Sapindaceae;;;;;;;;
