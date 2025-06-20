@@ -129,6 +129,11 @@ BT<-(BDD_infla$temps_total - (120 + BDD_infla$DI))
 BT<-round(BT)
 BT
 
+#calcul de l'inverse de DI
+BDD_infla$DI<-(10-BDD_infla$DI)
+BDD_infla$DI
+
+
 # création d'une nouvelle base de données calculée avec ajout des colonnes
 BDD_infla_calcule<-data.frame(BDD_infla,BT,SV,SD)
 BDD_infla_calcule #pour voir la BDD finale
@@ -182,6 +187,35 @@ dim(BDD_ana_ech)
 write.csv2(BDD_ana_ech,"Data/BDD_ana_ech.csv")
 
 
+
+############# Base à l'échelle de l'échantillon #######################
+#création de table avec moyenne, sd, min et max pour chaque variable en fonction du nom de l'espèce
+temp<-BDD_ana_ech[,5:24] ###sélection des colonnes comprenant les variables pour les intégrer dans la boucle
+temp
+#création d'un bdd d'origine pour moyenne (sert pour merge)
+BDD_moy_ech<-aggregate(temp[,1]~ID_echantillon, data = BDD_finale, FUN = mean)
+BDD_moy_ech[,2]<-round(BDD_moy_ech[,2],2)
+colnames(BDD_moy_ech)[2]<-colnames(temp)[1]
+#création d'un bdd d'origine pour sd (sert pour merge)
+BDD_sd_ech<-aggregate(temp[,1]~ID_echantillon, data = BDD_finale, FUN = sd)
+BDD_sd_ech[,2]<-round(BDD_sd_ech[,2],2)
+colnames(BDD_sd_ech)[2]<-colnames(temp)[1]
+
+#Boucle pour les calcul des moyennes et écart-types
+for (i in 2:ncol(temp)){
+  temp2<-aggregate(temp[,i]~ID_echantillon, data = BDD_finale, FUN = mean)
+  temp2[,2]<-round(temp2[,2],2)
+  colnames(temp2)[2]<-colnames(temp)[i]
+  BDD_moy_ech<-merge(x=BDD_moy_ech,y=temp2,by.x="ID_echantillon",by.y="ID_echantillon",all.x=T,all.y=T)
+  
+  temp2<-aggregate(temp[,i]~ID_echantillon, data = BDD_finale, FUN = sd)
+  temp2[,2]<-round(temp2[,2],2)
+  colnames(temp2)[2]<-colnames(temp)[i]
+  BDD_sd_ech<-merge(x=BDD_sd_ech,y=temp2,by.x="ID_echantillon",by.y="ID_echantillon",all.x=T,all.y=T)
+}
+BDD_moy_ech
+#export de la BDD 
+write.csv2(BDD_moy_ech,"Data/BDD_moy_ech.csv")
 
 
 
