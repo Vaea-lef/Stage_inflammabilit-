@@ -181,41 +181,53 @@ write.csv2(BDD_finale,"Data/BDD_finale.csv")
 ############# création d'une BDD avec seulement les infos pour les analyses ############
 
 BDD_ana_ech<-subset(BDD_finale, select=c(Nom_scientifique,ID_espece,ID_echantillon,ID_Feuille,DI,BT,MT,BB,Nb_ramifications,SV,SD,TMC_t0,TMC_t24,PET,TDMC,TD,Gmin,LMC_t0,LMC_t24,PEF,LDMC,Surface_F,SLA,LT))
-BDD_ana_ech
+head(BDD_ana_ech)
 dim(BDD_ana_ech)
 #export de la BDD 
 write.csv2(BDD_ana_ech,"Data/BDD_ana_ech.csv")
 
 
 
+
+
 ############# Base à l'échelle de l'échantillon #######################
-#création de table avec moyenne, sd, min et max pour chaque variable en fonction du nom de l'espèce
+
+#création de table avec moyenne et sd pour chaque variable en fonction du nom de l'espèce
 temp<-BDD_ana_ech[,5:24] ###sélection des colonnes comprenant les variables pour les intégrer dans la boucle
 temp
-#création d'un bdd d'origine pour moyenne (sert pour merge)
-BDD_moy_ech<-aggregate(temp[,1]~ID_echantillon, data = BDD_finale, FUN = mean)
-BDD_moy_ech[,2]<-round(BDD_moy_ech[,2],2)
-colnames(BDD_moy_ech)[2]<-colnames(temp)[1]
-#création d'un bdd d'origine pour sd (sert pour merge)
-BDD_sd_ech<-aggregate(temp[,1]~ID_echantillon, data = BDD_finale, FUN = sd)
-BDD_sd_ech[,2]<-round(BDD_sd_ech[,2],2)
-colnames(BDD_sd_ech)[2]<-colnames(temp)[1]
 
-#Boucle pour les calcul des moyennes et écart-types
-for (i in 2:ncol(temp)){
-  temp2<-aggregate(temp[,i]~ID_echantillon, data = BDD_finale, FUN = mean)
-  temp2[,2]<-round(temp2[,2],2)
-  colnames(temp2)[2]<-colnames(temp)[i]
-  BDD_moy_ech<-merge(x=BDD_moy_ech,y=temp2,by.x="ID_echantillon",by.y="ID_echantillon",all.x=T,all.y=T)
+#création d'une bdd d'origine pour moyenne (sert pour merge)
+BDD_moy_ech <- aggregate(temp[,1] ~ ID_echantillon + Nom_scientifique + ID_espece, data = BDD_ana_ech, FUN = mean, na.rm = TRUE)
+BDD_moy_ech[,4] <- round(BDD_moy_ech[,4], 2)
+colnames(BDD_moy_ech)[4] <- colnames(temp)[1]
+
+#création d'un bdd d'origine pour sd (sert pour merge)
+BDD_sd_ech <- aggregate(temp[,1] ~ ID_echantillon + Nom_scientifique + ID_espece, data = BDD_ana_ech, FUN = sd, na.rm = TRUE)
+BDD_sd_ech[,4] <- round(BDD_sd_ech[,4], 2)
+colnames(BDD_sd_ech)[4] <- colnames(temp)[1]
+
+# Boucle pour les calcul des moyennes et écart-types
+for (i in 2:ncol(temp)) {
+  # Moyenne
+  temp_moy <- aggregate(temp[, i] ~ ID_echantillon + Nom_scientifique + ID_espece,data = BDD_ana_ech, FUN = mean, na.rm = TRUE)
+  temp_moy[,4] <- round(temp_moy[,4], 2)
+  colnames(temp_moy)[4] <- colnames(temp)[i]
+  BDD_moy_ech <- merge(BDD_moy_ech, temp_moy, by = c("ID_echantillon", "Nom_scientifique", "ID_espece"), all = TRUE)
   
-  temp2<-aggregate(temp[,i]~ID_echantillon, data = BDD_finale, FUN = sd)
-  temp2[,2]<-round(temp2[,2],2)
-  colnames(temp2)[2]<-colnames(temp)[i]
-  BDD_sd_ech<-merge(x=BDD_sd_ech,y=temp2,by.x="ID_echantillon",by.y="ID_echantillon",all.x=T,all.y=T)
-}
-BDD_moy_ech
-#export de la BDD 
-write.csv2(BDD_moy_ech,"Data/BDD_moy_ech.csv")
+  # Écart-type
+  temp_sd <- aggregate(temp[, i] ~ ID_echantillon + Nom_scientifique + ID_espece,data = BDD_ana_ech, FUN = sd, na.rm = TRUE)
+  temp_sd[,4] <- round(temp_sd[,4], 2)
+  colnames(temp_sd)[4] <- colnames(temp)[i]
+  BDD_sd_ech <- merge(BDD_sd_ech, temp_sd,by = c("ID_echantillon", "Nom_scientifique", "ID_espece"),all = TRUE)
+  }
+
+# Résultats
+head(BDD_moy_ech)
+head(BDD_sd_ech)
+
+# Export des données
+write.csv2(BDD_moy_ech, "Data/BDD_moy_ech.csv", row.names = FALSE)
+write.csv2(BDD_sd_ech, "Data/BDD_sd_ech.csv", row.names = FALSE)
 
 
 
@@ -225,10 +237,12 @@ write.csv2(BDD_moy_ech,"Data/BDD_moy_ech.csv")
 #création de table avec moyenne, sd, min et max pour chaque variable en fonction du nom de l'espèce
 temp<-BDD_ana_ech[,5:24] ###sélection des colonnes comprenant les variables pour les intégrer dans la boucle
 temp
+
 #création d'un bdd d'origine pour moyenne (sert pour merge)
 BDD_moy_esp<-aggregate(temp[,1]~Nom_scientifique, data = BDD_finale, FUN = mean)
 BDD_moy_esp[,2]<-round(BDD_moy_esp[,2],2)
 colnames(BDD_moy_esp)[2]<-colnames(temp)[1]
+
 #création d'un bdd d'origine pour sd (sert pour merge)
 BDD_sd_esp<-aggregate(temp[,1]~Nom_scientifique, data = BDD_finale, FUN = sd)
 BDD_sd_esp[,2]<-round(BDD_sd_esp[,2],2)
@@ -236,26 +250,58 @@ colnames(BDD_sd_esp)[2]<-colnames(temp)[1]
 
 #Boucle pour les calcul des moyennes et écart-types
 for (i in 2:ncol(temp)){
+  
+  #Moyenne
   temp2<-aggregate(temp[,i]~Nom_scientifique, data = BDD_finale, FUN = mean)
   temp2[,2]<-round(temp2[,2],2)
   colnames(temp2)[2]<-colnames(temp)[i]
   BDD_moy_esp<-merge(x=BDD_moy_esp,y=temp2,by.x="Nom_scientifique",by.y="Nom_scientifique",all.x=T,all.y=T)
   
+  #Ecart-type
   temp2<-aggregate(temp[,i]~Nom_scientifique, data = BDD_finale, FUN = sd)
   temp2[,2]<-round(temp2[,2],2)
   colnames(temp2)[2]<-colnames(temp)[i]
   BDD_sd_esp<-merge(x=BDD_sd_esp,y=temp2,by.x="Nom_scientifique",by.y="Nom_scientifique",all.x=T,all.y=T)
-}
-BDD_moy_esp
+  }
+
+#Résultat
+head(BDD_moy_esp)
+head(BDD_sd_esp)
+
 #export de la BDD 
 write.csv2(BDD_moy_esp,"Data/BDD_moy_esp.csv")
+write.csv2(BDD_sd_esp, "Data/BDD_sd_ech.csv")
 
-BDD_sd_esp
-#export de la BDD 
-write.csv2(BDD_sd_esp,"Data/BDD_sd_esp.csv")
 
-DATA<-list(BDD_moy_esp,BDD_sd_esp)
-DATA
+
+
+
+################ NOMBRE D'ESPECES PAR MILIEU ###########
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+
+# Supposons que ta base s'appelle BDD_speces
+# et contient : "Nom_scientifique" et "Milieux" (ex : "F", "FL", "FLM")
+
+# Étape 1 : éclatement des milieux multiples
+BDD_expanded <- separate_rows(BDD_esp, Habitat, sep = "")    # chaque lettre devient une ligne
+BDD_expanded <- unique(BDD_expanded[, c("Nom_scientifique", "Habitat")])  # retire doublons
+
+# Étape 2 : comptage des espèces par milieu
+df_plot <- aggregate(Nom_scientifique ~ Habitat, data = BDD_expanded, FUN = length)
+colnames(df_plot)[2] <- "Nb_especes"
+
+# Étape 3 : tri du plus grand au plus petit
+df_plot <- df_plot[order(df_plot$Nb_especes, decreasing = TRUE), ]
+
+# Étape 4 : diagramme
+ggplot(df_plot, aes(x = reorder(Habitat, -Nb_especes), y = Nb_especes)) +
+  geom_bar(stat = "identity", fill = "darkorange") +
+  labs(x = "Milieu", y = "Nombre d'espèces", title = "Nombre d'espèces par milieu") +
+  theme_minimal()
+
+
 
 
 

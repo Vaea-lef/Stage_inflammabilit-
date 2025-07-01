@@ -1,12 +1,15 @@
 
 #### ANALYSE DE DONNEE STAGE INFLAMMABILITE ####
 
+
+################# IMPORTATION ET CHARGEMENT PACKAGE ###########################
+
 ##  importation BDD_ana_ech en format CSV
 setwd("C:/IRD/Stage_inflammabilit-") #définition du répertoire de travail
 BDD_ech<-read.csv2("Data/BDD_moy_ech.csv", header = TRUE) #importation de la base
-BDD_ech
-dim(BDD_ech)
+View(BDD_ech)
 
+##  importation BDD_sd_esp en format CSV
 BDD_sd_esp<-read.csv2("Data/BDD_sd_esp.csv", header = TRUE)
 BDD_sd_esp
 
@@ -16,47 +19,42 @@ BDD_esp
 names(BDD_esp)[which(names(BDD_esp) == "Nb_ramifications")] <- "Nb_rami"
 dim(BDD_esp)
 
-
-
-
-
-
-# Charger les bibliothèques nécessaires
+##  Charger les packages nécessaires pour ACP
 library(FactoMineR)
 library(factoextra)
 
 
+
+
+
 ################  ACP INFLAMMABILITE ####################
 
-# Sélectionner uniquement les colonnes des pourcentages
+# Sélection des colonnes des composantes de l'inflammabilité
 colonnes_infla <- BDD_esp[, c(3:6)]
 
-# Vérifier les données
+# Vérification des données
 head(colonnes_infla)
 
-# Appliquer l'ACP
+# Application de l'ACP
 res.pca <- PCA(colonnes_infla, scale.unit = TRUE, graph = FALSE)
 
 # Résumé des résultats
 summary(res.pca)
 
 # Graphique des contributions des variables aux composantes principales
-fviz_pca_var(res.pca, col.var = "contrib",
-             gradient.cols = c("#6fec00", "#ff9e00", "#Ff0000"),
-             repel = TRUE)
-
+fviz_pca_var(res.pca, col.var = "contrib", gradient.cols = c("#6fec00", "#ff9e00", "#Ff0000"),repel = TRUE)
 
 # Graphique des individus 
 fviz_pca_ind(res.pca, col.ind = "cos2", gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),repel = TRUE)
 
 # Graphique combiné des variables et des individus
-fviz_pca_biplot(res.pca,col.var = "contrib",
-                gradient.cols =c("#00AFBB", "#E7B800", "#FC4E07") , repel = TRUE)
+fviz_pca_biplot(res.pca,col.var = "contrib", gradient.cols =c("#00AFBB", "#E7B800", "#FC4E07") , repel = TRUE)
 
 # Afficher l'ébouli
 fviz_screeplot(res.pca, addlabels = TRUE, ylim = c(0, 50), main="Graphique de l'ébouli")
 
-# Ajout du score d'inflammabilité basé sur la coordonnée de l'axe 1 ou axe 1 et 2
+
+# Ajout d'un score d'inflammabilité basé sur la coordonnée de l'axe 1 et moyenne pondérée axe 1 et 2
 coord <- res.pca$ind$coord  # coordonnées des individus
 BDD_esp$score <- coord[, 1]  # Dim 1 = axe 1
 BDD_esp$score2 <- (0.8*coord[,1] + 0.2*coord[,2]) / 2
@@ -66,34 +64,35 @@ min_score <- min(BDD_esp$score2, na.rm = TRUE)
 max_score <- max(BDD_esp$score2, na.rm = TRUE)
 BDD_esp$score_normalise <- -1 + (BDD_esp$score2 - min_score) * 2 / (max_score - min_score)
 
+# visualiser les scores
 View(BDD_esp)
 
 
 
-#################### ACP TRAITS ################
-# Sélectionner uniquement les colonnes des pourcentages
+
+
+#################### ACP TRAITS ############################
+
+# Sélection des colonnes des traits fonctionnels
 colonnes_traits <- na.omit(BDD_esp[,c(7:22)])
 
 # Vérifier les données
 colonnes_traits
 
-# Appliquer l'ACP
+# Application de l'ACP
 res.pca <- PCA(colonnes_traits, scale.unit = TRUE, graph = FALSE)
 
 # Résumé des résultats
 summary(res.pca)
 
 # Graphique des contributions des variables aux composantes principales
-fviz_pca_var(res.pca, col.var = "contrib",
-             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
-             repel = TRUE)
-
+fviz_pca_var(res.pca, col.var = "contrib", gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"), repel = TRUE)
 
 # Graphique des individus 
 fviz_pca_ind(res.pca, col.ind = "cos2", gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),repel = TRUE)
 
 # Graphique combiné des variables et des individus
-fviz_pca_biplot(res.pca, repel = TRUE)
+fviz_pca_biplot(res.pca, col.var = "contrib", gradient.cols =c("#00AFBB", "#E7B800", "#FC4E07"),repel = TRUE)
 
 # Afficher l'ébouli
 fviz_screeplot(res.pca, addlabels = TRUE, ylim = c(0, 50), main="Graphique de l'ébouli")
@@ -101,8 +100,11 @@ fviz_screeplot(res.pca, addlabels = TRUE, ylim = c(0, 50), main="Graphique de l'
 
 
 
+
+
 ######## ACP INFLA avec projection des axes TRAITS ####################
-# Sélectionner lignes complètes (pas de NA dans les colonnes 3 à 22)
+
+# Sélection des lignes complètes (pas de NA dans les colonnes 3 à 22)
 colonnes_complet <- na.omit(BDD_esp[, 3:22])
 
 ## ACP ##
@@ -123,6 +125,7 @@ fviz_pca_biplot(res.pca, col.var = "red",repel = TRUE)
 
 
 #################### PLOT ##################################
+
 #histogrammes pour vérifier la normalité des données 
 hist(BDD_esp$score2)
 
