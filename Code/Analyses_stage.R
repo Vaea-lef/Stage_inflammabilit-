@@ -6,8 +6,8 @@
 
 ##  importation BDD_ana_ech en format CSV
 setwd("C:/IRD/Stage_inflammabilit-") #définition du répertoire de travail
-BDD_ech<-read.csv2("Data/BDD_moy_ech.csv", header = TRUE) #importation de la base
-View(BDD_ech)
+BDD_ech<-read.csv2("Data/BDD_moy_ech.csv", header = TRUE) #importation de l
+BDD_ech
 
 ##  importation BDD_sd_esp en format CSV
 BDD_sd_esp<-read.csv2("Data/BDD_sd_esp.csv", header = TRUE)
@@ -30,7 +30,7 @@ library(factoextra)
 ################  ACP INFLAMMABILITE ####################
 
 # Sélection des colonnes des composantes de l'inflammabilité
-colonnes_infla <- BDD_esp[, c(3:6)]
+colonnes_infla <- BDD_esp[, c(4:7)]
 
 # Vérification des données
 head(colonnes_infla)
@@ -54,6 +54,12 @@ fviz_pca_biplot(res.pca,col.var = "contrib", gradient.cols =c("#00AFBB", "#E7B80
 fviz_screeplot(res.pca, addlabels = TRUE, ylim = c(0, 50), main="Graphique de l'ébouli")
 
 
+
+
+
+
+
+
 # Ajout d'un score d'inflammabilité basé sur la coordonnée de l'axe 1 et moyenne pondérée axe 1 et 2
 coord <- res.pca$ind$coord  # coordonnées des individus
 BDD_esp$score <- coord[, 1]  # Dim 1 = axe 1
@@ -74,7 +80,7 @@ View(BDD_esp)
 #################### ACP TRAITS ############################
 
 # Sélection des colonnes des traits fonctionnels
-colonnes_traits <- na.omit(BDD_esp[,c(7:22)])
+colonnes_traits <- na.omit(BDD_esp[,c(8:23)])
 
 # Vérifier les données
 colonnes_traits
@@ -119,6 +125,169 @@ fviz_pca_var(res.pca, col.var = "red", repel = TRUE) +
 
 # ACP avec les individus
 fviz_pca_biplot(res.pca, col.var = "red",repel = TRUE)
+
+
+
+
+
+################ BOXPLOT INFLA ESPECE ########################
+
+######## DI ###########
+# Calcul des médianes par espèce
+med_DI <- aggregate(DI ~ Nom_scientifique, data = BDD_ech, median)
+
+# Création ordre décroissant des médianes
+ordre <- med_DI$Nom_scientifique[order(med_DI$DI, decreasing = TRUE)]
+
+# facteur avec ce nouvel ordre (pour que l'ordre soit capté par le boxplot)
+BDD_ech$Nom_scientifique <- factor(BDD_ech$Nom_scientifique, levels = ordre)
+
+# Traçage du boxplot avec l'ordre décroissant 
+boxplot(DI ~ Nom_scientifique, data = BDD_ech,
+        las = 2, cex.axis = 0.7,
+        main = "DI par espèce (ordre décroissant de la médiane)",
+        xlab = "Espèce", ylab = "DI")
+
+
+######## BT ###########
+# Calcul des médianes par espèce
+med_BT <- aggregate(BT ~ Nom_scientifique, data = BDD_ech, median)
+
+# Création ordre décroissant des médianes
+ordre <- med_BT$Nom_scientifique[order(med_BT$BT, decreasing = TRUE)]
+
+# facteur avec ce nouvel ordre (pour que l'ordre soit capté par le boxplot)
+BDD_ech$Nom_scientifique <- factor(BDD_ech$Nom_scientifique, levels = ordre)
+
+# Traçage du boxplot avec l'ordre décroissant 
+boxplot(BT ~ Nom_scientifique, data = BDD_ech,
+        las = 2, cex.axis = 0.7,
+        main = "BT par espèce (ordre décroissant de la médiane)",
+        xlab = "Espèce", ylab = "BT")
+
+
+######## MT ###########
+# Calcul des médianes par espèce
+med_MT <- aggregate(MT ~ Nom_scientifique, data = BDD_ech, median)
+
+# Création ordre décroissant des médianes
+ordre <- med_MT$Nom_scientifique[order(med_MT$MT, decreasing = TRUE)]
+
+# facteur avec ce nouvel ordre (pour que l'ordre soit capté par le boxplot)
+BDD_ech$Nom_scientifique <- factor(BDD_ech$Nom_scientifique, levels = ordre)
+
+# Traçage du boxplot avec l'ordre décroissant 
+boxplot(MT ~ Nom_scientifique, data = BDD_ech,
+        las = 2, cex.axis = 0.7,
+        main = "MT par espèce (ordre décroissant de la médiane)",
+        xlab = "Espèce", ylab = "MT")
+
+
+######## BB ###########
+# Calcul des médianes par espèce
+med_BB <- aggregate(BB ~ Nom_scientifique, data = BDD_ech, median)
+
+# Création ordre décroissant des médianes
+ordre <- med_BB$Nom_scientifique[order(med_BB$BB, decreasing = TRUE)]
+
+# facteur avec ce nouvel ordre (pour que l'ordre soit capté par le boxplot)
+BDD_ech$Nom_scientifique <- factor(BDD_ech$Nom_scientifique, levels = ordre)
+
+# Traçage du boxplot avec l'ordre décroissant 
+boxplot(BB ~ Nom_scientifique, data = BDD_ech,
+        las = 2, cex.axis = 0.7,
+        main = "BB par espèce (ordre décroissant de la médiane)",
+        xlab = "Espèce", ylab = "BB")
+
+
+
+
+
+
+################# Heatmap (couleur en fonction de chaque composante d'inflammabilité) ##################
+
+# packages nécessaires
+library(ggplot2)
+library(tidyr)  # pour changer le format de la BDD en format "long"
+
+# Copier la BDD (pour ne pas la modifier)
+df_prep <- BDD_esp
+
+# Normalisser les valeur entre 0 et 1 : fonction
+normalize <- function(x) {  return((x - min(x)) / (max(x) - min(x)))}
+
+df_norm <- df_prep
+df_norm$MT <- normalize(df_prep$MT)
+df_norm$DI <- normalize(df_prep$DI)
+df_norm$BB <- normalize(df_prep$BB)
+df_norm$BT <- normalize(df_prep$BT)
+
+# Transformer en format long (une ligne par composante)
+df_long <- pivot_longer(df_norm,
+                        cols = c("MT", "DI", "BB", "BT"),
+                        names_to = "Variable",
+                        values_to = "Valeur")
+
+# Créer l’ordre des espèces en fonction du score d'inflammabilité
+ordre_esp <- df_prep[order(df_prep$score_normalise, decreasing = FALSE), "Nom_scientifique"]
+
+# enlever les doublons et les NA
+ordre_esp <- unique(na.omit(ordre_esp))
+
+# Appliquer le facteur pour ordonner les espèces
+df_long$Nom_scientifique <- factor(df_long$Nom_scientifique, levels = rev(ordre_esp))
+
+# Générer la heatmap
+ggplot(df_long, aes(x = Variable, y = Nom_scientifique, fill = Valeur)) +
+  geom_tile(color = "black") +
+  scale_fill_gradientn(
+    colors = c("darkgreen", "yellow", "red"),
+    breaks = c(0.1, 0.5, 0.9),
+    labels = c("Faible", "Moyenne", "Élevée"),
+    name = "Inflammabilité"
+  ) +
+  labs(title = "Heatmap des composantes d’inflammabilité",
+       x = "Composantes",
+       y = "Espèces") +
+  scale_y_discrete(drop = FALSE) +  # Affiche toutes les espèces, même si certaines valeurs sont NA
+  theme(axis.text.y = element_text(size = 6))  # Réduction de la taille de texte si besoin
+
+
+
+
+
+####################### matrice de corrélation ######################
+
+# des traits foncitonnels
+library (corrplot)
+mat_cor_trait<-cor(colonnes_traits)
+corrplot(mat_cor_trait)
+round(mat_cor_trait, 2)   ## afficher les valeurs
+
+# de tout 
+library (corrplot)
+mat_cor_all<-cor(colonnes_all)
+corrplot(mat_cor_all)
+round(mat_cor_all, 2)   ## afficher les valeurs
+
+
+
+cor_matrix <- cor(colonnes_traits, method = "pearson")
+
+# Visualiser la corrélation
+corrplot(cor_matrix, method = "color", type = "upper",
+         tl.cex = 0.8, tl.col = "black", number.cex = 0.7, addCoef.col = "black")
+
+library(car)
+
+# Tu choisis un trait quelconque comme réponse (ex: le premier)
+mod <- lm(Nb_rami ~ ., data = colonnes_traits)
+vif_values <- vif(mod)
+
+# Affichage des résultats
+print(round(vif_values, 2))
+
+
 
 
 
@@ -220,17 +389,6 @@ points(BDD_esp$LMC_t24,BDD_esp$MT,pch=21,bg="lightblue",cex=2)
 
 
 
-
-####################### matrice de corrélation ######################
-
-library (corrplot)
-mat_cor<-cor(colonnes_all)
-mat_petit <- mat_cor[1:4, ]
-corrplot(mat_petit)
-corrplot(mat_cor)
-## afficher les valeurs
-round(mat_petit, 2)
-round(mat_cor, 2)
 
 
 
