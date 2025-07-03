@@ -91,13 +91,9 @@ TDMC<-((BDD_traits$Masse_T_Tsec * 1000)/BDD_traits$Masse_T_T0)
 TDMC<-round(TDMC,2)
 TDMC
 
-#Perte en eau de la Tige (PET)(%)
-PET<-(1-(BDD_traits$Masse_T_T24/BDD_traits$Masse_T_T0))*100
-PET<-round(PET,2)
-PET
 
 # création d'une nouvelle base de données calculée avec ajout des colonnes
-BDD_traits_calcule<-data.frame(BDD_traits,TV,TD,TMC_t0,TMC_t24,PET,TDMC)
+BDD_traits_calcule<-data.frame(BDD_traits,TV,TD,TMC_t0,TMC_t24,TDMC)
 BDD_traits_calcule #pour voir la BDD finale
 
 ###### Export de la BDD traits calculée CSV
@@ -180,7 +176,7 @@ write.csv2(BDD_finale,"Data/BDD_finale.csv")
 
 ############# création d'une BDD avec seulement les infos pour les analyses ############
 
-BDD_ana_ech<-subset(BDD_finale, select=c(Nom_scientifique,ID_espece,ID_echantillon,ID_Feuille,DI,BT,MT,BB,Nb_ramifications,SV,SD,TMC_t0,TMC_t24,PET,TDMC,TD,Gmin,LMC_t0,LMC_t24,PEF,LDMC,Surface_F,SLA,LT))
+BDD_ana_ech<-subset(BDD_finale, select=c(Nom_scientifique,ID_espece,ID_echantillon,ID_Feuille,DI,BT,MT,BB,Nb_ramifications,SV,SD,TMC_t0,TMC_t24,TDMC,TD,Gmin,LMC_t0,LMC_t24,PEF,LDMC,Surface_F,SLA,LT))
 head(BDD_ana_ech)
 dim(BDD_ana_ech)
 #export de la BDD 
@@ -193,7 +189,7 @@ write.csv2(BDD_ana_ech,"Data/BDD_ana_ech.csv")
 ############# Base à l'échelle de l'échantillon #######################
 
 #création de table avec moyenne et sd pour chaque variable en fonction du nom de l'espèce
-temp<-BDD_ana_ech[,5:24] ###sélection des colonnes comprenant les variables pour les intégrer dans la boucle
+temp<-BDD_ana_ech[,5:23] ###sélection des colonnes comprenant les variables pour les intégrer dans la boucle
 temp
 
 #création d'une bdd d'origine pour moyenne (sert pour merge)

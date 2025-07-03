@@ -80,7 +80,7 @@ View(BDD_esp)
 #################### ACP TRAITS ############################
 
 # Sélection des colonnes des traits fonctionnels
-colonnes_traits <- na.omit(BDD_esp[,c(8:23)])
+colonnes_traits <- na.omit(BDD_esp[,c(8:22)])
 
 # Vérifier les données
 colonnes_traits
@@ -111,7 +111,7 @@ fviz_screeplot(res.pca, addlabels = TRUE, ylim = c(0, 50), main="Graphique de l'
 ######## ACP INFLA avec projection des axes TRAITS ####################
 
 # Sélection des lignes complètes (pas de NA dans les colonnes 3 à 22)
-colonnes_complet <- na.omit(BDD_esp[, 3:22])
+colonnes_complet <- na.omit(BDD_esp[, 4:22])
 
 ## ACP ##
 # colonnes 1 à 4 : inflammabilité (axes actifs)
@@ -256,36 +256,107 @@ ggplot(df_long, aes(x = Variable, y = Nom_scientifique, fill = Valeur)) +
 
 
 
-####################### matrice de corrélation ######################
+####################### matrice de corrélation (pour le choix des traits) ######################
 
-# des traits foncitonnels
+### des traits foncitonnels
 library (corrplot)
 mat_cor_trait<-cor(colonnes_traits)
 corrplot(mat_cor_trait)
 round(mat_cor_trait, 2)   ## afficher les valeurs
+# Visualiser la corrélation
+corrplot(mat_cor_trait, method = "color", type = "upper",
+         tl.cex = 0.8, tl.col = "black", number.cex = 0.7, addCoef.col = "black")
+corrplot(mat_cor_trait, method = "color", 
+         tl.cex = 0.8, tl.col = "black", number.cex = 0.7, addCoef.col = "black")
+# sélection automatique des traits
+library(caret)
+traits_non_corrélés <- colonnes_traits[, -findCorrelation(mat_cor_trait, cutoff = 0.6)]
+traits_non_corrélés
 
-# de tout 
+
+
+
+
+
+
+#################### TEST ANOVA POUR VERIFICATION VARIABILITE ESPECES ######################
+# inflammabilité
+  #DI
+variabilité_esp <- aov(BDD_ech$DI~BDD_ech$Nom_scientifique)
+summary(variabilité_esp)
+  #BT
+variabilité_esp <- aov(BDD_ech$BT~BDD_ech$Nom_scientifique)
+summary(variabilité_esp)
+  #MT
+variabilité_esp <- aov(BDD_ech$MT~BDD_ech$Nom_scientifique)
+summary(variabilité_esp)
+  #BB
+variabilité_esp <- aov(BDD_ech$MT~BDD_ech$Nom_scientifique)
+summary(variabilité_esp)
+
+# traits
+  #Nb_rami
+variabilité_esp <- aov(BDD_ech$Nb_rami~BDD_ech$Nom_scientifique)
+summary(variabilité_esp)
+  #SV
+variabilité_esp <- aov(BDD_ech$SV~BDD_ech$Nom_scientifique)
+summary(variabilité_esp)
+  #SD
+variabilité_esp <- aov(BDD_ech$SD~BDD_ech$Nom_scientifique)
+summary(variabilité_esp)
+  #PET
+variabilité_esp <- aov(BDD_ech$PET~BDD_ech$Nom_scientifique)
+summary(variabilité_esp)
+  #TD
+variabilité_esp <- aov(BDD_ech$TD~BDD_ech$Nom_scientifique)
+summary(variabilité_esp)
+  #Gmin
+variabilité_esp <- aov(BDD_ech$Gmin~BDD_ech$Nom_scientifique)
+summary(variabilité_esp)
+  #LMC_t0
+variabilité_esp <- aov(BDD_ech$LMC_t0~BDD_ech$Nom_scientifique)
+summary(variabilité_esp)
+  #Surface_F
+variabilité_esp <- aov(BDD_ech$Surface_F~BDD_ech$Nom_scientifique)
+summary(variabilité_esp)
+  #SLA
+variabilité_esp <- aov(BDD_ech$SLA~BDD_ech$Nom_scientifique)
+summary(variabilité_esp)
+
+
+
+############# Proportions of variance explained (Alam) #############
+library(lme4)
+
+# Modèle linéaire mixte
+m_BT <- lmer(LMC_t24 ~ 1 + (1 | Nom_scientifique), data = BDD_ech)
+summary(m_BT)
+
+# Extraire les composantes de variance
+var_BT <- as.data.frame(VarCorr(m_BT))
+var_BT_inter <- var_BT$vcov[1]
+var_BT_intra <- attr(VarCorr(m_BT), "sc")^2
+
+# Pourcentage de variance
+total_BT <- var_BT_inter + var_BT_intra
+100 * var_BT_inter / total_BT  # variance inter (espèce)
+100 * var_BT_intra / total_BT  # variance intra (résiduelle)
+
+
+
+
+################### matrice de corrélation pour observer l'effet des traits sur infla ################
+
+
+
+### de tout 
 library (corrplot)
-mat_cor_all<-cor(colonnes_all)
+mat_cor_all<-cor(colonnes_complet)
 corrplot(mat_cor_all)
 round(mat_cor_all, 2)   ## afficher les valeurs
-
-
-
-cor_matrix <- cor(colonnes_traits, method = "pearson")
-
-# Visualiser la corrélation
-corrplot(cor_matrix, method = "color", type = "upper",
+corrplot(mat_cor_all, method = "color", 
          tl.cex = 0.8, tl.col = "black", number.cex = 0.7, addCoef.col = "black")
 
-library(car)
-
-# Tu choisis un trait quelconque comme réponse (ex: le premier)
-mod <- lm(Nb_rami ~ ., data = colonnes_traits)
-vif_values <- vif(mod)
-
-# Affichage des résultats
-print(round(vif_values, 2))
 
 
 
