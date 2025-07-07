@@ -113,6 +113,17 @@ write.csv2(BDD_traits_calcule,"Data/BDD_traits_calcule.csv")
 BDD_infla<-read.csv2("Data/BDD_Inflammabilite.csv")
 BDD_infla
 
+# Exemple avec trois ID
+ids_a_remplacer <- c("02_5", "13_6", "30_5","39_6","42_5")
+
+# Boucle simple pour remplacer ligne par ligne
+for (id in ids_a_remplacer) {
+  lignes <- which(BDD_infla$ID_echantillon == id)
+  BDD_infla[lignes, c("DI", "BB", "temps_total", "MT","DI_test","BB_test")] <- NA
+}
+View(BDD_infla)
+
+
 #calcul du volume des échantillons (m3)
 SV<-((2/3)*pi*BDD_infla$longeur*((BDD_infla$largeur/2)*(BDD_infla$hauteur/2)))/1000000
 SV<-round(SV,3)
