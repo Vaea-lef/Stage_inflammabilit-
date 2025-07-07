@@ -121,8 +121,6 @@ for (id in ids_a_remplacer) {
   lignes <- which(BDD_infla$ID_echantillon == id)
   BDD_infla[lignes, c("DI", "BB", "temps_total", "MT","DI_test","BB_test")] <- NA
 }
-View(BDD_infla)
-
 
 #calcul de la SD density (kg/m3)
 SD<-((BDD_infla$masse/1000)/(((2/3)*pi*BDD_infla$longeur*((BDD_infla$largeur/2)*(BDD_infla$hauteur/2)))/1000000))
@@ -134,14 +132,21 @@ BT<-(BDD_infla$temps_total - (120 + BDD_infla$DI))
 BT<-round(BT)
 BT
 
+#calcul du BT avec extra case
+BT_test<-(BDD_infla$temps_total - (120 + BDD_infla$DI_test))
+BT_test<-round(BT_test)
+BT_test
 
 #calcul de l'inverse de DI
 BDD_infla$DI<-(10-BDD_infla$DI)
 BDD_infla$DI
 
+#calcul de l'inverse de DI_test
+BDD_infla$DI_test<-(10-BDD_infla$DI_test)
+BDD_infla$DI_test
 
 # création d'une nouvelle base de données calculée avec ajout des colonnes
-BDD_infla_calcule<-data.frame(BDD_infla,BT,SD)
+BDD_infla_calcule<-data.frame(BDD_infla,BT, BT_test,SD)
 BDD_infla_calcule #pour voir la BDD finale
 
 ###### Export de la base infla calculée CSV
@@ -183,10 +188,11 @@ BDD_finale
 #export de la BDD finale 
 write.csv2(BDD_finale,"Data/BDD_finale.csv")
 
+colnames(BDD_finale)
+
 
 ############# création d'une BDD avec seulement les infos pour les analyses ############
-
-BDD_ana_ech<-subset(BDD_finale, select=c(Nom_scientifique, Milieu_recolte,ID_espece,ID_echantillon,ID_Feuille,DI,BT,MT,BB,Nb_ramifications,SV,SD,TMC_t0,TMC_t24,TDMC,TD,TDIA,Gmin,LMC_t0,LMC_t24,PEF,LDMC,Surface_F,SLA,LT))
+BDD_ana_ech<-subset(BDD_finale, select=c(Nom_scientifique, Milieu_recolte,ID_espece,ID_echantillon,ID_Feuille,DI,DI_test,BT,BT_test,MT,BB,BB_test,Nb_ramifications,SD,TMC_t0,TMC_t24,TDMC,TD,TDIA,Gmin,LMC_t0,LMC_t24,PEF,LDMC,Surface_F,SLA,LT))
 head(BDD_ana_ech)
 dim(BDD_ana_ech)
 #export de la BDD 
@@ -199,7 +205,7 @@ write.csv2(BDD_ana_ech,"Data/BDD_ana_ech.csv")
 ############# Base à l'échelle de l'échantillon #######################
 
 #création de table avec moyenne et sd pour chaque variable en fonction du nom de l'espèce
-temp<-BDD_ana_ech[,6:25] ###sélection des colonnes comprenant les variables pour les intégrer dans la boucle
+temp<-BDD_ana_ech[,6:27] ###sélection des colonnes comprenant les variables pour les intégrer dans la boucle
 temp
 
 #création d'une bdd d'origine pour moyenne (sert pour merge)
