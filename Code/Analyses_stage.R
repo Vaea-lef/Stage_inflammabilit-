@@ -149,6 +149,7 @@ boxplot(DI ~ Nom_scientifique, data = BDD_ech,
         xlab = "Espèce", ylab = "DI")
 
 
+
 ######## BT ###########
 # Calcul des médianes par espèce
 med_BT <- aggregate(BT ~ Nom_scientifique, data = BDD_ech, median)
@@ -164,7 +165,6 @@ boxplot(BT ~ Nom_scientifique, data = BDD_ech,
         las = 2, cex.axis = 0.7,
         main = "BT par espèce (ordre décroissant de la médiane)",
         xlab = "Espèce", ylab = "BT")
-
 
 ######## MT ###########
 # Calcul des médianes par espèce
