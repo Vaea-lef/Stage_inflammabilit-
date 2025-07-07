@@ -124,13 +124,8 @@ for (id in ids_a_remplacer) {
 View(BDD_infla)
 
 
-#calcul du volume des échantillons (m3)
-SV<-((2/3)*pi*BDD_infla$longeur*((BDD_infla$largeur/2)*(BDD_infla$hauteur/2)))/1000000
-SV<-round(SV,3)
-SV
-
 #calcul de la SD density (kg/m3)
-SD<-((BDD_infla$masse/1000)/SV)
+SD<-((BDD_infla$masse/1000)/(((2/3)*pi*BDD_infla$longeur*((BDD_infla$largeur/2)*(BDD_infla$hauteur/2)))/1000000))
 SD<-round(SD,2)
 SD
 
@@ -139,13 +134,14 @@ BT<-(BDD_infla$temps_total - (120 + BDD_infla$DI))
 BT<-round(BT)
 BT
 
+
 #calcul de l'inverse de DI
 BDD_infla$DI<-(10-BDD_infla$DI)
 BDD_infla$DI
 
 
 # création d'une nouvelle base de données calculée avec ajout des colonnes
-BDD_infla_calcule<-data.frame(BDD_infla,BT,SV,SD)
+BDD_infla_calcule<-data.frame(BDD_infla,BT,SD)
 BDD_infla_calcule #pour voir la BDD finale
 
 ###### Export de la base infla calculée CSV
