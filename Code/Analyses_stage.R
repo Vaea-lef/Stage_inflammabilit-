@@ -30,7 +30,7 @@ library(factoextra)
 ################  ACP INFLAMMABILITE ####################
 
 # Sélection des colonnes des composantes de l'inflammabilité
-colonnes_infla <- BDD_esp[, c(4:7)]
+colonnes_infla <- BDD_esp[, c(5:8)]
 
 # Vérification des données
 head(colonnes_infla)
@@ -80,7 +80,7 @@ View(BDD_esp)
 #################### ACP TRAITS ############################
 
 # Sélection des colonnes des traits fonctionnels
-colonnes_traits <- na.omit(BDD_esp[,c(8:23)])
+colonnes_traits <- na.omit(BDD_esp[,c(9:24)])
 
 # Vérifier les données
 colonnes_traits
@@ -111,7 +111,7 @@ fviz_screeplot(res.pca, addlabels = TRUE, ylim = c(0, 50), main="Graphique de l'
 ######## ACP INFLA avec projection des axes TRAITS ####################
 
 # Sélection des lignes complètes (pas de NA dans les colonnes 3 à 22)
-colonnes_complet <- na.omit(BDD_esp[, 4:23])
+colonnes_complet <- na.omit(BDD_esp[, 5:24])
 
 ## ACP ##
 # colonnes 1 à 4 : inflammabilité (axes actifs)
@@ -518,9 +518,13 @@ corrplot(mat_cor_all, method = "color", tl.cex = 0.8, tl.col = "black", number.c
 
 #################### PLOT ##################################
 # histogramme pour vérifier la normalité des variables réponse (infla)
-hist(BDD_ech$MT) #normal
-hist(BDD_ech$BT) #necéssite peut être tranfo log 
-hist(BDD_ech$DI) #voir 
+hist(BDD_ech$MT)#normal
+hist(log(BDD_ech$MT))
+hist(BDD_ech$BT)#necéssite peut être tranfo log 
+hist(1/BDD_ech$)
+hist(log(BDD_ech$BT)+1)
+log(0)
+hist(BDD_ech$DI)#voir 
 hist(BDD_ech$BB) #voir
 
 ###### MT #########
