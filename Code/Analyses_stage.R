@@ -20,12 +20,55 @@ dim(BDD_esp)
 names(BDD_esp)[which(names(BDD_esp) == "Nb_ramifications")] <- "Nb_rami"
 dim(BDD_esp)
 
+
+################## DISTRIBUTION DES DONNEES #####################
+#Infla
+hist(BDD_esp$DI)      # plus de grande valeurs que petites
+hist(BDD_esp$DI_test) # same DI
+hist(scale(log(BDD_esp$BT)))      # plus de petites valeurs que grande
+hist(BDD_esp$BT_test) # same BT
+hist(scale(BDD_esp$BB))      # normale
+hist(BDD_esp$BB_test) # same BB
+hist(scale(BDD_esp$MT))      # normale 
+
+#traits
+
+hist(log(BDD_esp$Nb_rami))  #normale
+hist(log(BDD_esp$SD))       #normale
+hist(log(BDD_esp$TMC_t0))         #normale
+hist(log(BDD_esp$TMC_t24))   #plutôt normale
+hist(log(BDD_esp$TDMC))           #normale
+hist(log(BDD_esp$TD))             #normale
+hist(log(BDD_esp$TDIA))           #normale
+hist(BDD_esp$LMC_t0)         #plutôt normale
+hist(log(BDD_esp$LMC_t24))   #normale
+hist(BDD_esp$LDMC)           #normale
+hist(log(BDD_esp$Surface_F)) #normale
+hist(BDD_esp$SLA)            #normale
+hist(log(BDD_esp$LT))        #normale
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ##  Charger les packages nécessaires pour ACP
 library(FactoMineR)
 library(factoextra)
-
-
-
 
 
 ################  ACP INFLAMMABILITE ####################
@@ -36,8 +79,14 @@ colonnes_infla <- BDD_esp[, c(5,7,9,10)]
 # Vérification des données
 head(colonnes_infla)
 
+# Centrage-réduction des données
+colonnes_infla_cr <- scale(log(colonnes_infla))
+
+# Vérification des données standardisées
+head(colonnes_infla_cr)
+
 # Application de l'ACP
-res.pca <- PCA(colonnes_infla, scale.unit = TRUE, graph = FALSE)
+res.pca <- PCA(colonnes_infla_cr, scale.unit = TRUE, graph = FALSE)
 
 # Résumé des résultats
 summary(res.pca)
@@ -79,8 +128,14 @@ colonnes_infla_test <- BDD_esp[, c(6,8,9,11)]
 # Vérification des données
 head(colonnes_infla_test)
 
+# Centrage-réduction des données
+colonnes_infla_test_cr <- scale(colonnes_infla_test)
+
+# Vérification des données standardisées
+head(colonnes_infla_test_cr)
+
 # Application de l'ACP
-res.pca <- PCA(colonnes_infla_test, scale.unit = TRUE, graph = FALSE)
+res.pca <- PCA(colonnes_infla_test_cr, scale.unit = TRUE, graph = FALSE)
 
 # Résumé des résultats
 summary(res.pca)
@@ -118,7 +173,7 @@ View(BDD_esp)
 #################### ACP TRAITS ############################
 
 # Sélection des colonnes des traits fonctionnels
-colonnes_traits <- na.omit(BDD_esp[, setdiff(12:26, c(19, 22))])
+colonnes_traits <- na.omit(BDD_esp[, setdiff(12:31, c(19, 22,27,28,29,30))])
 
 # Vérifier les données
 colonnes_traits
@@ -149,13 +204,13 @@ fviz_screeplot(res.pca, addlabels = TRUE, ylim = c(0, 50), main="Graphique de l'
 ######## ACP INFLA avec projection des axes TRAITS ####################
 
 # Sélection des lignes complètes (pas de NA dans les colonnes 3 à 22)
-colonnes_complet <- na.omit(BDD_esp[, setdiff(5:26, c(6,8,11,19, 22))])
+colonnes_complet <- na.omit(BDD_esp[, setdiff(5:31, c(6,8,11,19, 22,27,28,29,30))])
 dim (colonnes_complet)
 ## ACP ##
 # colonnes 1 à 4 : inflammabilité (axes actifs)
 # colonnes 5 à 20 : traits (axes supplémentaires)
 res.pca <- PCA(colonnes_complet, scale.unit = TRUE, 
-               quanti.sup = 5:17, graph = FALSE)
+               quanti.sup = 5:18, graph = FALSE)
 
 # Visualisation ACP
 fviz_pca_var(res.pca, col.var = "red", repel = TRUE) +
@@ -172,14 +227,14 @@ fviz_pca_biplot(res.pca, col.var = "red",repel = TRUE)
 ######## ACP INFLA avec projection des axes TRAITS (TEST) ####################
 
 # Sélection des lignes complètes (pas de NA dans les colonnes 3 à 22)
-colonnes_complet_test <- na.omit(BDD_esp[, setdiff(5:26, c(5,7,10,19, 22))])
+colonnes_complet_test <- na.omit(BDD_esp[, setdiff(5:26, c(5,6,7,10,19, 22))])
 dim (colonnes_complet_test)
 
 ## ACP ##
 # colonnes 1 à 4 : inflammabilité (axes actifs)
 # colonnes 5 à 20 : traits (axes supplémentaires)
 res.pca <- PCA(colonnes_complet_test, scale.unit = TRUE, 
-               quanti.sup = 5:17, graph = FALSE)
+               quanti.sup = 4:16, graph = FALSE)
 
 # Visualisation ACP
 fviz_pca_var(res.pca, col.var = "red", repel = TRUE) +
@@ -230,6 +285,9 @@ boxplot(DI_test ~ Nom_scientifique, data = BDD_ech,
         las = 2, cex.axis = 0.7,
         main = "DI par espèce (ordre décroissant de la médiane)",
         xlab = "Espèce", ylab = "DI")
+plot(BDD_esp$DI_test, BDD_esp$Nom_scientifique)
+
+plot(BDD_ech$DI_test~as.factor(BDD_ech$Nom_scientifique),horiz=T)
 
 
 ######## BT ###########
@@ -369,6 +427,62 @@ ggplot(df_long, aes(x = Variable, y = Nom_scientifique, fill = Valeur)) +
   theme(axis.text.y = element_text(size = 6))  # Réduction de la taille de texte si besoin
 
 
+################# Heatmap TEST ##################
+
+# packages nécessaires
+library(ggplot2)
+library(tidyr)  # pour changer le format de la BDD en format "long"
+
+# Copier la BDD (pour ne pas la modifier)
+df_prep <- BDD_esp
+
+# Normalisser les valeur entre 0 et 1 : fonction
+normalize <- function(x) {  return((x - min(x)) / (max(x) - min(x)))}
+
+df_norm <- df_prep
+df_norm$MT <- normalize(df_prep$MT)
+df_norm$DI_test <- normalize(df_prep$DI_test)
+df_norm$BB_test <- normalize(df_prep$BB_test)
+df_norm$BT_test <- normalize(df_prep$BT_test)
+
+# Transformer en format long (une ligne par composante)
+df_long <- pivot_longer(df_norm,
+                        cols = c("MT", "DI_test", "BB_test", "BT_test"),
+                        names_to = "Variable",
+                        values_to = "Valeur")
+
+# Créer l’ordre des espèces en fonction du score d'inflammabilité
+ordre_esp <- df_prep[order(df_prep$score_test_normalise, decreasing = FALSE), "Nom_scientifique"]
+
+# enlever les doublons et les NA
+ordre_esp <- unique(na.omit(ordre_esp))
+
+# Appliquer le facteur pour ordonner les espèces
+df_long$Nom_scientifique <- factor(df_long$Nom_scientifique, levels = rev(ordre_esp))
+
+# Générer la heatmap
+ggplot(df_long, aes(x = Variable, y = Nom_scientifique, fill = Valeur)) +
+  geom_tile(color = "black") +
+  scale_fill_gradientn(
+    colors = c("darkgreen", "yellow", "red"),
+    breaks = c(0.1, 0.5, 0.9),
+    labels = c("Faible", "Moyenne", "Élevée"),
+    name = "Inflammabilité"
+  ) +
+  labs(title = "Heatmap des composantes d’inflammabilité",
+       x = "Composantes",
+       y = "Espèces") +
+  scale_y_discrete(drop = FALSE) +  # Affiche toutes les espèces, même si certaines valeurs sont NA
+  theme(axis.text.y = element_text(size = 6))  # Réduction de la taille de texte si besoin
+
+
+
+
+
+
+
+
+
 
 
 
@@ -376,16 +490,16 @@ ggplot(df_long, aes(x = Variable, y = Nom_scientifique, fill = Valeur)) +
 
 ### des traits foncitonnels
 library (corrplot)
-mat_cor_trait<-cor(colonnes_traits)
+mat_cor_trait<-cor(colonnes_traits,method="spearman")
 corrplot(mat_cor_trait)
 round(mat_cor_trait, 2)   ## afficher les valeurs
 # Visualiser la corrélation
 corrplot(mat_cor_trait, method = "color", type = "upper", tl.cex = 0.8, tl.col = "black", number.cex = 0.7, addCoef.col = "black")
 corrplot(mat_cor_trait, method = "color", tl.cex = 0.8, tl.col = "black", number.cex = 0.7, addCoef.col = "black")
 
+plot(log(BDD_esp$Surface_F)~BDD_esp$Nb_rami)
 
-
-
+hist(BDD_esp$Surface_F)
 
 
 #################### TEST ANOVA POUR VERIFICATION VARIABILITE ESPECES ######################

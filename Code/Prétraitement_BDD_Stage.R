@@ -137,9 +137,11 @@ BT_test<-(BDD_infla$temps_total - (120 + BDD_infla$DI_test))
 BT_test<-round(BT_test)
 BT_test
 
-#calcul de l'inverse de DI
+#calcul de l'inverse de DI_test
 BDD_infla$DI<-(10-BDD_infla$DI)
 BDD_infla$DI
+
+
 
 #calcul de l'inverse de DI_test
 BDD_infla$DI_test<-(10-BDD_infla$DI_test)
