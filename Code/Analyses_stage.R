@@ -16,6 +16,7 @@ BDD_sd_esp
 ##  importation BDD_moy_esp en format CSV
 BDD_esp<-read.csv2("Data/BDD_moy_esp.csv", header = TRUE) #importation de la base
 BDD_esp
+dim(BDD_esp)
 names(BDD_esp)[which(names(BDD_esp) == "Nb_ramifications")] <- "Nb_rami"
 dim(BDD_esp)
 
@@ -30,7 +31,7 @@ library(factoextra)
 ################  ACP INFLAMMABILITE ####################
 
 # Sélection des colonnes des composantes de l'inflammabilité
-colonnes_infla <- BDD_esp[, c(5:8)]
+colonnes_infla <- BDD_esp[, c(5,7,9,10)]
 
 # Vérification des données
 head(colonnes_infla)
@@ -53,22 +54,59 @@ fviz_pca_biplot(res.pca,col.var = "contrib", gradient.cols =c("#00AFBB", "#E7B80
 # Afficher l'ébouli
 fviz_screeplot(res.pca, addlabels = TRUE, ylim = c(0, 50), main="Graphique de l'ébouli")
 
+# Ajout d'un score d'inflammabilité basé sur la coordonnée de l'axe 1 et moyenne pondérée axe 1 et 2
+coord <- res.pca$ind$coord  # coordonnées des individus
+BDD_esp$score <- (0.8*coord[,1] + 0.2*coord[,2]) / 2
+
+# normalisation du score d'inflammabilité entre -1 et 1
+min_score <- min(BDD_esp$score, na.rm = TRUE)
+max_score <- max(BDD_esp$score, na.rm = TRUE)
+BDD_esp$score_normalise <- -1 + (BDD_esp$score - min_score) * 2 / (max_score - min_score)
 
 
 
 
 
 
+
+
+
+################  ACP INFLAMMABILITE TEST ####################
+
+# Sélection des colonnes des composantes de l'inflammabilité
+colonnes_infla_test <- BDD_esp[, c(6,8,9,11)]
+
+# Vérification des données
+head(colonnes_infla_test)
+
+# Application de l'ACP
+res.pca <- PCA(colonnes_infla_test, scale.unit = TRUE, graph = FALSE)
+
+# Résumé des résultats
+summary(res.pca)
+
+# Graphique des contributions des variables aux composantes principales
+fviz_pca_var(res.pca, col.var = "contrib", gradient.cols = c("#6fec00", "#ff9e00", "#Ff0000"),repel = TRUE)
+
+# Graphique des individus 
+fviz_pca_ind(res.pca, col.ind = "cos2", gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),repel = TRUE)
+
+# Graphique combiné des variables et des individus
+fviz_pca_biplot(res.pca,col.var = "contrib", gradient.cols =c("#00AFBB", "#E7B800", "#FC4E07") , repel = TRUE)
+
+# Afficher l'ébouli
+fviz_screeplot(res.pca, addlabels = TRUE, ylim = c(0, 50), main="Graphique de l'ébouli")
 
 # Ajout d'un score d'inflammabilité basé sur la coordonnée de l'axe 1 et moyenne pondérée axe 1 et 2
 coord <- res.pca$ind$coord  # coordonnées des individus
-BDD_esp$score <- coord[, 1]  # Dim 1 = axe 1
-BDD_esp$score2 <- (0.8*coord[,1] + 0.2*coord[,2]) / 2
+BDD_esp$score_test <- (0.8*coord[,1] + 0.2*coord[,2]) / 2
 
 # normalisation du score d'inflammabilité entre -1 et 1
-min_score <- min(BDD_esp$score2, na.rm = TRUE)
-max_score <- max(BDD_esp$score2, na.rm = TRUE)
-BDD_esp$score_normalise <- -1 + (BDD_esp$score2 - min_score) * 2 / (max_score - min_score)
+min_score <- min(BDD_esp$score_test, na.rm = TRUE)
+max_score <- max(BDD_esp$score_test, na.rm = TRUE)
+BDD_esp$score_test_normalise <- -1 + (BDD_esp$score_test - min_score) * 2 / (max_score - min_score)
+
+
 
 # visualiser les scores
 View(BDD_esp)
@@ -80,7 +118,7 @@ View(BDD_esp)
 #################### ACP TRAITS ############################
 
 # Sélection des colonnes des traits fonctionnels
-colonnes_traits <- na.omit(BDD_esp[,c(9:24)])
+colonnes_traits <- na.omit(BDD_esp[, setdiff(12:26, c(19, 22))])
 
 # Vérifier les données
 colonnes_traits
@@ -111,13 +149,13 @@ fviz_screeplot(res.pca, addlabels = TRUE, ylim = c(0, 50), main="Graphique de l'
 ######## ACP INFLA avec projection des axes TRAITS ####################
 
 # Sélection des lignes complètes (pas de NA dans les colonnes 3 à 22)
-colonnes_complet <- na.omit(BDD_esp[, 5:24])
-
+colonnes_complet <- na.omit(BDD_esp[, setdiff(5:26, c(6,8,11,19, 22))])
+dim (colonnes_complet)
 ## ACP ##
 # colonnes 1 à 4 : inflammabilité (axes actifs)
 # colonnes 5 à 20 : traits (axes supplémentaires)
 res.pca <- PCA(colonnes_complet, scale.unit = TRUE, 
-               quanti.sup = 5:20, graph = FALSE)
+               quanti.sup = 5:17, graph = FALSE)
 
 # Visualisation ACP
 fviz_pca_var(res.pca, col.var = "red", repel = TRUE) +
@@ -125,6 +163,34 @@ fviz_pca_var(res.pca, col.var = "red", repel = TRUE) +
 
 # ACP avec les individus
 fviz_pca_biplot(res.pca, col.var = "red",repel = TRUE)
+
+
+
+
+
+
+######## ACP INFLA avec projection des axes TRAITS (TEST) ####################
+
+# Sélection des lignes complètes (pas de NA dans les colonnes 3 à 22)
+colonnes_complet_test <- na.omit(BDD_esp[, setdiff(5:26, c(5,7,10,19, 22))])
+dim (colonnes_complet_test)
+
+## ACP ##
+# colonnes 1 à 4 : inflammabilité (axes actifs)
+# colonnes 5 à 20 : traits (axes supplémentaires)
+res.pca <- PCA(colonnes_complet_test, scale.unit = TRUE, 
+               quanti.sup = 5:17, graph = FALSE)
+
+# Visualisation ACP
+fviz_pca_var(res.pca, col.var = "red", repel = TRUE) +
+  ggtitle("Variables actives (infla) et supplémentaires (traits)")
+
+# ACP avec les individus
+fviz_pca_biplot(res.pca, col.var = "red",repel = TRUE)
+
+
+
+
 
 
 
@@ -149,6 +215,22 @@ boxplot(DI ~ Nom_scientifique, data = BDD_ech,
         xlab = "Espèce", ylab = "DI")
 
 
+######## DI_TEST ###########
+# Calcul des médianes par espèce
+med_DI_test <- aggregate(DI_test ~ Nom_scientifique, data = BDD_ech, median)
+
+# Création ordre décroissant des médianes
+ordre <- med_DI_test$Nom_scientifique[order(med_DI_test$DI_test, decreasing = TRUE)]
+
+# facteur avec ce nouvel ordre (pour que l'ordre soit capté par le boxplot)
+BDD_ech$Nom_scientifique <- factor(BDD_ech$Nom_scientifique, levels = ordre)
+
+# Traçage du boxplot avec l'ordre décroissant 
+boxplot(DI_test ~ Nom_scientifique, data = BDD_ech,
+        las = 2, cex.axis = 0.7,
+        main = "DI par espèce (ordre décroissant de la médiane)",
+        xlab = "Espèce", ylab = "DI")
+
 
 ######## BT ###########
 # Calcul des médianes par espèce
@@ -165,6 +247,24 @@ boxplot(BT ~ Nom_scientifique, data = BDD_ech,
         las = 2, cex.axis = 0.7,
         main = "BT par espèce (ordre décroissant de la médiane)",
         xlab = "Espèce", ylab = "BT")
+
+
+######## BT_TEST ###########
+# Calcul des médianes par espèce
+med_BT_test <- aggregate(BT_test ~ Nom_scientifique, data = BDD_ech, median)
+
+# Création ordre décroissant des médianes
+ordre <- med_BT_test$Nom_scientifique[order(med_BT_test$BT_test, decreasing = TRUE)]
+
+# facteur avec ce nouvel ordre (pour que l'ordre soit capté par le boxplot)
+BDD_ech$Nom_scientifique <- factor(BDD_ech$Nom_scientifique, levels = ordre)
+
+# Traçage du boxplot avec l'ordre décroissant 
+boxplot(BT_test ~ Nom_scientifique, data = BDD_ech,
+        las = 2, cex.axis = 0.7,
+        main = "BT par espèce (ordre décroissant de la médiane)",
+        xlab = "Espèce", ylab = "BT")
+
 
 ######## MT ###########
 # Calcul des médianes par espèce
@@ -199,6 +299,22 @@ boxplot(BB ~ Nom_scientifique, data = BDD_ech,
         main = "BB par espèce (ordre décroissant de la médiane)",
         xlab = "Espèce", ylab = "BB")
 
+
+######## BB_TEST ###########
+# Calcul des médianes par espèce
+med_BB_test <- aggregate(BB_test ~ Nom_scientifique, data = BDD_ech, median)
+
+# Création ordre décroissant des médianes
+ordre <- med_BB_test$Nom_scientifique[order(med_BB_test$BB_test, decreasing = TRUE)]
+
+# facteur avec ce nouvel ordre (pour que l'ordre soit capté par le boxplot)
+BDD_ech$Nom_scientifique <- factor(BDD_ech$Nom_scientifique, levels = ordre)
+
+# Traçage du boxplot avec l'ordre décroissant 
+boxplot(BB_test ~ Nom_scientifique, data = BDD_ech,
+        las = 2, cex.axis = 0.7,
+        main = "BB par espèce (ordre décroissant de la médiane)",
+        xlab = "Espèce", ylab = "BB")
 
 
 
