@@ -144,11 +144,11 @@ BDD_infla$DI
 
 
 #calcul de l'inverse de DI_test
-BDD_infla$DI_test<-(10-BDD_infla$DI_test)
-BDD_infla$DI_test
+score_DI<-(10-BDD_infla$DI_test)
+score_DI
 
 # création d'une nouvelle base de données calculée avec ajout des colonnes
-BDD_infla_calcule<-data.frame(BDD_infla,BT, BT_test,SD)
+BDD_infla_calcule<-data.frame(BDD_infla,score_DI,BT, BT_test,SD)
 BDD_infla_calcule #pour voir la BDD finale
 
 ###### Export de la base infla calculée CSV
@@ -194,7 +194,7 @@ colnames(BDD_finale)
 
 
 ############# création d'une BDD avec seulement les infos pour les analyses ############
-BDD_ana_ech<-subset(BDD_finale, select=c(Nom_scientifique, Milieu_recolte,ID_espece,ID_echantillon,ID_Feuille,DI,DI_test,BT,BT_test,MT,BB,BB_test,Nb_ramifications,SD,TMC_t0,TMC_t24,TDMC,TD,TDIA,Gmin,LMC_t0,LMC_t24,PEF,LDMC,Surface_F,SLA,LT))
+BDD_ana_ech<-subset(BDD_finale, select=c(Nom_scientifique, Milieu_recolte,ID_espece,ID_echantillon,ID_Feuille,DI,DI_test,score_DI,BT,BT_test,MT,BB,BB_test,Nb_ramifications,SD,TMC_t0,TMC_t24,TDMC,TD,TDIA,Gmin,LMC_t0,LMC_t24,PEF,LDMC,Surface_F,SLA,LT))
 head(BDD_ana_ech)
 dim(BDD_ana_ech)
 #export de la BDD 
@@ -207,7 +207,7 @@ write.csv2(BDD_ana_ech,"Data/BDD_ana_ech.csv")
 ############# Base à l'échelle de l'échantillon #######################
 
 #création de table avec moyenne et sd pour chaque variable en fonction du nom de l'espèce
-temp<-BDD_ana_ech[,6:27] ###sélection des colonnes comprenant les variables pour les intégrer dans la boucle
+temp<-BDD_ana_ech[,6:28] ###sélection des colonnes comprenant les variables pour les intégrer dans la boucle
 temp
 
 #création d'une bdd d'origine pour moyenne (sert pour merge)
