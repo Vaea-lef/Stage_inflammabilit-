@@ -19,7 +19,7 @@ BDD_esp
 dim(BDD_esp)
 names(BDD_esp)[which(names(BDD_esp) == "Nb_ramifications")] <- "Nb_rami"
 dim(BDD_esp)
-
+View(BDD_esp)
 
 ################## DISTRIBUTION DES DONNEES #####################
 #Infla
@@ -51,6 +51,86 @@ hist(log(BDD_esp$LT))        #normale
 
 
 
+############################################################## ECHELLE ESPECE #############################################################
+
+################## DISTRIBUTION DES DONNEES #####################
+#Infla
+hist(BDD_esp$DI)      # asymétrique gauche
+hist(BDD_esp$DI_test) # asymétrique droite
+hist(BDD_esp$BT)      # asymétrique droite
+hist(BDD_esp$BT_test) # asymétrique droite
+hist(BDD_esp$BB)      # normale proportion
+hist(BDD_esp$BB_test) # normale proportion
+hist(BDD_esp$MT)      # normale 
+
+hist(BDD_esp$T_ambiante)
+plot(BDD_esp$T_ambiante,BDD_esp$DI_test)
+
+#traits
+
+hist(BDD_esp$Nb_rami)   #asymétrique droite
+hist(BDD_esp$SD)        #asymétrique droite
+hist(BDD_esp$TMC_t0)    #asymétrique droite ou normale (hésitation)
+hist(BDD_esp$TMC_t24)   #asymétrique droite ou normale (hésitation)
+hist(BDD_esp$TDMC)      #normale
+hist(BDD_esp$TD)        #normale
+hist(BDD_esp$TDIA)      #normale
+hist(BDD_esp$LMC_t0)    #asymétrique droite ou normale (hésitation) 
+hist(BDD_esp$LMC_t24)   #asymétrique droite ou normale (hésitation) 
+hist(BDD_esp$LDMC)      #normale
+hist(BDD_esp$Surface_F) #asymétrique droite
+hist(BDD_esp$SLA)       #normale
+hist(BDD_esp$LT)        #asymétrique droite
+
+
+
+
+
+
+
+
+
+################ EFFET DES CONDITIONS METEO ##################
+#MT
+options(na.action = "na.omit")
+m<-glm(MT~T_ambiante+Vent+Humidite,data=BDD_esp,family="gaussian")
+summary(m)
+
+pred<-predict(m,type = "response")
+plot(BDD_esp$MT,pred)
+abline(a=0,b=1)
+
+
+#BB 
+BDD_esp$BB_prop <- BDD_esp$BB_test/100
+m<-glm(BB_prop~T_ambiante+Vent+Humidite,data=BDD_esp,family="binomial")
+summary(m)
+
+pred<-predict(m,type = "response")
+plot(BDD_esp$BB_prop,pred)
+abline(a=0,b=1)
+
+
+#DI
+m<-glm(DI_test~T_ambiante+Vent,data=BDD_esp,family="Gamma")
+summary(m)
+
+pred<-predict(m)
+plot(BDD_esp$DI_test,pred)
+abline(a=0,b=1)
+
+plot(BDD_esp$T_ambiante,1/BDD_esp$DI_test)
+
+
+#BT
+m<-glm(BT_test~T_ambiante,data=BDD_esp,family="Gamma")
+summary(m)
+
+pred<-predict(m,type = "response")
+plot(BDD_esp$BT,pred)
+abline(a=0,b=1)
+
+plot(BDD_esp$Vent,BDD_esp$BT_test)
 
 
 
@@ -61,10 +141,7 @@ hist(log(BDD_esp$LT))        #normale
 
 
 
-
-
-
-
+############################### ACP ######################################
 
 ##  Charger les packages nécessaires pour ACP
 library(FactoMineR)
@@ -74,13 +151,13 @@ library(factoextra)
 ################  ACP INFLAMMABILITE ####################
 
 # Sélection des colonnes des composantes de l'inflammabilité
-colonnes_infla <- BDD_esp[, c(5,7,9,10)]
+colonnes_infla <- BDD_esp[, c(10,12,13,15)]
 
 # Vérification des données
 head(colonnes_infla)
 
 # Centrage-réduction des données
-colonnes_infla_cr <- scale(log(colonnes_infla))
+colonnes_infla_cr <- scale(colonnes_infla)
 
 # Vérification des données standardisées
 head(colonnes_infla_cr)
@@ -91,11 +168,10 @@ res.pca <- PCA(colonnes_infla_cr, scale.unit = FALSE, graph = FALSE)
 # Résumé des résultats
 summary(res.pca)
 
+
 # Graphique des contributions des variables aux composantes principales
 fviz_pca_var(res.pca, col.var = "contrib", gradient.cols = c("#6fec00", "#ff9e00", "#Ff0000"),repel = TRUE)
 
-# Graphique des individus 
-fviz_pca_ind(res.pca, col.ind = "cos2", gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),repel = TRUE)
 
 # Graphique combiné des variables et des individus
 fviz_pca_biplot(res.pca,col.var = "contrib", gradient.cols =c("#00AFBB", "#E7B800", "#FC4E07") , repel = TRUE)
@@ -114,53 +190,7 @@ max_score <- max(BDD_esp$score, na.rm = TRUE)
 BDD_esp$score_normalise <- -1 + (BDD_esp$score - min_score) * 2 / (max_score - min_score)
 
 
-
-
-
-
-
-################  ACP INFLAMMABILITE TEST ####################
-
-# Sélection des colonnes des composantes de l'inflammabilité
-colonnes_infla_test <- BDD_esp[, c(7,9,10,12)]
-
-# Vérification des données
-head(colonnes_infla_test)
-
-# Centrage-réduction des données
-colonnes_infla_test_cr <- scale(colonnes_infla_test)
-
-# Vérification des données standardisées
-head(colonnes_infla_test_cr)
-
-# Application de l'ACP
-res.pca <- PCA(colonnes_infla_test_cr, scale.unit = FALSE, graph = FALSE)
-
-# Résumé des résultats
-summary(res.pca)
-
-# Graphique des contributions des variables aux composantes principales
-fviz_pca_var(res.pca, col.var = "contrib", gradient.cols = c("#6fec00", "#ff9e00", "#Ff0000"),repel = TRUE)
-
-# Graphique des individus 
-fviz_pca_ind(res.pca, col.ind = "cos2", gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),repel = TRUE)
-
-# Graphique combiné des variables et des individus
-fviz_pca_biplot(res.pca,col.var = "contrib", gradient.cols =c("#00AFBB", "#E7B800", "#FC4E07") , repel = TRUE)
-
-# Afficher l'ébouli
-fviz_screeplot(res.pca, addlabels = TRUE, ylim = c(0, 50), main="Graphique de l'ébouli")
-
-# Ajout d'un score d'inflammabilité basé sur la coordonnée de l'axe 1 et moyenne pondérée axe 1 et 2
-coord <- res.pca$ind$coord  # coordonnées des individus
-BDD_esp$score_test <- coord[,1]
-
-# normalisation du score d'inflammabilité entre -1 et 1
-min_score <- min(BDD_esp$score_test, na.rm = TRUE)
-max_score <- max(BDD_esp$score_test, na.rm = TRUE)
-BDD_esp$score_test_normalise <- -1 + (BDD_esp$score_test - min_score) * 2 / (max_score - min_score)
-
-HCPC(res.pca)
+HCPC(res.pca,method="ward")
 
 
 distcoord<-dist(coord[,1:2])
@@ -173,10 +203,42 @@ View(BDD_esp)
 
 
 
+
+####################### CLASSEMENT ESPECES ############################
+
+################ graphique pour visualiser les espèces et leur inflammabilité ####################
+library(ggplot2)
+
+# définition du min et du max pour le graph 
+scoremin <- min(BDD_esp$score_normalise)
+scoremax <- max(BDD_esp$score_normalise)
+
+
+# graphique
+ggplot(BDD_esp, aes(x = reorder(Nom_scientifique, score_normalise), y = score_normalise, fill = score_normalise)) +
+  geom_bar(stat = "identity", color = NA) +  
+  coord_flip() +
+  scale_fill_gradient2(
+    low = "darkgreen",
+    mid = "yellow",
+    high = "red",
+    midpoint = 0,
+    limits = c(scoremin, scoremax),) +
+  labs(x = "Espèces",
+       y = "Score d'inflammabilité",
+       fill = "Score",
+       title = "Score d'inflammabilité par espèce"
+  ) 
+
+
+
+
+
+
 #################### ACP TRAITS ############################
 
 # Sélection des colonnes des traits fonctionnels
-colonnes_traits <- na.omit(BDD_esp[, setdiff(13:27, c(20, 23))])
+colonnes_traits <- na.omit(BDD_esp[, setdiff(16:30, c(23, 26))])
 
 # Vérifier les données
 colonnes_traits
@@ -193,9 +255,6 @@ summary(res.pca)
 # Graphique des contributions des variables aux composantes principales
 fviz_pca_var(res.pca, col.var = "contrib", gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"), repel = TRUE)
 
-# Graphique des individus 
-fviz_pca_ind(res.pca, col.ind = "cos2", gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),repel = TRUE)
-
 # Graphique combiné des variables et des individus
 fviz_pca_biplot(res.pca, col.var = "contrib", gradient.cols =c("#00AFBB", "#E7B800", "#FC4E07"),repel = TRUE)
 
@@ -203,27 +262,24 @@ fviz_pca_biplot(res.pca, col.var = "contrib", gradient.cols =c("#00AFBB", "#E7B8
 fviz_screeplot(res.pca, addlabels = TRUE, ylim = c(0, 50), main="Graphique de l'ébouli")
 
 
+####################### matrice de corrélation (pour le choix des traits) ######################
+
+### des traits foncitonnels
+library (corrplot)
+mat_cor_trait<-cor(colonnes_traits,method="spearman")
+corrplot(mat_cor_trait)
+round(mat_cor_trait, 2)   ## afficher les valeurs
+# Visualiser la corrélation
+corrplot(mat_cor_trait, method = "color", type = "upper", tl.cex = 0.8, tl.col = "black", number.cex = 0.7, addCoef.col = "black")
+corrplot(mat_cor_trait, method = "color", tl.cex = 0.8, tl.col = "black", number.cex = 0.7, addCoef.col = "black")
+
+library(caret)
+traits_non_corrélés <- colonnes_traits[, -findCorrelation(mat_cor_trait, cutoff = 0.7)]
+traits_non_corrélés
 
 
 
 
-######## ACP INFLA avec projection des axes TRAITS ####################
-
-# Sélection des lignes complètes (pas de NA dans les colonnes 3 à 22)
-colonnes_complet <- na.omit(BDD_esp[, setdiff(5:29, c(6,8,11,19, 22,27,28,29,30))])
-dim (colonnes_complet)
-## ACP ##
-# colonnes 1 à 4 : inflammabilité (axes actifs)
-# colonnes 5 à 20 : traits (axes supplémentaires)
-res.pca <- PCA(colonnes_complet, scale.unit = TRUE, 
-               quanti.sup = 5:18, graph = FALSE)
-
-# Visualisation ACP
-fviz_pca_var(res.pca, col.var = "red", repel = TRUE) +
-  ggtitle("Variables actives (infla) et supplémentaires (traits)")
-
-# ACP avec les individus
-fviz_pca_biplot(res.pca, col.var = "red",repel = TRUE)
 
 
 
@@ -233,11 +289,11 @@ fviz_pca_biplot(res.pca, col.var = "red",repel = TRUE)
 ######## ACP INFLA avec projection des axes TRAITS (TEST) ####################
 
 # Sélection des lignes complètes (pas de NA dans les colonnes 3 à 22)
-colonnes_complet_test <- na.omit(BDD_esp[, setdiff(5:26, c(5,6,8,11,20, 23))])
+colonnes_complet_test <- na.omit(BDD_esp[, setdiff(8:30, c(8,9,11,14,23, 26))])
 dim (colonnes_complet_test)
 
 colonnes_complet_test_cr <- scale(colonnes_complet_test)
-
+head(colonnes_complet_test_cr)
 ## ACP ##
 # colonnes 1 à 4 : inflammabilité (axes actifs)
 # colonnes 5 à 20 : traits (axes supplémentaires)
@@ -250,6 +306,12 @@ fviz_pca_var(res.pca, col.var = "red", repel = TRUE) +
 
 # ACP avec les individus
 fviz_pca_biplot(res.pca, col.var = "red",repel = TRUE)
+
+
+
+
+
+
 
 
 
@@ -505,13 +567,13 @@ normalize <- function(x) {  return((x - min(x)) / (max(x) - min(x)))}
 
 df_norm <- df_prep
 df_norm$MT <- normalize(df_prep$MT)
-df_norm$DI <- normalize(df_prep$DI)
-df_norm$BB <- normalize(df_prep$BB)
-df_norm$BT <- normalize(df_prep$BT)
-
+df_norm$score_DI <- normalize(df_prep$score_DI)
+df_norm$BB_test <- normalize(df_prep$BB_test)
+df_norm$BT_test <- normalize(df_prep$BT_test)
+View(df_norm)
 # Transformer en format long (une ligne par composante)
 df_long <- pivot_longer(df_norm,
-                        cols = c("MT", "DI", "BB", "BT"),
+                        cols = c("MT", "score_DI", "BB_test", "BT_test"),
                         names_to = "Variable",
                         values_to = "Valeur")
 
@@ -540,53 +602,6 @@ ggplot(df_long, aes(x = Variable, y = Nom_scientifique, fill = Valeur)) +
   theme(axis.text.y = element_text(size = 6))  # Réduction de la taille de texte si besoin
 
 
-################# Heatmap TEST ##################
-
-# packages nécessaires
-library(ggplot2)
-library(tidyr)  # pour changer le format de la BDD en format "long"
-
-# Copier la BDD (pour ne pas la modifier)
-df_prep <- BDD_esp
-
-# Normalisser les valeur entre 0 et 1 : fonction
-normalize <- function(x) {  return((x - min(x)) / (max(x) - min(x)))}
-
-df_norm <- df_prep
-df_norm$MT <- normalize(df_prep$MT)
-df_norm$DI_test <- normalize(df_prep$DI_test)
-df_norm$BB_test <- normalize(df_prep$BB_test)
-df_norm$BT_test <- normalize(df_prep$BT_test)
-
-# Transformer en format long (une ligne par composante)
-df_long <- pivot_longer(df_norm,
-                        cols = c("MT", "DI_test", "BB_test", "BT_test"),
-                        names_to = "Variable",
-                        values_to = "Valeur")
-
-# Créer l’ordre des espèces en fonction du score d'inflammabilité
-ordre_esp <- df_prep[order(df_prep$score_test_normalise, decreasing = FALSE), "Nom_scientifique"]
-
-# enlever les doublons et les NA
-ordre_esp <- unique(na.omit(ordre_esp))
-
-# Appliquer le facteur pour ordonner les espèces
-df_long$Nom_scientifique <- factor(df_long$Nom_scientifique, levels = rev(ordre_esp))
-
-# Générer la heatmap
-ggplot(df_long, aes(x = Variable, y = Nom_scientifique, fill = Valeur)) +
-  geom_tile(color = "black") +
-  scale_fill_gradientn(
-    colors = c("darkgreen", "yellow", "red"),
-    breaks = c(0.1, 0.5, 0.9),
-    labels = c("Faible", "Moyenne", "Élevée"),
-    name = "Inflammabilité"
-  ) +
-  labs(title = "Heatmap des composantes d’inflammabilité",
-       x = "Composantes",
-       y = "Espèces") +
-  scale_y_discrete(drop = FALSE) +  # Affiche toutes les espèces, même si certaines valeurs sont NA
-  theme(axis.text.y = element_text(size = 6))  # Réduction de la taille de texte si besoin
 
 
 
@@ -597,22 +612,6 @@ ggplot(df_long, aes(x = Variable, y = Nom_scientifique, fill = Valeur)) +
 
 
 
-
-
-####################### matrice de corrélation (pour le choix des traits) ######################
-
-### des traits foncitonnels
-library (corrplot)
-mat_cor_trait<-cor(colonnes_traits,method="spearman")
-corrplot(mat_cor_trait)
-round(mat_cor_trait, 2)   ## afficher les valeurs
-# Visualiser la corrélation
-corrplot(mat_cor_trait, method = "color", type = "upper", tl.cex = 0.8, tl.col = "black", number.cex = 0.7, addCoef.col = "black")
-corrplot(mat_cor_trait, method = "color", tl.cex = 0.8, tl.col = "black", number.cex = 0.7, addCoef.col = "black")
-
-plot(log(BDD_esp$Surface_F)~BDD_esp$Nb_rami)
-
-hist(BDD_esp$Surface_F)
 
 
 
@@ -625,59 +624,73 @@ hist(BDD_esp$Surface_F)
 
 
 #################### TEST ANOVA POUR VARIABILITE INTRA et INTER ESPECES ######################
-# Variables d'intérêt
-variables <- c("BB_test", "BT_test", "MT", "DI_test", "TD", "Surface_F", "LMC_t24", "SD", "LT", "SLA")
+#  Liste des variables à analyser 
+vars <- c("BB_test", "BT_test", "MT", "DI_test", "TD", "Surface_F", "Nb_ramifications",
+          "LMC_t24", "LDMC", "SD", "LT", "SLA")
 
-# Initialisation du tableau résultat simplifié
-results_df <- data.frame(
-  variable = character(),
-  prop_inter = numeric(),
-  prop_intra = numeric(),
-  p_value = numeric(),
-  stringsAsFactors = FALSE
-)
+#  Transformation log(var + 0.01)
+BDD_ech_log <- BDD_ech
+BDD_ech_log[vars] <- log(BDD_ech[vars] + 0.01)
 
-# Boucle sur chaque variable
-for (i in variables) {
+# 3. Initialisation d'une table pour stocker les résultats
+var_partition <- data.frame(Variable = character(),
+                            p_value = numeric(),
+                            Prop_intra = numeric(),
+                            Prop_inter = numeric(),
+                            stringsAsFactors = FALSE)
+
+# 4. Boucle sur chaque variable pour faire l'ANOVA et extraire les variances
+for (var in vars) {
+  # Formule de l'ANOVA
+  collage <- as.formula(paste(var, "~ Nom_scientifique"))
   
-# Log-transformation + 0.01
-y <- log(BDD_ech[[i]] + 0.01)
+  # ANOVA
+  anova_var <- aov(collage, data = BDD_ech_log)
+  aov_summary <- summary(anova_var)[[1]]
   
-# Formule pour ANOVA
-formula <- as.formula(paste("y ~ Nom_scientifique"))
+  # Extraction des sommes de carrés
+  SS_among <- aov_summary["Nom_scientifique", "Sum Sq"]
+  SS_within <- aov_summary["Residuals", "Sum Sq"]
+  SS_total <- SS_among + SS_within
   
-# modèle anova
-fit <- aov(formula, data = BDD_ech)
-  
-# Résumé ANOVA
-anova_res <- summary(fit)[[1]]
-  
-# Somme des carrés pour l'espèce et le résiduel
-ss_species <- anova_res["Nom_scientifique", "Sum Sq"]
-ss_residual <- anova_res["Residuals", "Sum Sq"]
-ss_total <- ss_species + ss_residual
-  
-# Proportions de variance
-prop_inter <- ss_species / ss_total
-prop_intra <- ss_residual / ss_total
-  
-# p-value
-p_value <- anova_res["Nom_scientifique", "Pr(>F)"]
-  
-# Ajouter au tableau résultat simplifié
-results_df <- rbind(results_df, data.frame(
-  variable = v,
-  prop_inter = prop_inter,
-  prop_intra = prop_intra,
-  p_value = p_value,
-  stringsAsFactors = FALSE
+  # Stockage des résultats
+  var_partition <- rbind(var_partition, data.frame(
+    Variable = var,
+    p_value = aov_summary["Nom_scientifique", "Pr(>F)"],
+    Prop_inter = SS_among / SS_total,
+    Prop_intra = SS_within / SS_total
   ))
 }
 
-# Afficher les résultats simplifiés
-print(results_df)
+# 5. Affichage des résultats
+print(var_partition)
 
-summary(fit)
+
+
+
+#################### GLM POUR VARIABILITE INTRA et INTER ESPECES ######################
+#chargement pckage 
+library(lme4)
+
+# BT_test : durée de combustion (Gamma)
+mod_BT <- glmer(BT_test ~ 1 + (1 | Nom_scientifique),family = "Gamma", data = BDD_ech)
+summary(mod_BT)
+
+
+# DI_test : délai d’inflammation (Gamma)
+mod_DI <- glmer(DI_test ~ 1 + (1 | Nom_scientifique),family = "Gamma", data = BDD_ech)
+summary(mod_DI)
+
+
+# MT : température max (Gaussian)
+mod_MT <- lmer(MT ~ 1 + (1 | Nom_scientifique), data = BDD_ech)
+summary(mod_MT)
+
+
+# BB_prop : proportion brûlée (Binomiale)
+BDD_ech$BB_prop <- BDD_ech$BB_test/100
+mod_BB <- glmer(BB_prop ~ 1 + (1 | Nom_scientifique),family = "binomial", data = BDD_ech)
+summary(mod_BB)
 
 
 
@@ -718,155 +731,142 @@ corrplot(mat_cor_all, method = "color", tl.cex = 0.8, tl.col = "black", number.c
 
 
 
-
-#################### PLOT DISTRIBUTION ##################################
-# histogramme pour vérifier la normalité des variables réponse (infla)
-hist(BDD_ech$MT)       #normale
-hist(sqrt(BDD_ech$MT))
-shapiro.test(BDD_ech$MT)
-hist(BDD_ech$BT_test)       #necéssite peut être tranfo log 
-hist(log(BDD_ech$BT_test + 1))  #normale
-
-hist(BDD_ech$DI_test)#voir je trouve pas la bonne fonction
-
-hist(BDD_ech$BB) #voir
-hist(log(BDD_ech$BB+1))
-shapiro.test(log(BDD_ech$BB+1))
-
+############################ MODELES #####################################
+#standardisation des données 
+SD_cr<-scale(BDD_esp$SD)
+TD_cr<-scale(BDD_esp$TD)
+LA_cr<-scale(BDD_esp$Surface_F)
+LDMC_cr<-scale(BDD_esp$LDMC)
+LT_cr<-scale(BDD_esp$LT)
 
 
 
 ###### MT #########
 #plot avec traits (VE)
-plot(BDD_ech$LT, BDD_ech$MT, xlab = "LT", ylab = "MT")
-plot(BDD_ech$LMC_t0, BDD_ech$MT, xlab = "LMC_t0", ylab = "MT")
-plot(BDD_ech$LMC_t24, BDD_ech$MT, xlab = "LMC_t24", ylab = "MT")
-plot(BDD_ech$Nb_ramifications, BDD_ech$MT, xlab = "Nombre de ramifications", ylab = "MT")
-plot(BDD_ech$PEF, BDD_ech$MT, xlab = "PEF", ylab = "MT")
-plot(BDD_ech$Gmin, BDD_ech$MT, xlab = "Gmin", ylab = "MT")
-plot(BDD_ech$SLA, BDD_ech$MT, xlab = "SLA", ylab = "MT")
-plot(BDD_ech$Surface_F, BDD_ech$MT, xlab = "Surface foliaire", ylab = "MT")
-plot(BDD_ech$TDIA, BDD_ech$MT, xlab = "Diamètre de tige", ylab = "MT")
-plot(BDD_ech$SD, BDD_ech$MT, xlab = "SD", ylab = "MT")
+plot(BDD_esp$TD, BDD_esp$MT)
+plot(BDD_esp$LT, BDD_esp$MT)
+plot(BDD_esp$LDMC, BDD_esp$MT)
+plot(BDD_esp$Surface_F, BDD_esp$MT)
+plot(BDD_esp$SD, BDD_esp$MT)
 
-#modeles
-m_nul=lm(MT~LT*LMC_t0*LMC_t24*Nb_ramifications*PEF*Gmin*SLA*Surface_F*TDIA*SD,data=BDD_ech)
-summary(m_nul)
-m1 <- lm(MT ~  LT+ LMC_t0 + Nb_ramifications  + Gmin + SLA + Surface_F  + SD, data = BDD_ech)
-summary(m1)
-m2 <- lm(MT ~  LT+ LMC_t0 + Nb_ramifications + SLA + Gmin  + SD, data = BDD_ech)
-summary(m2)
-m3 <- lm(MT ~  LT+ LMC_t0  + SLA + Gmin  + SD, data = BDD_ech)
-summary(m3)
-m4 <- lm(MT ~  LT+ LMC_t0  + Gmin  + SD, data = BDD_ech)
-summary(m4)
-m5 <- lm(MT ~   LMC_t0 + SD, data = BDD_ech)
-summary(m5)
+#modèles
+m_MT0<-glm(MT~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp,family="gaussian")
+summary(m_MT0)
 
-m6 <- lm(MT ~   LMC_t0 * SD, data = BDD_ech)
-summary(m6)
+m_MT1<-glm(MT~SD_cr+TD_cr+LDMC_cr+LT_cr,data=BDD_esp,family="gaussian")        # meilleur modèle
+summary(m_MT1)
 
-m7 <- lm(MT ~   LMC_t0 , data = BDD_ech)
-summary(m7)
-m8 <- lm(MT ~   SD, data = BDD_ech)
-summary(m8)
+m_MT2<-glm(MT~SD_cr+LDMC_cr+LT_cr,data=BDD_esp,family="gaussian")
+summary(m_MT2)
 
-AIC(m_nul,m1,m2,m3,m4,m5,m6) 
-plot(m6)
-hist(resid(m6))
+m_MT3<-glm(MT~SD_cr+LDMC_cr,data=BDD_esp,family="gaussian")
+summary(m_MT3)
+
+AIC(m_MT0,m_MT1,m_MT2,m_MT3) 
 
 
-###### BT #########
-#plot avec traits (VE)
-plot(BDD_ech$LT, BDD_ech$BT, xlab = "LT", ylab = "BT")
-plot(BDD_ech$LMC_t0, BDD_ech$BT, xlab = "LMC_t0", ylab = "BT")
-plot(BDD_ech$LMC_t24, BDD_ech$BT, xlab = "LMC_t24", ylab = "BT")
-plot(BDD_ech$Nb_ramifications, BDD_ech$BT, xlab = "Nombre de ramifications", ylab = "BT")
-plot(BDD_ech$PEF, BDD_ech$BT, xlab = "PEF", ylab = "BT")
-plot(BDD_ech$Gmin, BDD_ech$BT, xlab = "Gmin", ylab = "BT")
-plot(BDD_ech$SLA, BDD_ech$BT, xlab = "SLA", ylab = "BT")
-plot(BDD_ech$Surface_F, BDD_ech$BT, xlab = "Surface foliaire", ylab = "BT")
-plot(BDD_ech$TDIA, BDD_ech$BT, xlab = "Diamètre de tige", ylab = "BT")
-plot(BDD_ech$SD, BDD_ech$BT, xlab = "SD", ylab = "BT")
-
-#modeles
-m1 <- lm(BT ~  LT+ LMC_t0 + Nb_ramifications  + Gmin + SLA + Surface_F  + SD, data = BDD_ech)
-summary(m1)
-m2 <- lm(BT ~  LT+ LMC_t0 + Nb_ramifications + SLA + Surface_F + SD, data = BDD_ech)
-summary(m2)
-m3 <- lm(BT ~  LT+ LMC_t0  + SLA + Surface_F  + SD, data = BDD_ech)
-summary(m3)
-m4 <- lm(BT ~  LT+ LMC_t0  + SLA  + SD, data = BDD_ech)
-summary(m4)
-m5 <- lm(BT ~   LT+ LMC_t0 + SD, data = BDD_ech)
-summary(m5)
-
-m6 <- lm(BT ~   LT* LMC_t0 * SD, data = BDD_ech)
-summary(m6)
-
-m7 <- lm(BT ~   LT + LMC_t0 + SD + LT*SD + LT*LMC_t0, data = BDD_ech)
-summary(m7)
-m8 <- lm(BT ~   LT + LMC_t0 + SD + LT*SD, data = BDD_ech)
-summary(m8)
-m9 <- lm(BT ~   LT*SD, data = BDD_ech)
-summary(m9)
-
-
-AIC(m_nul,m1,m2,m3,m4,m5,m6,m7,m8,m9) 
-plot(m6)
-hist(resid(m6))
+pred<-predict(m,type = "response")
+plot(BDD_esp$MT,pred)
+abline(a=0,b=1)
 
 
 
 ###### BB #########
 #plot avec traits (VE)
-plot(BDD_ech$LT, BDD_ech$BB, xlab = "LT", ylab = "BB")
-plot(BDD_ech$LMC_t0, BDD_ech$BB, xlab = "LMC_t0", ylab = "BB")
-plot(BDD_ech$LMC_t24, BDD_ech$BB, xlab = "LMC_t24", ylab = "BB")
-plot(BDD_ech$Nb_ramifications, BDD_ech$BB, xlab = "Nombre de ramifications", ylab = "BB")
-plot(BDD_ech$PEF, BDD_ech$BB, xlab = "PEF", ylab = "BB")
-plot(BDD_ech$Gmin, BDD_ech$BB, xlab = "Gmin", ylab = "BB")
-plot(BDD_ech$SLA, BDD_ech$BB, xlab = "SLA", ylab = "BB")
-plot(BDD_ech$Surface_F, BDD_ech$BB, xlab = "Surface foliaire", ylab = "BB")
-plot(BDD_ech$TDIA, BDD_ech$BB, xlab = "Diamètre de tige", ylab = "BB")
-plot(BDD_ech$SD, BDD_ech$BB, xlab = "SD", ylab = "BB")
+plot(BDD_esp$TD, BDD_esp$BB_test)
+plot(BDD_esp$LT, BDD_esp$BB_test)
+plot(BDD_esp$LDMC, BDD_esp$BB_test)
+plot(BDD_esp$Surface_F, BDD_esp$BB_test)
+plot(BDD_esp$SD, BDD_esp$BB_test)
 
-#modeles
-m1 <- lm(BB ~  LT+ LMC_t0 + Nb_ramifications  + Gmin + SLA + Surface_F  + SD, data = BDD_ech)
-summary(m1)
-m2 <- lm(BB ~  LT+ LMC_t0 + Nb_ramifications + Gmin + SLA + Surface_F , data = BDD_ech)
-summary(m2)
-m3 <- lm(BB ~  LT+ LMC_t0 + Nb_ramifications + SLA + Gmin   , data = BDD_ech)
-summary(m3)
-m4 <- lm(BB ~  LT+ LMC_t0 + Nb_ramifications + SLA  , data = BDD_ech)
-summary(m4)
-m5 <- lm(BB ~   LT* LMC_t0 * Nb_ramifications * SLA  , data = BDD_ech)
-summary(m5)
-m6 <- lm(BB ~   LT* LMC_t0 * Nb_ramifications + LT* LMC_t0 * SLA + LT* Nb_ramifications * SLA + LMC_t0 * Nb_ramifications * SLA, data = BDD_ech)
-summary(m6)
-m7 <- lm(BB ~   LT* LMC_t0 + LT*Nb_ramifications + LT*SLA + LMC_t0*Nb_ramifications + LMC_t0*SLA + Nb_ramifications*SLA  , data = BDD_ech)
-summary(m7)
-m8 <- lm(BB ~   LT* LMC_t0 + Nb_ramifications + SLA, data = BDD_ech)
-summary(m8)
+#modèles
+BDD_esp$BB_prop <- BDD_esp$BB_test/100
 
-m9 <- lm(BB ~   LT* LMC_t0 + Nb_ramifications , data = BDD_ech)
-summary(m9)
+m_BB0<-glm(BB_prop~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp,family="binomial")
+summary(m_BB0)
 
-m10 <- lm(BB ~   LT+ LMC_t0 + Nb_ramifications, data = BDD_ech)
-summary(m10)
+m_BB1<-glm(BB_prop~LDMC_cr,data=BDD_esp,family="binomial")        # meilleur modèle
+summary(m_BB1)
 
-AIC(m2,m3,m4,m5,m6,m7,m8,m9,m10) 
-plot(m9)
-hist(resid(m9))
+AIC(m_BB0,m_BB1) #!!! pas le même nombre d'observation car SD a deux esp de moins 
+
+pred<-predict(m,type = "response")
+plot(BDD_esp$BB_prop,pred)
 
 
 
+###### BT #########
+#plot avec traits (VE)
+plot(BDD_esp$TD, BDD_esp$BT_test)
+plot(BDD_esp$LT, BDD_esp$BT_test)
+plot(BDD_esp$LDMC, BDD_esp$BT_test)
+plot(BDD_esp$Surface_F, BDD_esp$BT_test)
+plot(BDD_esp$SD, BDD_esp$BT_test)
+
+#modèles
+m_BT0<-glm(BT_test~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp,family="Gamma")
+summary(m_BT0)
+
+m_BT1<-glm(BT_test~SD_cr+TD_cr+LDMC_cr,data=BDD_esp,family="Gamma")       
+summary(m_BT1)
+
+m_BT2<-glm(BT_test~TD_cr+LDMC_cr,data=BDD_esp,family="Gamma")
+summary(m_BT2)
+
+AIC(m_BT0,m_BT1) #!!! pas le même nombre d'observation car SD a deux esp de moins 
+
+
+pred<-predict(m,type = "response")
+plot(BDD_esp$MT,pred)
+abline(a=0,b=1)
 
 
 
+###### DI #########
+#plot avec traits (VE)
+plot(BDD_esp$TD, BDD_esp$DI_test)
+plot(BDD_esp$LT, BDD_esp$DI_test)
+plot(BDD_esp$LDMC, BDD_esp$DI_test)
+plot(BDD_esp$Surface_F, BDD_esp$DI_test)
+plot(BDD_esp$SD, BDD_esp$DI_test)
+
+#modèles
+m_DI0<-glm(DI_test~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp,family="Gamma")
+summary(m_DI0)
+
+m_DI1<-glm(DI_test~TD_cr+LDMC_cr+LT_cr,data=BDD_esp,family="Gamma")       
+summary(m_DI1)
+
+AIC(m_DI0,m_DI1) #!!! pas le même nombre d'observation car SD a deux esp de moins 
 
 
 
+###### Score ########
+hist(BDD_esp$score_normalise)
+#plot avec traits (VE)
+plot(BDD_esp$TD, BDD_esp$score_normalise)
+plot(BDD_esp$LT, BDD_esp$score_normalise)
+plot(BDD_esp$LDMC, BDD_esp$score_normalise)
+plot(BDD_esp$Surface_F, BDD_esp$score_normalise)
+plot(BDD_esp$SD, BDD_esp$score_normalise)
+
+#modèles
+m_score0<-glm(score_normalise~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp,family="gaussian")
+summary(m_score0)
+
+m_score1<-glm(score_normalise~SD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp,family="gaussian")       
+summary(m_score1)
+
+m_score2<-glm(score_normalise~SD_cr+LDMC_cr+LT_cr,data=BDD_esp,family="gaussian")       
+summary(m_score2)
+
+m_score3<-glm(score_normalise~LDMC_cr+LT_cr,data=BDD_esp,family="gaussian")  ##meilleur modèle     
+summary(m_score3)
+
+m_score4<-glm(score_normalise~LDMC_cr,data=BDD_esp,family="gaussian")       
+summary(m_score4)
+
+AIC(m_score4,m_score3)
 
 
 
@@ -892,29 +892,6 @@ points(BDD_esp$LMC_t24,BDD_esp$MT,pch=21,bg="lightblue",cex=2)
 
 
 
-################ graphique pour visualiser les espèces et leur inflammabilité ####################
-library(ggplot2)
-
-# définition du min et du max pour le graph 
-scoremin <- min(BDD_esp$score_normalise)
-scoremax <- max(BDD_esp$score_normalise)
-
-
-# graphique
-ggplot(BDD_esp, aes(x = reorder(Nom_scientifique, score_normalise), y = score_normalise, fill = score_normalise)) +
-  geom_bar(stat = "identity", color = NA) +  
-  coord_flip() +
-  scale_fill_gradient2(
-    low = "darkgreen",
-    mid = "yellow",
-    high = "red",
-    midpoint = 0,
-    limits = c(scoremin, scoremax),) +
-  labs(x = "Espèces",
-       y = "Score d'inflammabilité",
-       fill = "Score",
-       title = "Score d'inflammabilité par espèce"
-      ) 
 
 
 

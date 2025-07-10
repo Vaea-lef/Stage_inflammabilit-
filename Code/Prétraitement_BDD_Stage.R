@@ -113,14 +113,23 @@ write.csv2(BDD_traits_calcule,"Data/BDD_traits_calcule.csv")
 BDD_infla<-read.csv2("Data/BDD_Inflammabilite.csv")
 BDD_infla
 
-# Exemple avec trois ID
-ids_a_remplacer <- c("02_5", "13_6", "30_5","39_6","42_5")
+# Vecteur des ID à supprimer
+ids_a_supprimer <- c("02_5", "13_6", "30_5", "39_6", "42_5")
+# Initialisation d'un vecteur d'indices à supprimer
+lignes_a_supprimer <- c()
+lignes_a_supprimer <- unique(lignes_a_supprimer)  # au cas où il y aurait des doublons
 
-# Boucle simple pour remplacer ligne par ligne
-for (id in ids_a_remplacer) {
-  lignes <- which(BDD_infla$ID_echantillon == id)
-  BDD_infla[lignes, c("DI", "BB", "temps_total", "MT","DI_test","BB_test")] <- NA
+
+# Boucle pour trouver les indices à supprimer
+for (id in ids_a_supprimer) {
+  lignes_a_supprimer <- c(lignes_a_supprimer, which(BDD_infla$ID_echantillon == id))
 }
+
+# Suppression des lignes
+BDD_infla <- BDD_infla[-lignes_a_supprimer, ]
+BDD_infla <- BDD_infla[BDD_infla$MT != 150, ]
+
+View(BDD_infla)
 
 #calcul de la SD density (kg/m3)
 SD<-((BDD_infla$masse/1000)/(((2/3)*pi*BDD_infla$longeur*((BDD_infla$largeur/2)*(BDD_infla$hauteur/2)))/1000000))
@@ -194,7 +203,7 @@ colnames(BDD_finale)
 
 
 ############# création d'une BDD avec seulement les infos pour les analyses ############
-BDD_ana_ech<-subset(BDD_finale, select=c(Nom_scientifique, Milieu_recolte,ID_espece,ID_echantillon,ID_Feuille,DI,DI_test,score_DI,BT,BT_test,MT,BB,BB_test,Nb_ramifications,SD,TMC_t0,TMC_t24,TDMC,TD,TDIA,Gmin,LMC_t0,LMC_t24,PEF,LDMC,Surface_F,SLA,LT))
+BDD_ana_ech<-subset(BDD_finale, select=c(Nom_scientifique, Milieu_recolte,ID_espece,ID_echantillon,ID_Feuille,T_ambiante,Vent,Humidite,DI,DI_test,score_DI,BT,BT_test,MT,BB,BB_test,Nb_ramifications,SD,TMC_t0,TMC_t24,TDMC,TD,TDIA,Gmin,LMC_t0,LMC_t24,PEF,LDMC,Surface_F,SLA,LT))
 head(BDD_ana_ech)
 dim(BDD_ana_ech)
 #export de la BDD 
@@ -207,7 +216,7 @@ write.csv2(BDD_ana_ech,"Data/BDD_ana_ech.csv")
 ############# Base à l'échelle de l'échantillon #######################
 
 #création de table avec moyenne et sd pour chaque variable en fonction du nom de l'espèce
-temp<-BDD_ana_ech[,6:28] ###sélection des colonnes comprenant les variables pour les intégrer dans la boucle
+temp<-BDD_ana_ech[,6:31] ###sélection des colonnes comprenant les variables pour les intégrer dans la boucle
 temp
 
 #création d'une bdd d'origine pour moyenne (sert pour merge)
