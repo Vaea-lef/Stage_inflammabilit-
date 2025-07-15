@@ -111,25 +111,12 @@ write.csv2(BDD_traits_calcule,"Data/BDD_traits_calcule.csv")
 
 
 BDD_infla<-read.csv2("Data/BDD_Inflammabilite.csv")
+
+
+
 BDD_infla
-
-# Vecteur des ID à supprimer
-ids_a_supprimer <- c("02_5", "13_6", "30_5", "39_6", "42_5")
-# Initialisation d'un vecteur d'indices à supprimer
-lignes_a_supprimer <- c()
-lignes_a_supprimer <- unique(lignes_a_supprimer)  # au cas où il y aurait des doublons
-
-
-# Boucle pour trouver les indices à supprimer
-for (id in ids_a_supprimer) {
-  lignes_a_supprimer <- c(lignes_a_supprimer, which(BDD_infla$ID_echantillon == id))
-}
-
-# Suppression des lignes
-BDD_infla <- BDD_infla[-lignes_a_supprimer, ]
-BDD_infla <- BDD_infla[BDD_infla$MT != 150, ]
-
-View(BDD_infla)
+BDD_infla[BDD_infla$ID_echantillon == "21_2", "MT"] <- 150
+BDD_infla[BDD_infla$ID_echantillon == "21_2", "temps_total"] <- 130
 
 #calcul de la SD density (kg/m3)
 SD<-((BDD_infla$masse/1000)/(((2/3)*pi*BDD_infla$longeur*((BDD_infla$largeur/2)*(BDD_infla$hauteur/2)))/1000000))
@@ -156,8 +143,12 @@ BDD_infla$DI
 score_DI<-(10-BDD_infla$DI_test)
 score_DI
 
+#calcul fréquence ignition 
+FI <- ifelse(BDD_infla$MT > 150, 1, 0)
+FI
+
 # création d'une nouvelle base de données calculée avec ajout des colonnes
-BDD_infla_calcule<-data.frame(BDD_infla,score_DI,BT, BT_test,SD)
+BDD_infla_calcule<-data.frame(BDD_infla,score_DI,BT, BT_test,FI,SD)
 BDD_infla_calcule #pour voir la BDD finale
 
 ###### Export de la base infla calculée CSV
@@ -203,7 +194,7 @@ colnames(BDD_finale)
 
 
 ############# création d'une BDD avec seulement les infos pour les analyses ############
-BDD_ana_ech<-subset(BDD_finale, select=c(Nom_scientifique, Milieu_recolte,ID_espece,ID_echantillon,ID_Feuille,T_ambiante,Vent,Humidite,DI,DI_test,score_DI,BT,BT_test,MT,BB,BB_test,Nb_ramifications,SD,TMC_t0,TMC_t24,TDMC,TD,TDIA,Gmin,LMC_t0,LMC_t24,PEF,LDMC,Surface_F,SLA,LT))
+BDD_ana_ech<-subset(BDD_finale, select=c(Nom_scientifique, Milieu_recolte,ID_espece,ID_echantillon,ID_Feuille,T_ambiante,Vent,Humidite,DI,DI_test,score_DI,BT,BT_test,MT,BB,BB_test,FI,Nb_ramifications,SD,TMC_t0,TMC_t24,TDMC,TD,TDIA,Gmin,LMC_t0,LMC_t24,PEF,LDMC,Surface_F,SLA,LT))
 head(BDD_ana_ech)
 dim(BDD_ana_ech)
 #export de la BDD 
@@ -216,7 +207,7 @@ write.csv2(BDD_ana_ech,"Data/BDD_ana_ech.csv")
 ############# Base à l'échelle de l'échantillon #######################
 
 #création de table avec moyenne et sd pour chaque variable en fonction du nom de l'espèce
-temp<-BDD_ana_ech[,6:31] ###sélection des colonnes comprenant les variables pour les intégrer dans la boucle
+temp<-BDD_ana_ech[,6:32] ###sélection des colonnes comprenant les variables pour les intégrer dans la boucle
 temp
 
 #création d'une bdd d'origine pour moyenne (sert pour merge)
@@ -283,9 +274,26 @@ for (i in 2:ncol(temp)) {
   BDD_sd_esp <- merge(BDD_sd_esp, temp_sd_esp, by = c("Nom_scientifique", "ID_espece" , "Milieu_recolte"), all = TRUE)
 }
 
+
+BDD_FI_esp <- aggregate(FI ~ Nom_scientifique + ID_espece + Milieu_recolte, 
+                        data = BDD_moy_ech, 
+                        FUN = sum, 
+                        na.rm = TRUE)
+colnames(BDD_FI_esp)[4] <- "Nb_FI"
+
+BDD_FI_esp
+
+
+BDD_moy_esp <- merge(BDD_moy_esp, BDD_FI_esp, 
+                     by = c("Nom_scientifique", "ID_espece", "Milieu_recolte"), 
+                     all.x = TRUE)
+
+
 #Résultat
 head(BDD_moy_esp)
 head(BDD_sd_esp)
+
+
 
 #export de la BDD 
 write.csv2(BDD_moy_esp,"Data/BDD_moy_esp.csv")
@@ -328,5 +336,36 @@ names(df_statut)
 # Étape 4 : diagramme
 ggplot(df_statut, aes(x = reorder(Statut, -Nb_especes), y = Nb_especes)) +
   geom_bar(stat = "identity", fill = "darkorange") +
-  labs(x = "Milieu", y = "Nombre d'espèces", title = "Nombre d'espèces par milieu") 
+  labs(x = "Milieu", y = "Nombre d'espèces", title = "Nombre d'espèces par milieu")
 
+
+
+
+
+
+# Vecteur des ID à supprimer
+ids_a_supprimer <- c("02_5", "13_6", "30_5", "39_6", "42_5")
+# Initialisation d'un vecteur d'indices à supprimer
+lignes_a_supprimer <- c()
+lignes_a_supprimer <- unique(lignes_a_supprimer)  # au cas où il y aurait des doublons
+
+
+# Boucle pour trouver les indices à supprimer
+for (id in ids_a_supprimer) {
+  lignes_a_supprimer <- c(lignes_a_supprimer, which(BDD_infla$ID_echantillon == id))
+}
+
+# Suppression des lignes
+BDD_infla <- BDD_infla[-lignes_a_supprimer, ]
+BDD_infla <- BDD_infla[BDD_infla$MT != 150, ]
+
+
+
+ID_a_supprimer <- c("02_5", "13_6", "30_5", "39_6", "42_5")
+
+BDD_infla <- BDD_infla[
+  !(BDD_infla$ID_echantillon == "02_5" |
+      BDD_infla$ID_echantillon == "13_6" |
+      BDD_infla$ID_echantillon == "30_5" |
+      BDD_infla$ID_echantillon == "39_6" |
+      BDD_infla$ID_echantillon == "42_5"), ]

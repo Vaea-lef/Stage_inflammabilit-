@@ -1,5 +1,11 @@
 
 #### ANALYSE DE DONNEE STAGE INFLAMMABILITE ####
+#packages
+library(FactoMineR)
+library(factoextra)
+library (corrplot)
+
+
 
 
 ################# IMPORTATION ET CHARGEMENT PACKAGE ###########################
@@ -48,7 +54,7 @@ hist(BDD_esp$SLA)            #normale
 hist(log(BDD_esp$LT))        #normale
 
 
-plot(BDD_ech$DI_test~BDD_ech$LDMC)
+
 
 
 ############################################################## ECHELLE ESPECE #############################################################
@@ -92,7 +98,6 @@ hist(BDD_esp$LT)        #asymétrique droite
 
 ################ EFFET DES CONDITIONS METEO ##################
 #MT
-options(na.action = "na.omit")
 m<-glm(MT~T_ambiante+Vent+Humidite,data=BDD_esp,family="gaussian")
 summary(m)
 
@@ -151,7 +156,7 @@ library(factoextra)
 ################  ACP INFLAMMABILITE ####################
 
 # Sélection des colonnes des composantes de l'inflammabilité
-colonnes_infla <- BDD_esp[, c(10,12,13,15)]
+colonnes_infla <- BDD_esp[, c(10,12,13,15,32)]
 
 # Vérification des données
 head(colonnes_infla)
@@ -216,13 +221,13 @@ scoremax <- max(BDD_esp$score_normalise)
 
 # graphique
 ggplot(BDD_esp, aes(x = reorder(Nom_scientifique, score_normalise), y = score_normalise, fill = score_normalise)) +
-  geom_bar(stat = "identity", color = NA) +  
+  geom_bar() +  
   coord_flip() +
   scale_fill_gradient2(
     low = "darkgreen",
     mid = "yellow",
     high = "red",
-    midpoint = 0,
+    midpoint = 0.48,
     limits = c(scoremin, scoremax),) +
   labs(x = "Espèces",
        y = "Score d'inflammabilité",
@@ -230,7 +235,48 @@ ggplot(BDD_esp, aes(x = reorder(Nom_scientifique, score_normalise), y = score_no
        title = "Score d'inflammabilité par espèce"
   ) 
 
+################# sans ggplot ######################
+# Palette personnalisée
+pal_vert_jaune <- colorRampPalette(c("darkgreen", "yellow"))
+pal_jaune_rouge <- colorRampPalette(c("yellow", "red"))
 
+# Définir les bornes
+mean_score <- mean(BDD_esp$score_normalise, na.rm = TRUE)
+min_score <- min(BDD_esp$score_normalise, na.rm = TRUE)
+max_score <- max(BDD_esp$score_normalise, na.rm = TRUE)
+
+# Nombre de nuances de chaque côté
+n_colors <- 100
+n_left <- round((mean_score - min_score) / (max_score - min_score) * n_colors)
+n_right <- n_colors - n_left
+
+# Générer les couleurs
+couleurs <- c(pal_vert_jaune(n_left), pal_jaune_rouge(n_right))
+
+# Attribuer à chaque espèce une couleur selon sa position par rapport à la min–max
+score_scaled <- round((BDD_esp$score_normalise - min_score) / (max_score - min_score) * (length(couleurs) - 1)) + 1
+
+# Ordre des points
+o <- order(BDD_esp$score_normalise)
+couleur_points <- couleurs[score_scaled][o]
+
+# Tracé
+par(mar = c(4, 9, 0, 0))
+plot(BDD_esp$score_normalise[o], 1:length(BDD_esp$Nom_scientifique), axes="n")
+# Axes
+axis(2, at = 1:length(BDD_esp$Nom_scientifique), labels = BDD_esp$Nom_scientifique[o], las = 1, cex.axis = 0.7)
+mtext("Espèces", side = 2, line = 8.5, cex = 1)
+axis(1, at = seq(-1, 1, 0.25), labels = seq(-1, 1, 0.25),labs(x="Score d'inflammabilité"))
+mtext("Flammability score", side = 1, line = 3, cex = 1)
+
+# Lignes de référence
+abline(v = mean_score, lwd = 2)
+abline(v = quantile(BDD_esp$score_normalise, na.rm = TRUE)[2], lwd = 2, lty = 3)
+abline(v = quantile(BDD_esp$score_normalise, na.rm = TRUE)[4], lwd = 2, lty = 3)
+
+# Points colorés
+points(BDD_esp$score_normalise[o], 1:length(BDD_esp$Nom_scientifique), 
+       pch = 21, cex = 1.5, bg = couleur_points)
 
 
 
@@ -238,9 +284,9 @@ ggplot(BDD_esp, aes(x = reorder(Nom_scientifique, score_normalise), y = score_no
 #################### ACP TRAITS ############################
 
 # Sélection des colonnes des traits fonctionnels
-colonnes_traits <- na.omit(BDD_esp[, setdiff(16:30, c(23, 26))])
+colonnes_traits <- na.omit(BDD_esp[, setdiff(17:31, c(23,24, 27))])
 
-Z# Vérifier les données
+# Vérifier les données
 colonnes_traits
 
 
@@ -274,7 +320,7 @@ corrplot(mat_cor_trait, method = "color", type = "upper", tl.cex = 0.8, tl.col =
 corrplot(mat_cor_trait, method = "color", tl.cex = 0.8, tl.col = "black", number.cex = 0.7, addCoef.col = "black")
 
 library(caret)
-traits_non_corrélés <- colonnes_traits[, -findCorrelation(mat_cor_trait, cutoff = 0.67)]
+traits_non_corrélés <- colonnes_traits[, -findCorrelation(mat_cor_trait, cutoff = 0.7)]
 traits_non_corrélés
 
 
@@ -364,7 +410,7 @@ DI
 
 
 # Calcul des moyennes par espèce
-moyennes_BT_test <- aggregate(log(BT_test+1) ~ Nom_scientifique, data = BDD_ech, FUN = mean, na.rm = TRUE)
+moyennes_BT_test <- aggregate(BT_test ~ Nom_scientifique, data = BDD_ech, FUN = mean, na.rm = TRUE)
 
 # Ordonner les espèces croissante
 moyennes_BT_test <- moyennes_BT_test[order(moyennes_MT$MT), ]
@@ -376,8 +422,8 @@ BDD_ech$Type <- "Individuel"
 
 # Plot avec légende
 BT<-ggplot() +
-  geom_point(data = BDD_ech, aes(x = log(BT_test+1), y = Nom_scientifique, color = Type), size = 2) +
-  geom_point(data = moyennes_BT_test, aes(x = log(BT_test), y = Nom_scientifique, color = Type), size = 3) +
+  geom_point(data = BDD_ech, aes(x = BT_test, y = Nom_scientifique, color = Type), size = 2) +
+  geom_point(data = moyennes_BT_test, aes(x = BT_test, y = Nom_scientifique, color = Type), size = 3) +
   scale_color_manual(values = c("Individuel" = "black", "Moyenne" = "#f14900")) +
   labs(x = "BT", y = "Espèce", color = "") +
   theme_bw()
@@ -391,7 +437,7 @@ log(100)
 moyennes_BB_test <- aggregate(BB_test ~ Nom_scientifique, data = BDD_ech, FUN = mean, na.rm = TRUE)
 
 # Ordonner les espèces croissante
-moyennes_BB_test <- moyennes_BB_test[order(moyennes_BB_test),  ]
+moyennes_BB_test <- moyennes_BB_test[order(moyennes_MT$MT),  ]
 BDD_ech$Nom_scientifique <- factor(BDD_ech$Nom_scientifique, levels = moyennes_BB_test$Nom_scientifique)
 
 # Créer un dataframe pour les moyennes (pour ggplot)
@@ -408,6 +454,25 @@ BB<-ggplot() +
 BB
 
 
+# Calcul des moyennes par espèce
+moyennes_FI <- aggregate(FI ~ Nom_scientifique, data = BDD_ech, FUN = mean, na.rm = TRUE)
+
+# Ordonner les espèces croissante
+moyennes_FI <- moyennes_FI[order(moyennes_MT$MT),  ]
+BDD_ech$Nom_scientifique <- factor(BDD_ech$Nom_scientifique, levels = moyennes_FI$Nom_scientifique)
+
+# Créer un dataframe pour les moyennes (pour ggplot)
+moyennes_FI$Type <- "Moyenne"
+BDD_ech$Type <- "Individuel"
+
+# Plot avec légende
+FI<-ggplot() +
+  geom_point(data = BDD_ech, aes(x = FI, y = Nom_scientifique, color = Type), size = 2) +  
+  geom_point(data = moyennes_FI, aes(x = FI, y = Nom_scientifique, color = Type), size = 3)+
+  scale_color_manual(values = c("Individuel" = "black", "Moyenne" = "#f14900")) +
+  labs(x = "FI", y = "Espèce", color = "") +
+  theme_bw()
+FI
 
 
 
@@ -628,8 +693,8 @@ ggplot(df_long, aes(x = Variable, y = Nom_scientifique, fill = Valeur)) +
 
 #################### TEST ANOVA POUR VARIABILITE INTRA et INTER ESPECES ######################
 #  Liste des variables à analyser 
-vars <- c("BB_test", "BT_test", "MT", "DI_test", "TD", "Surface_F", "Nb_ramifications",
-          "LMC_t24", "LDMC", "SD", "LT", "SLA")
+vars <- c("BB_test", "BT_test", "MT", "DI_test","FI", "TD", "Surface_F",
+          "LDMC", "SD", "LT")
 
 #  Transformation log(var + 0.01)
 BDD_ech_log <- BDD_ech
@@ -754,6 +819,103 @@ BDD_esp$LT_cr<-scale(BDD_esp$LT)
 BDD_esp$Vent_cr<-scale(BDD_esp$Vent)
 BDD_esp$Temp_cr<-scale(BDD_esp$T_ambiante)
 
+
+###### FI ########
+nb_essais <- 6
+
+mFI<-glm(cbind(Nb_FI,nb_essais-Nb_FI)~LMC_t24,data=BDD_esp,family="binomial")
+summary(mFI)
+pred<-predict(mFI,type="response")
+
+ndata<-data.frame(LMC_t24=seq(min(BDD_esp$LMC_t24),max(BDD_esp$LMC_t24),1))
+pred<-predict(mFI,type="response",newdata=ndata)
+
+plot(pred~ndata$LMC_t24,type="l",lwd=2)
+points(BDD_esp$LMC_t24,(BDD_esp$Nb_FI/nb_essais))
+
+summary(pred)
+
+mFI1<-glm(cbind(Nb_FI,nb_essais-Nb_FI)~LDMC+LT+Surface_F+TD+SD,data=BDD_esp,family="binomial")
+summary(mFI1)
+pR2(mFI1)
+
+
+pred1<-predict(mFI1,type="response")preLDMCd1<-predict(mFI1,type="response")
+
+ndata<-data.frame(LMC_t24=seq(min(BDD_esp$LMC_t24),max(BDD_esp$LMC_t24),1))
+pred1<-predict(mFI,type="response",newdata=ndata)
+
+plot(pred1~ndata$LMC_t24,type="l",lwd=2)
+points(BDD_esp$LMC_t24,(BDD_esp$Nb_FI/nb_essais))
+
+summary(pred)
+
+
+###################### graph bleu rouge ###############
+
+# Extraire coefficients (sans l'intercept)
+coefs <- summary(mFI1)$coefficients[-1, ]
+
+# Variables utiles
+estimates <- coefs[, "Estimate"]
+stderr <- coefs[, "Std. Error"]
+pval <- coefs[, "Pr(>|z|)"]
+labels <- rownames(coefs)
+
+# Calcul des intervalles de confiance plus ou moins SE
+ci <- cbind(estimates - stderr, estimates + stderr)
+
+# Étoiles de significativité
+stars <- ifelse(pval < 0.001, "***",
+                ifelse(pval < 0.01, "**",
+                       ifelse(pval < 0.05, "*",
+                              ifelse(pval < 0.1, ".", ""))))
+
+# Couleurs selon signe du coefficient
+cols <- ifelse(estimates < 0, "red", "blue")
+
+# Ordre des variables (du bas vers le haut)
+y_pos <- length(estimates):1
+
+# Plot de base
+plot(estimates, y_pos,
+     xlim = range(ci),
+     ylim = c(0.5, length(estimates) + 0.5),
+     pch = 16, col = cols,
+     xlab = "Estimate",
+     ylab = "",
+     axes = FALSE,
+     main = "Ignition Frequency",
+     cex.main = 1.5)
+
+# Ligne verticale à zéro
+abline(v = 0, lty = 2)
+
+# Barres d'erreur (IC)
+segments(ci[,1], y_pos, ci[,2], y_pos, col = cols)
+
+# Axe Y avec noms des variables
+axis(2, at = y_pos, labels = labels, las = 1)
+
+# Axe X
+axis(1)
+
+# Valeurs des coefficients + étoiles
+text(estimates, y_pos + 0.25,
+     labels = paste0(round(estimates, 2), stars),
+     col = cols, font = 2, cex = 1.3)
+
+# Ajouter un texte avec le pseudo R² (à modifier si besoin)
+mtext(expression(R^2~"= 0.683"), side = 3, adj = 0, line = 0.5, cex = 1.2)
+
+
+
+
+
+
+
+
+
 ###### MT #########
 #plot avec traits (VE)
 plot(BDD_esp$TD, BDD_esp$MT)
@@ -767,7 +929,8 @@ m_MT0<-glm(MT~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp,family="gaussian")
 summary(m_MT0)
 
 m_MT01<-glm(MT~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp,family="gaussian")
-summary(m_MT0)
+summary(m_MT01)
+plot(m_MT01)
 
 m_MT1<-glm(MT~SD_cr+TD_cr+LDMC_cr+LT_cr,data=BDD_esp,family="gaussian")        # meilleur modèle
 summary(m_MT1)
@@ -781,10 +944,35 @@ summary(m_MT3)
 AIC(m_MT0,m_MT01,m_MT1,m_MT2,m_MT3) 
 
 
+
+
+plot(BDD_esp$Gmin,BDD_esp$LMC_t24)
+
+
+foo<-seq(min(BDD_esp$Gmin),max(BDD_esp$Gmin),1)
+pred_data1<-data.frame(Gmin=foo,
+                       LDMC=rep(quantile(BDD_esp$LDMC,p=0.25),length(foo)))
+
+pred_data2<-data.frame(Gmin=foo,
+                       LDMC=rep(quantile(BDD_esp$LDMC,p=0.75),length(foo)))
+
+pred_data3<-data.frame(Gmin=foo,
+                       LDMC=rep(quantile(BDD_esp$LDMC,p=0.05),length(foo)))
+
+
+pred1<-predict(m,type="response",newdata=pred_data1,se.fit=TRUE)
+pred2<-predict(m,type="response",newdata=pred_data2,se.fit=TRUE)
+pred3<-predict(m,type="response",newdata=pred_data3,se.fit=TRUE)
+
+plot(BDD_esp$LMC_t24~BDD_esp$Gmin)
+lines(pred1$fit~pred_data$Gmin,lwd=2)
+lines(pred2$fit~pred_data$Gmin,lwd=2)
+lines(pred3$fit~pred_data$Gmin,lwd=2)
+
+
 pred<-predict(m,type = "response")
 plot(BDD_esp$MT,pred)
 abline(a=0,b=1)
-
 
 
 
@@ -1221,16 +1409,18 @@ corrplot(mat_cor_trait_ech, method = "color", type = "upper", tl.cex = 0.8, tl.c
 corrplot(mat_cor_trait_ech, method = "color", tl.cex = 0.8, tl.col = "black", number.cex = 0.7, addCoef.col = "black")
 
 library(caret)
-traits_non_corrélés_ech <- colonnes_traits_ech[, -findCorrelation(mat_cor_trait_ech, cutoff = 0.65)]
+traits_non_corrélés_ech <- colonnes_traits_ech[, -findCorrelation(mat_cor_trait_ech, cutoff = 0.7)]
 traits_non_corrélés_ech
 
 
+plot(log(BDD_ech$LDMC),log(BDD_ech$LMC_t24))
+plot(BDD_ech$MT~BDD_ech$LDMC)
+plot(BDD_ech$MT~BDD_ech$LMC_t24,xlim=(c(0,500)))
+plot(BDD_ech$MT,BDD_ech$LMC_t24)
 
-
-
-
-
-
+summary(lm(BDD_ech$MT~BDD_ech$LDMC))
+summary(lm(BDD_ech$MT~BDD_ech$LMC_t24))
+plot(BDD_ech$LMC_t24,BDD_ech$LMC_t0)
 
 
 ######## ACP INFLA avec projection des axes TRAITS (TEST) ####################
@@ -1286,6 +1476,9 @@ summary(modech_MT0)
 
 modech_MT1 <- lmer(MT ~ SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr + (1 | Nom_scientifique), data = BDD_ech)
 summary(modech_MT1)
+r.squaredGLMM(modech_MT1)
+
+plot(modech_MT1)
 
 AIC(modech_MT0,modech_MT1) 
 
@@ -1458,9 +1651,6 @@ pred1<-predict(m,type="response",newdata=pred_data1,se.fit=TRUE)
 pred2<-predict(m,type="response",newdata=pred_data2,se.fit=TRUE)
 pred3<-predict(m,type="response",newdata=pred_data3,se.fit=TRUE)
 
-
-pred
-
 plot(BDD_esp$LMC_t24~BDD_esp$Gmin)
 lines(pred1$fit~pred_data$Gmin,lwd=2)
 lines(pred2$fit~pred_data$Gmin,lwd=2)
@@ -1474,3 +1664,9 @@ lines(pred$fit-(1.96*pred$se.fit)~pred_data$Gmin,lty=3)
 
 
 hist(BDD_esp$LMC_t24)
+
+
+mFI<-glm(cbind(Nb_FI,nb_essais-Nb_FI)~LMC_t24,data=BDD_esp,family="binomial")
+summary(mFI)
+
+plot(BDD_esp$Nb_FI~BDD_esp$LMC_t24)
