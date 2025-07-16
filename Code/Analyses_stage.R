@@ -14,6 +14,13 @@ library (corrplot)
 setwd("C:/IRD/Stage_inflammabilit-") #définition du répertoire de travail
 BDD_ech<-read.csv2("Data/BDD_moy_ech.csv", header = TRUE) #importation de l
 BDD_ech
+names(BDD_ech)[which(names(BDD_ech) == "Nb_ramifications")] <- "Nb_rami"
+View(BDD_ech)
+
+BDD_ech_net<-read.csv2("Data/BDD_moy_ech1.csv", header = TRUE) #importation de l
+BDD_ech_net
+names(BDD_ech_net)[which(names(BDD_ech_net) == "Nb_ramifications")] <- "Nb_rami"
+View(BDD_ech_net)
 
 ##  importation BDD_sd_esp en format CSV
 BDD_sd_esp<-read.csv2("Data/BDD_sd_esp.csv", header = TRUE)
@@ -24,8 +31,15 @@ BDD_esp<-read.csv2("Data/BDD_moy_esp.csv", header = TRUE) #importation de la bas
 BDD_esp
 dim(BDD_esp)
 names(BDD_esp)[which(names(BDD_esp) == "Nb_ramifications")] <- "Nb_rami"
-dim(BDD_esp)
 View(BDD_esp)
+
+BDD_esp_net<-read.csv2("Data/BDD_moy_esp1.csv", header = TRUE) #importation de la base
+BDD_esp_net
+dim(BDD_esp_net)
+names(BDD_esp_net)[which(names(BDD_esp_net) == "Nb_ramifications")] <- "Nb_rami"
+View(BDD_esp_net)
+
+
 
 ################## DISTRIBUTION DES DONNEES #####################
 #Infla
@@ -194,6 +208,8 @@ min_score <- min(BDD_esp$score, na.rm = TRUE)
 max_score <- max(BDD_esp$score, na.rm = TRUE)
 BDD_esp$score_normalise <- -1 + (BDD_esp$score - min_score) * 2 / (max_score - min_score)
 
+n <- BDD_esp[BDD_esp$Nom_scientifique != "Scaevola taccada", ]
+BDD_esp_net$score_normalise <- n$score_normalise
 
 HCPC(res.pca,method="ward")
 
@@ -236,11 +252,11 @@ ggplot(BDD_esp, aes(x = reorder(Nom_scientifique, score_normalise), y = score_no
   ) 
 
 ################# sans ggplot ######################
-# Palette personnalisée
+# Palette de couleur
 pal_vert_jaune <- colorRampPalette(c("darkgreen", "yellow"))
 pal_jaune_rouge <- colorRampPalette(c("yellow", "red"))
 
-# Définir les bornes
+# Définir les bornes du graph
 mean_score <- mean(BDD_esp$score_normalise, na.rm = TRUE)
 min_score <- min(BDD_esp$score_normalise, na.rm = TRUE)
 max_score <- max(BDD_esp$score_normalise, na.rm = TRUE)
@@ -250,7 +266,7 @@ n_colors <- 100
 n_left <- round((mean_score - min_score) / (max_score - min_score) * n_colors)
 n_right <- n_colors - n_left
 
-# Générer les couleurs
+# Générer  couleurs
 couleurs <- c(pal_vert_jaune(n_left), pal_jaune_rouge(n_right))
 
 # Attribuer à chaque espèce une couleur selon sa position par rapport à la min–max
@@ -320,7 +336,7 @@ corrplot(mat_cor_trait, method = "color", type = "upper", tl.cex = 0.8, tl.col =
 corrplot(mat_cor_trait, method = "color", tl.cex = 0.8, tl.col = "black", number.cex = 0.7, addCoef.col = "black")
 
 library(caret)
-traits_non_corrélés <- colonnes_traits[, -findCorrelation(mat_cor_trait, cutoff = 0.7)]
+traits_non_corrélés <- colonnes_traits[, -findCorrelation(mat_cor_trait, cutoff = 0.68)]
 traits_non_corrélés
 
 
@@ -821,40 +837,62 @@ BDD_esp$Temp_cr<-scale(BDD_esp$T_ambiante)
 
 
 ###### FI ########
-nb_essais <- 6
+# Comptage du nombre d'essais par espèce dans BDD_ech
+essais_par_espece <- table(BDD_ech$Nom_scientifique)
+essais_par_espece
 
-mFI<-glm(cbind(Nb_FI,nb_essais-Nb_FI)~LMC_t24,data=BDD_esp,family="binomial")
+# Création d'une nouvelle colonne Nb_essais dans BDD_esp en s'appuyant sur le nom scientifique
+BDD_esp$Nb_essais <- essais_par_espece[BDD_esp$Nom_scientifique]
+
+# Vérification
+head(BDD_esp)
+
+
+
+mFI<-glm(cbind(Nb_FI,Nb_essais-Nb_FI)~LMC_t0,data=BDD_esp,family="binomial")
 summary(mFI)
 pred<-predict(mFI,type="response")
 
-ndata<-data.frame(LMC_t24=seq(min(BDD_esp$LMC_t24),max(BDD_esp$LMC_t24),1))
+ndata<-data.frame(LMC_t0=seq(min(BDD_esp$LMC_t0),max(BDD_esp$LMC_t0),1))
 pred<-predict(mFI,type="response",newdata=ndata)
 
-plot(pred~ndata$LMC_t24,type="l",lwd=2)
-points(BDD_esp$LMC_t24,(BDD_esp$Nb_FI/nb_essais))
+plot(pred~ndata$LMC_t0,type="l",lwd=2,xlab="LMC_t0",ylab="Ignition Frequency")
+points(BDD_esp$LMC_t0,(BDD_esp$Nb_FI/nb_essais))
 
 summary(pred)
 
-mFI1<-glm(cbind(Nb_FI,nb_essais-Nb_FI)~LDMC+LT+Surface_F+TD+SD,data=BDD_esp,family="binomial")
+
+mFI<-glm(cbind(Nb_FI,Nb_essais-Nb_FI)~LDMC,data=BDD_esp,family="binomial")
+summary(mFI)
+pred<-predict(mFI,type="response")
+
+ndata<-data.frame(LDMC=seq(min(BDD_esp$LDMC),max(BDD_esp$LDMC),1))
+pred<-predict(mFI,type="response",newdata=ndata)
+
+plot(pred~ndata$LDMC,type="l",lwd=2,xlab="LDMC",ylab="Ignition Frequency")
+points(BDD_esp$LDMC,(BDD_esp$Nb_FI/nb_essais))
+
+summary(pred)
+
+
+
+
+
+
+mFI1<-glm(cbind(Nb_FI,Nb_essais-Nb_FI)~LDMC+LT+Surface_F+TD+SD,data=BDD_esp,family="binomial")
 summary(mFI1)
-pR2(mFI1)
 
 
-pred1<-predict(mFI1,type="response")preLDMCd1<-predict(mFI1,type="response")
+mFI2<-glm(cbind(Nb_FI,Nb_essais-Nb_FI)~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp,family="binomial")
+summary(mFI2)
 
-ndata<-data.frame(LMC_t24=seq(min(BDD_esp$LMC_t24),max(BDD_esp$LMC_t24),1))
-pred1<-predict(mFI,type="response",newdata=ndata)
-
-plot(pred1~ndata$LMC_t24,type="l",lwd=2)
-points(BDD_esp$LMC_t24,(BDD_esp$Nb_FI/nb_essais))
-
-summary(pred)
 
 
 ###################### graph bleu rouge ###############
 
 # Extraire coefficients (sans l'intercept)
-coefs <- summary(mFI1)$coefficients[-1, ]
+par(mar = c(5,5,5,5))
+coefs <- summary(mFI2)$coefficients[-1, ]
 
 # Variables utiles
 estimates <- coefs[, "Estimate"]
@@ -872,15 +910,15 @@ stars <- ifelse(pval < 0.001, "***",
                               ifelse(pval < 0.1, ".", ""))))
 
 # Couleurs selon signe du coefficient
-cols <- ifelse(estimates < 0, "red", "blue")
+cols <- ifelse(estimates < 0, "#e90000", "#117304")
 
 # Ordre des variables (du bas vers le haut)
 y_pos <- length(estimates):1
 
 # Plot de base
 plot(estimates, y_pos,
-     xlim = range(ci),
-     ylim = c(0.5, length(estimates) + 0.5),
+     xlim = c(-3,3),
+     ylim = c(1,length(estimates) +0.25 ),
      pch = 16, col = cols,
      xlab = "Estimate",
      ylab = "",
@@ -895,18 +933,18 @@ abline(v = 0, lty = 2)
 segments(ci[,1], y_pos, ci[,2], y_pos, col = cols)
 
 # Axe Y avec noms des variables
-axis(2, at = y_pos, labels = labels, las = 1)
+axis(2, at = y_pos, labels = c("SD", "TD", "LA", "LDMC","LT"), las = 1)
 
 # Axe X
 axis(1)
 
 # Valeurs des coefficients + étoiles
-text(estimates, y_pos + 0.25,
+text(estimates, y_pos + 0.15,
      labels = paste0(round(estimates, 2), stars),
      col = cols, font = 2, cex = 1.3)
 
 # Ajouter un texte avec le pseudo R² (à modifier si besoin)
-mtext(expression(R^2~"= 0.683"), side = 3, adj = 0, line = 0.5, cex = 1.2)
+mtext(expression(R^2~"= 0.78"), side = 3, adj = 0, line = 0.5, cex = 1.2)
 
 
 
@@ -927,6 +965,70 @@ plot(BDD_esp$SD, BDD_esp$MT)
 #modèles
 m_MT0<-glm(MT~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp,family="gaussian")
 summary(m_MT0)
+
+###################### graph coefs ###############
+
+# Extraire coefficients (sans l'intercept)
+par(mar = c(5,5,5,5))
+coefs <- summary(m_MT0)$coefficients[-1, ]
+
+# Variables utiles
+estimates <- coefs[, "Estimate"]
+stderr <- coefs[, "Std. Error"]
+pval <- coefs[, "Pr(>|t|)"]
+labels <- rownames(coefs)
+
+# Calcul des intervalles de confiance plus ou moins SE
+ci <- cbind(estimates - stderr, estimates + stderr)
+
+# Étoiles de significativité
+stars <- ifelse(pval < 0.001, "***",
+                ifelse(pval < 0.01, "**",
+                       ifelse(pval < 0.05, "*",
+                              ifelse(pval < 0.1, ".", ""))))
+
+# Couleurs selon signe du coefficient
+cols <- ifelse(estimates < 0, "#e90000", "#117304")
+
+# Ordre des variables (du bas vers le haut)
+y_pos <- length(estimates):1
+
+# Plot de base
+plot(estimates, y_pos,
+     xlim = c(-100,200),
+     ylim = c(1,length(estimates) +0.25 ),
+     pch = 16, col = cols,
+     xlab = "Estimate",
+     ylab = "",
+     axes = FALSE,
+     main = "Maximum Temperature",
+     cex.main = 1.5)
+
+# Ligne verticale à zéro
+abline(v = 0, lty = 2)
+
+# Barres d'erreur (IC)
+segments(ci[,1], y_pos, ci[,2], y_pos, col = cols)
+
+# Axe Y avec noms des variables
+axis(2, at = y_pos, labels = c("SD", "TD", "LA", "LDMC","LT"), las = 1)
+
+# Axe X
+axis(1)
+
+# Valeurs des coefficients + étoiles
+text(estimates, y_pos + 0.15,
+     labels = paste0(round(estimates, 2), stars),
+     col = cols, font = 2, cex = 1.3)
+
+# Ajouter un texte avec le pseudo R² (à modifier si besoin)
+mtext(expression(R^2~"= 0.67"), side = 3, adj = 0, line = 0.5, cex = 1.2)
+
+
+
+
+
+
 
 m_MT01<-glm(MT~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp,family="gaussian")
 summary(m_MT01)
@@ -989,8 +1091,70 @@ plot(BDD_esp$SD, BDD_esp$BB_test)
 hist(BDD_esp$BB_prop)
 BDD_esp$BB_prop <- BDD_esp$BB_test/100
 
-m_BB0<-glm(BB_prop~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr+Vent_cr+Temp_cr,data=BDD_esp,family="gaussian")
+m_BB0<-glm(BB_prop~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp,family="gaussian")
 summary(m_BB0)
+
+###################### graph coefs ###############
+
+# Extraire coefficients (sans l'intercept)
+par(mar = c(5,5,5,5))
+coefs <- summary(m_BB0)$coefficients[-1, ]
+
+# Variables utiles
+estimates <- coefs[, "Estimate"]
+stderr <- coefs[, "Std. Error"]
+pval <- coefs[, "Pr(>|t|)"]
+labels <- rownames(coefs)
+
+# Calcul des intervalles de confiance plus ou moins SE
+ci <- cbind(estimates - stderr, estimates + stderr)
+
+# Étoiles de significativité
+stars <- ifelse(pval < 0.001, "***",
+                ifelse(pval < 0.01, "**",
+                       ifelse(pval < 0.05, "*",
+                              ifelse(pval < 0.1, ".", ""))))
+
+# Couleurs selon signe du coefficient
+cols <- ifelse(estimates < 0, "#e90000", "#117304")
+
+# Ordre des variables (du bas vers le haut)
+y_pos <- length(estimates):1
+
+# Plot de base
+plot(estimates, y_pos,
+     xlim = range(ci),
+     ylim = c(1,length(estimates) +0.25 ),
+     pch = 16, col = cols,
+     xlab = "Estimate",
+     ylab = "",
+     axes = FALSE,
+     main = "Burnt Biomass",
+     cex.main = 1.5)
+
+# Ligne verticale à zéro
+abline(v = 0, lty = 2)
+
+# Barres d'erreur (IC)
+segments(ci[,1], y_pos, ci[,2], y_pos, col = cols)
+
+# Axe Y avec noms des variables
+axis(2, at = y_pos, labels = c("SD", "TD", "LA", "LDMC","LT"), las = 1)
+
+# Axe X
+axis(1)
+
+# Valeurs des coefficients + étoiles
+text(estimates, y_pos + 0.15,
+     labels = paste0(round(estimates, 2), stars),
+     col = cols, font = 2, cex = 1.3)
+
+# Ajouter un texte avec le pseudo R² (à modifier si besoin)
+mtext(expression(R^2~"= 0.5"), side = 3, adj = 0, line = 0.5, cex = 1.2)
+
+
+
+
 
 m_BB0<-glm(BB_prop~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr+Vent_cr+Temp_cr,data=BDD_esp,family="quasibinomial")
 summary(m_BB0)
@@ -1052,6 +1216,67 @@ plot(BDD_esp$SD, BDD_esp$BT_test)
 m_BT0<-glm(BT_test~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp,family="Gamma")
 summary(m_BT0)
 
+###################### graph coefs ###############
+
+# Extraire coefficients (sans l'intercept)
+par(mar = c(5,5,5,5))
+coefs <- summary(m_BT0)$coefficients[-1, ]
+
+# Variables utiles
+estimates <- coefs[, "Estimate"]
+stderr <- coefs[, "Std. Error"]
+pval <- coefs[, "Pr(>|t|)"]
+
+
+# Calcul des intervalles de confiance plus ou moins SE
+ic <- cbind(estimates - stderr, estimates + stderr)
+
+# Étoiles de significativité
+stars <- ifelse(pval < 0.001, "***",
+                ifelse(pval < 0.01, "**",
+                       ifelse(pval < 0.05, "*",
+                              ifelse(pval < 0.1, ".", ""))))
+
+# Couleurs selon signe du coefficient
+cols <- ifelse(estimates < 0, "#e90000", "#117304")
+
+# Ordre des variables (du bas vers le haut)
+y_pos <- length(estimates):1
+
+# Plot de base
+plot(estimates, y_pos,
+     xlim = c(-0.020,0.010),
+     ylim = c(1,length(estimates) +0.25 ),
+     pch = 16, col = cols,
+     xlab = "Estimate",
+     ylab = "",
+     axes = FALSE,
+     main = "Burning Time",
+     cex.main = 1.5)
+
+# Ligne verticale à zéro
+abline(v = 0, lty = 2)
+
+# Barres d'erreur (IC)
+segments(ic[,1], y_pos, ic[,2], y_pos, col = cols)
+
+# Axe Y avec noms des variables
+axis(2, at = y_pos, labels = c("SD", "TD", "LA", "LDMC","LT"), las = 1)
+
+# Axe X
+axis(1)
+
+# Valeurs des coefficients + étoiles
+text(estimates, y_pos + 0.15,
+     labels = paste0(round(estimates, 4), stars),
+     col = cols, font = 2, cex = 1.3)
+
+# Ajouter un texte avec le pseudo R² (à modifier si besoin)
+mtext(expression(R^2~"= 0.51"), side = 3, adj = 0, line = 0.5, cex = 1.2)
+
+
+
+
 m_BT1<-glm(BT_test~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp,family="Gamma")       
 summary(m_BT1)
 
@@ -1083,6 +1308,65 @@ plot(BDD_esp$SD, BDD_esp$DI_test)
 m_DI0<-glm(DI_test~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp,family="Gamma")
 summary(m_DI0)
 
+###################### graph coefs ###############
+
+# Extraire coefficients (sans l'intercept)
+par(mar = c(5,5,5,5))
+coefs <- summary(m_DI0)$coefficients[-1, ]
+
+# Variables utiles
+estimates <- coefs[, "Estimate"]
+stderr <- coefs[, "Std. Error"]
+pval <- coefs[, "Pr(>|t|)"]
+
+# Calcul des intervalles de confiance plus ou moins SE
+ci <- cbind(estimates - stderr, estimates + stderr)
+
+# Étoiles de significativité
+stars <- ifelse(pval < 0.001, "***",
+                ifelse(pval < 0.01, "**",
+                       ifelse(pval < 0.05, "*",
+                              ifelse(pval < 0.1, ".", ""))))
+
+# Couleurs selon signe du coefficient
+cols <- ifelse(estimates < 0, "#e90000", "#117304")
+
+# Ordre des variables (du bas vers le haut)
+y_pos <- length(estimates):1
+
+# Plot de base
+plot(estimates, y_pos,
+     xlim = c(-0.4,0.6),
+     ylim = c(1,length(estimates) +0.25 ),
+     pch = 16, col = cols,
+     xlab = "Estimate",
+     ylab = "",
+     axes = FALSE,
+     main = "Ignition Delay",
+     cex.main = 1.5)
+
+# Ligne verticale à zéro
+abline(v = 0, lty = 2)
+
+# Barres d'erreur (IC)
+segments(ci[,1], y_pos, ci[,2], y_pos, col = cols)
+
+# Axe Y avec noms des variables
+axis(2, at = y_pos, labels = c("SD", "TD", "LA", "LDMC","LT"), las = 1)
+
+# Axe X
+axis(1)
+
+# Valeurs des coefficients + étoiles
+text(estimates, y_pos + 0.15,
+     labels = paste0(round(estimates, 4), stars),
+     col = cols, font = 2, cex = 1.3)
+
+# Ajouter un texte avec le pseudo R² (à modifier si besoin)
+mtext(expression(R^2~"= 0.61"), side = 3, adj = 0, line = 0.5, cex = 1.2)
+
+
+
 m_DI1<-glm(DI_test~TD_cr+LDMC_cr+LA_cr+LT_cr+Vent_cr+Temp_cr,data=BDD_esp,family="Gamma")       
 summary(m_DI1)
 
@@ -1102,6 +1386,68 @@ plot(BDD_esp$SD, BDD_esp$score_normalise)
 #modèles
 m_score0<-glm(score_normalise~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp,family="gaussian")
 summary(m_score0)
+
+###################### graph coefs ###############
+
+# Extraire coefficients (sans l'intercept)
+par(mar = c(5,5,5,5))
+coefs <- summary(m_score0)$coefficients[-1, ]
+
+# Variables utiles
+estimates <- coefs[, "Estimate"]
+stderr <- coefs[, "Std. Error"]
+pval <- coefs[, "Pr(>|t|)"]
+labels <- rownames(coefs)
+
+# Calcul des intervalles de confiance plus ou moins SE
+ci <- cbind(estimates - stderr, estimates + stderr)
+
+# Étoiles de significativité
+stars <- ifelse(pval < 0.001, "***",
+                ifelse(pval < 0.01, "**",
+                       ifelse(pval < 0.05, "*",
+                              ifelse(pval < 0.1, ".", ""))))
+
+# Couleurs selon signe du coefficient
+cols <- ifelse(estimates < 0, "#e90000", "#117304")
+
+# Ordre des variables (du bas vers le haut)
+y_pos <- length(estimates):1
+
+# Plot de base
+plot(estimates, y_pos,
+     xlim = c(-0.2,0.4),
+     ylim = c(1,length(estimates) +0.25 ),
+     pch = 16, col = cols,
+     xlab = "Estimate",
+     ylab = "",
+     axes = FALSE,
+     main = "Flammability",
+     cex.main = 1.5)
+
+# Ligne verticale à zéro
+abline(v = 0, lty = 2)
+
+# Barres d'erreur (IC)
+segments(ci[,1], y_pos, ci[,2], y_pos, col = cols)
+
+# Axe Y avec noms des variables
+axis(2, at = y_pos, labels = labels, las = 1)
+
+# Axe X
+axis(1)
+
+# Valeurs des coefficients + étoiles
+text(estimates, y_pos + 0.15,
+     labels = paste0(round(estimates, 4), stars),
+     col = cols, font = 2, cex = 1.3)
+
+# Ajouter un texte avec le pseudo R² (à modifier si besoin)
+mtext(expression(R^2~"= 0.6"), side = 3, adj = 0, line = 0.5, cex = 1.2)
+
+
+
+
 
 m_score1<-glm(score_normalise~SD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp,family="gaussian")       
 summary(m_score1)
@@ -1670,3 +2016,670 @@ mFI<-glm(cbind(Nb_FI,nb_essais-Nb_FI)~LMC_t24,data=BDD_esp,family="binomial")
 summary(mFI)
 
 plot(BDD_esp$Nb_FI~BDD_esp$LMC_t24)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+############################ MODELES #####################################
+hist(BDD_esp_net$DI_test)
+#standardisation des données 
+BDD_esp_net$SD_cr<-scale(BDD_esp_net$SD)
+BDD_esp_net$TD_cr<-scale(BDD_esp_net$TD)
+BDD_esp_net$LA_cr<-scale(BDD_esp_net$Surface_F)
+BDD_esp_net$LDMC_cr<-scale(BDD_esp_net$LDMC)
+BDD_esp_net$LT_cr<-scale(BDD_esp_net$LT)
+BDD_esp_net$Vent_cr<-scale(BDD_esp_net$Vent)
+BDD_esp_net$Temp_cr<-scale(BDD_esp_net$T_ambiante)
+
+
+###### FI ########
+# Comptage du nombre d'essais par espèce dans BDD_ech
+essais_par_espece <- table(BDD_ech$Nom_scientifique)
+essais_par_espece
+
+# Création d'une nouvelle colonne Nb_essais dans BDD_esp_net en s'appuyant sur le nom scientifique
+BDD_esp_net$Nb_essais <- essais_par_espece[BDD_esp_net$Nom_scientifique]
+
+# Vérification
+head(BDD_esp_net)
+
+
+
+mFI<-glm(cbind(Nb_FI,Nb_essais-Nb_FI)~LMC_t0,data=BDD_esp_net,family="binomial")
+summary(mFI)
+pred<-predict(mFI,type="response")
+
+ndata<-data.frame(LMC_t0=seq(min(BDD_esp_net$LMC_t0),max(BDD_esp_net$LMC_t0),1))
+pred<-predict(mFI,type="response",newdata=ndata)
+
+plot(pred~ndata$LMC_t0,type="l",lwd=2,xlab="LMC_t0",ylab="Ignition Frequency")
+points(BDD_esp_net$LMC_t0,(BDD_esp_net$Nb_FI/nb_essais))
+
+summary(pred)
+
+
+mFI<-glm(cbind(Nb_FI,Nb_essais-Nb_FI)~LDMC,data=BDD_esp_net,family="binomial")
+summary(mFI)
+pred<-predict(mFI,type="response")
+
+ndata<-data.frame(LDMC=seq(min(BDD_esp_net$LDMC),max(BDD_esp_net$LDMC),1))
+pred<-predict(mFI,type="response",newdata=ndata)
+
+plot(pred~ndata$LDMC,type="l",lwd=2,xlab="LDMC",ylab="Ignition Frequency")
+points(BDD_esp_net$LDMC,(BDD_esp_net$Nb_FI/nb_essais))
+
+summary(pred)
+
+
+
+
+
+
+mFI1<-glm(cbind(Nb_FI,Nb_essais-Nb_FI)~LDMC+LT+Surface_F+TD+SD,data=BDD_esp_net,family="binomial")
+summary(mFI1)
+
+
+mFI2<-glm(cbind(Nb_FI,Nb_essais-Nb_FI)~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp_net,family="binomial")
+summary(mFI2)
+
+
+
+###################### graph bleu rouge ###############
+
+# Extraire coefficients (sans l'intercept)
+par(mar = c(5,5,5,5))
+coefs <- summary(mFI2)$coefficients[-1, ]
+
+# Variables utiles
+estimates <- coefs[, "Estimate"]
+stderr <- coefs[, "Std. Error"]
+pval <- coefs[, "Pr(>|z|)"]
+labels <- rownames(coefs)
+
+# Calcul des intervalles de confiance plus ou moins SE
+ci <- cbind(estimates - stderr, estimates + stderr)
+
+# Étoiles de significativité
+stars <- ifelse(pval < 0.001, "***",
+                ifelse(pval < 0.01, "**",
+                       ifelse(pval < 0.05, "*",
+                              ifelse(pval < 0.1, ".", ""))))
+
+# Couleurs selon signe du coefficient
+cols <- ifelse(estimates < 0, "#e90000", "#117304")
+
+# Ordre des variables (du bas vers le haut)
+y_pos <- length(estimates):1
+
+# Plot de base
+plot(estimates, y_pos,
+     xlim = c(-3,3),
+     ylim = c(1,length(estimates) +0.25 ),
+     pch = 16, col = cols,
+     xlab = "Estimate",
+     ylab = "",
+     axes = FALSE,
+     main = "Ignition Frequency",
+     cex.main = 1.5)
+
+# Ligne verticale à zéro
+abline(v = 0, lty = 2)
+
+# Barres d'erreur (IC)
+segments(ci[,1], y_pos, ci[,2], y_pos, col = cols)
+
+# Axe Y avec noms des variables
+axis(2, at = y_pos, labels = c("SD", "TD", "LA", "LDMC","LT"), las = 1)
+
+# Axe X
+axis(1)
+
+# Valeurs des coefficients + étoiles
+text(estimates, y_pos + 0.15,
+     labels = paste0(round(estimates, 2), stars),
+     col = cols, font = 2, cex = 1.3)
+
+# Ajouter un texte avec le pseudo R² (à modifier si besoin)
+mtext(expression(R^2~"= 0.78"), side = 3, adj = 0, line = 0.5, cex = 1.2)
+
+
+
+
+
+
+
+
+
+###### MT #########
+#plot avec traits (VE)
+plot(BDD_esp_net$TD, BDD_esp_net$MT)
+plot(BDD_esp_net$LT, BDD_esp_net$MT)
+plot(BDD_esp_net$LDMC, BDD_esp_net$MT)
+plot(BDD_esp_net$Surface_F, BDD_esp_net$MT)
+plot(BDD_esp_net$SD, BDD_esp_net$MT)
+
+#modèles
+m_MT0<-glm(MT~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp_net,family="gaussian")
+summary(m_MT0)
+
+###################### graph coefs ###############
+
+# Extraire coefficients (sans l'intercept)
+par(mar = c(5,5,5,5))
+coefs <- summary(m_MT0)$coefficients[-1, ]
+
+# Variables utiles
+estimates <- coefs[, "Estimate"]
+stderr <- coefs[, "Std. Error"]
+pval <- coefs[, "Pr(>|t|)"]
+labels <- rownames(coefs)
+
+# Calcul des intervalles de confiance plus ou moins SE
+ci <- cbind(estimates - stderr, estimates + stderr)
+
+# Étoiles de significativité
+stars <- ifelse(pval < 0.001, "***",
+                ifelse(pval < 0.01, "**",
+                       ifelse(pval < 0.05, "*",
+                              ifelse(pval < 0.1, ".", ""))))
+
+# Couleurs selon signe du coefficient
+cols <- ifelse(estimates < 0, "#e90000", "#117304")
+
+# Ordre des variables (du bas vers le haut)
+y_pos <- length(estimates):1
+
+# Plot de base
+plot(estimates, y_pos,
+     xlim = c(-100,150),
+     ylim = c(1,length(estimates) +0.25 ),
+     pch = 16, col = cols,
+     xlab = "Estimate",
+     ylab = "",
+     axes = FALSE,
+     main = "Maximum Temperature",
+     cex.main = 1.5)
+
+# Ligne verticale à zéro
+abline(v = 0, lty = 2)
+
+# Barres d'erreur (IC)
+segments(ci[,1], y_pos, ci[,2], y_pos, col = cols)
+
+# Axe Y avec noms des variables
+axis(2, at = y_pos, labels = c("SD", "TD", "LA", "LDMC","LT"), las = 1)
+
+# Axe X
+axis(1)
+
+# Valeurs des coefficients + étoiles
+text(estimates, y_pos + 0.15,
+     labels = paste0(round(estimates, 2), stars),
+     col = cols, font = 2, cex = 1.3)
+
+# Ajouter un texte avec le pseudo R² (à modifier si besoin)
+mtext(expression(R^2~"= 0.58"), side = 3, adj = 0, line = 0.5, cex = 1.2)
+
+
+
+
+
+
+
+m_MT01<-glm(MT~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp_net,family="gaussian")
+summary(m_MT01)
+plot(m_MT01)
+
+m_MT1<-glm(MT~SD_cr+TD_cr+LDMC_cr+LT_cr,data=BDD_esp_net,family="gaussian")        # meilleur modèle
+summary(m_MT1)
+
+m_MT2<-glm(MT~SD_cr+LDMC_cr+LT_cr,data=BDD_esp_net,family="gaussian")
+summary(m_MT2)
+
+m_MT3<-glm(MT~SD_cr+LDMC_cr,data=BDD_esp_net,family="gaussian")
+summary(m_MT3)
+
+AIC(m_MT0,m_MT01,m_MT1,m_MT2,m_MT3) 
+
+
+
+
+plot(BDD_esp_net$Gmin,BDD_esp_net$LMC_t24)
+
+
+foo<-seq(min(BDD_esp_net$Gmin),max(BDD_esp_net$Gmin),1)
+pred_data1<-data.frame(Gmin=foo,
+                       LDMC=rep(quantile(BDD_esp_net$LDMC,p=0.25),length(foo)))
+
+pred_data2<-data.frame(Gmin=foo,
+                       LDMC=rep(quantile(BDD_esp_net$LDMC,p=0.75),length(foo)))
+
+pred_data3<-data.frame(Gmin=foo,
+                       LDMC=rep(quantile(BDD_esp_net$LDMC,p=0.05),length(foo)))
+
+
+pred1<-predict(m,type="response",newdata=pred_data1,se.fit=TRUE)
+pred2<-predict(m,type="response",newdata=pred_data2,se.fit=TRUE)
+pred3<-predict(m,type="response",newdata=pred_data3,se.fit=TRUE)
+
+plot(BDD_esp_net$LMC_t24~BDD_esp_net$Gmin)
+lines(pred1$fit~pred_data$Gmin,lwd=2)
+lines(pred2$fit~pred_data$Gmin,lwd=2)
+lines(pred3$fit~pred_data$Gmin,lwd=2)
+
+
+pred<-predict(m,type = "response")
+plot(BDD_esp_net$MT,pred)
+abline(a=0,b=1)
+
+
+
+
+###### BB #########
+#plot avec traits (VE)
+plot(BDD_esp_net$TD, BDD_esp_net$BB_test)
+plot(BDD_esp_net$LT, BDD_esp_net$BB_test)
+plot(BDD_esp_net$LDMC, BDD_esp_net$BB_test)
+plot(BDD_esp_net$Surface_F, BDD_esp_net$BB_test)
+plot(BDD_esp_net$SD, BDD_esp_net$BB_test)
+
+#modèles
+hist(BDD_esp_net$BB_prop)
+BDD_esp_net$BB_prop <- BDD_esp_net$BB_test/100
+
+m_BB0<-glm(BB_prop~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp_net,family="gaussian")
+summary(m_BB0)
+
+###################### graph coefs ###############
+
+# Extraire coefficients (sans l'intercept)
+par(mar = c(5,5,5,5))
+coefs <- summary(m_BB0)$coefficients[-1, ]
+
+# Variables utiles
+estimates <- coefs[, "Estimate"]
+stderr <- coefs[, "Std. Error"]
+pval <- coefs[, "Pr(>|t|)"]
+labels <- rownames(coefs)
+
+# Calcul des intervalles de confiance plus ou moins SE
+ci <- cbind(estimates - stderr, estimates + stderr)
+
+# Étoiles de significativité
+stars <- ifelse(pval < 0.001, "***",
+                ifelse(pval < 0.01, "**",
+                       ifelse(pval < 0.05, "*",
+                              ifelse(pval < 0.1, ".", ""))))
+
+# Couleurs selon signe du coefficient
+cols <- ifelse(estimates < 0, "#e90000", "#117304")
+
+# Ordre des variables (du bas vers le haut)
+y_pos <- length(estimates):1
+
+# Plot de base
+plot(estimates, y_pos,
+     xlim = range(ci),
+     ylim = c(1,length(estimates) +0.25 ),
+     pch = 16, col = cols,
+     xlab = "Estimate",
+     ylab = "",
+     axes = FALSE,
+     main = "Burnt Biomass",
+     cex.main = 1.5)
+
+# Ligne verticale à zéro
+abline(v = 0, lty = 2)
+
+# Barres d'erreur (IC)
+segments(ci[,1], y_pos, ci[,2], y_pos, col = cols)
+
+# Axe Y avec noms des variables
+axis(2, at = y_pos, labels = c("SD", "TD", "LA", "LDMC","LT"), las = 1)
+
+# Axe X
+axis(1)
+
+# Valeurs des coefficients + étoiles
+text(estimates, y_pos + 0.15,
+     labels = paste0(round(estimates, 2), stars),
+     col = cols, font = 2, cex = 1.3)
+
+# Ajouter un texte avec le pseudo R² (à modifier si besoin)
+mtext(expression(R^2~"= 0.47"), side = 3, adj = 0, line = 0.5, cex = 1.2)
+
+
+
+
+
+m_BB0<-glm(BB_prop~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr+Vent_cr+Temp_cr,data=BDD_esp_net,family="quasibinomial")
+summary(m_BB0)
+
+m_BB01<-glm(BB_prop~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp_net,family="binomial")
+summary(m_BB0)
+
+m_BB1<-glm(BB_prop~LDMC_cr,data=BDD_esp_net,family="binomial")        # meilleur modèle
+summary(m_BB1)
+
+library(betareg)
+model <- betareg(BB_prop~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr+Vent_cr+Temp_cr,data=BDD_esp_net)
+summary(model)
+
+
+AIC(m_BB0,model) #!!! pas le même nombre d'observation car SD a deux esp de moins 
+
+
+
+m_BB0<-glm(BB_prop~LDMC+LT,data=BDD_esp_net,family="gaussian")
+summary(m_BB0)
+m_BB1<-glm(BB_prop~LDMC+LT,data=BDD_esp_net,family="quasibinomial")
+summary(m_BB1)
+m_BB2<-glm(BB_prop~LDMC+LT,data=BDD_esp_net,family="binomial")
+summary(m_BB2)
+library(betareg)
+model <- betareg(BB_prop~LDMC+LT,data=BDD_esp_net)
+summary(model)
+
+c<-seq(1,1000,0.1)
+
+new<-data.frame(LDMC=c)
+
+pred1<-predict(m_BB0,newdata=new,type = "response")
+plot(BDD_esp_net$BB_prop,pred1)
+pred2<-predict(m_BB1,type = "response",newdata=new)
+plot(BDD_esp_net$BB_prop,pred2)
+pred3<-predict(m_BB2,type = "response",newdata=new)
+
+pred1
+plot(pred1~c,type="l",lwd=3)
+lines(pred2~c,lwd=3,lty=3)
+lines(pred3~c,lwd=3,lty=2)
+points(BDD_esp_net$BB_prop~BDD_esp_net$LDMC)
+
+
+
+
+
+###### BT #########
+#plot avec traits (VE)
+plot(BDD_esp_net$TD, BDD_esp_net$BT_test)
+plot(BDD_esp_net$LT, BDD_esp_net$BT_test)
+plot(BDD_esp_net$LDMC, BDD_esp_net$BT_test)
+plot(BDD_esp_net$Surface_F, BDD_esp_net$BT_test)
+plot(BDD_esp_net$SD, BDD_esp_net$BT_test)
+
+#modèles
+m_BT0<-glm(BT_test~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp_net,family="Gamma")
+summary(m_BT0)
+
+###################### graph coefs ###############
+
+# Extraire coefficients (sans l'intercept)
+par(mar = c(5,5,5,5))
+coefs <- summary(m_BT0)$coefficients[-1, ]
+
+# Variables utiles
+estimates <- coefs[, "Estimate"]
+stderr <- coefs[, "Std. Error"]
+pval <- coefs[, "Pr(>|t|)"]
+
+
+# Calcul des intervalles de confiance plus ou moins SE
+ic <- cbind(estimates - stderr, estimates + stderr)
+
+# Étoiles de significativité
+stars <- ifelse(pval < 0.001, "***",
+                ifelse(pval < 0.01, "**",
+                       ifelse(pval < 0.05, "*",
+                              ifelse(pval < 0.1, ".", ""))))
+
+# Couleurs selon signe du coefficient
+cols <- ifelse(estimates < 0, "#e90000", "#117304")
+
+# Ordre des variables (du bas vers le haut)
+y_pos <- length(estimates):1
+
+# Plot de base
+plot(estimates, y_pos,
+     xlim = c(-0.015,0.010),
+     ylim = c(1,length(estimates) +0.25 ),
+     pch = 16, col = cols,
+     xlab = "Estimate",
+     ylab = "",
+     axes = FALSE,
+     main = "Burning Time",
+     cex.main = 1.5)
+
+# Ligne verticale à zéro
+abline(v = 0, lty = 2)
+
+# Barres d'erreur (IC)
+segments(ic[,1], y_pos, ic[,2], y_pos, col = cols)
+
+# Axe Y avec noms des variables
+axis(2, at = y_pos, labels = c("SD", "TD", "LA", "LDMC","LT"), las = 1)
+
+# Axe X
+axis(1)
+
+# Valeurs des coefficients + étoiles
+text(estimates, y_pos + 0.15,
+     labels = paste0(round(estimates, 4), stars),
+     col = cols, font = 2, cex = 1.3)
+
+# Ajouter un texte avec le pseudo R² (à modifier si besoin)
+mtext(expression(R^2~"= 0.61"), side = 3, adj = 0, line = 0.5, cex = 1.2)
+
+
+
+
+m_BT1<-glm(BT_test~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp_net,family="Gamma")       
+summary(m_BT1)
+
+m_BT2<-glm(BT_test~SD_cr+TD_cr+LA_cr+LDMC_cr,data=BDD_esp_net,family="Gamma")    ### meilleur modèle 
+summary(m_BT2)
+
+m_BT3<-glm(BT_test~SD_cr+TD_cr+LDMC_cr,data=BDD_esp_net,family="Gamma")
+summary(m_BT3)
+
+
+AIC(m_BT0,m_BT1,m_BT2,m_BT3,m_BT4) #!!! pas le même nombre d'observation car SD a deux esp de moins 
+
+
+pred<-predict(m,type = "response")
+plot(BDD_esp_net$MT,pred)
+abline(a=0,b=1)
+
+
+
+###### DI #########
+#plot avec traits (VE)
+plot(BDD_esp_net$TD, BDD_esp_net$DI_test)
+plot(BDD_esp_net$LT, BDD_esp_net$DI_test)
+plot(BDD_esp_net$LDMC, BDD_esp_net$DI_test)
+plot(BDD_esp_net$Surface_F, BDD_esp_net$DI_test)
+plot(BDD_esp_net$SD, BDD_esp_net$DI_test)
+
+#modèles
+m_DI0<-glm(DI_test~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp_net,family="Gamma")
+summary(m_DI0)
+
+###################### graph coefs ###############
+
+# Extraire coefficients (sans l'intercept)
+par(mar = c(5,5,5,5))
+coefs <- summary(m_DI0)$coefficients[-1, ]
+
+# Variables utiles
+estimates <- coefs[, "Estimate"]
+stderr <- coefs[, "Std. Error"]
+pval <- coefs[, "Pr(>|t|)"]
+
+# Calcul des intervalles de confiance plus ou moins SE
+ci <- cbind(estimates - stderr, estimates + stderr)
+
+# Étoiles de significativité
+stars <- ifelse(pval < 0.001, "***",
+                ifelse(pval < 0.01, "**",
+                       ifelse(pval < 0.05, "*",
+                              ifelse(pval < 0.1, ".", ""))))
+
+# Couleurs selon signe du coefficient
+cols <- ifelse(estimates < 0, "#e90000", "#117304")
+
+# Ordre des variables (du bas vers le haut)
+y_pos <- length(estimates):1
+
+# Plot de base
+plot(estimates, y_pos,
+     xlim = c(-0.4,0.6),
+     ylim = c(1,length(estimates) +0.25 ),
+     pch = 16, col = cols,
+     xlab = "Estimate",
+     ylab = "",
+     axes = FALSE,
+     main = "Ignition Delay",
+     cex.main = 1.5)
+
+# Ligne verticale à zéro
+abline(v = 0, lty = 2)
+
+# Barres d'erreur (IC)
+segments(ci[,1], y_pos, ci[,2], y_pos, col = cols)
+
+# Axe Y avec noms des variables
+axis(2, at = y_pos, labels = c("SD", "TD", "LA", "LDMC","LT"), las = 1)
+
+# Axe X
+axis(1)
+
+# Valeurs des coefficients + étoiles
+text(estimates, y_pos + 0.15,
+     labels = paste0(round(estimates, 4), stars),
+     col = cols, font = 2, cex = 1.3)
+
+# Ajouter un texte avec le pseudo R² (à modifier si besoin)
+mtext(expression(R^2~"= 0.53"), side = 3, adj = 0, line = 0.5, cex = 1.2)
+
+
+
+m_DI1<-glm(DI_test~TD_cr+LDMC_cr+LA_cr+LT_cr+Vent_cr+Temp_cr,data=BDD_esp_net,family="Gamma")       
+summary(m_DI1)
+
+AIC(m_DI0,m_DI1) #!!! pas le même nombre d'observation car SD a deux esp de moins 
+
+
+
+###### Score ########
+hist(BDD_esp_net$score_normalise)
+#plot avec traits (VE)
+plot(BDD_esp_net$TD, BDD_esp_net$score_normalise)
+plot(BDD_esp_net$LT, BDD_esp_net$score_normalise)
+plot(BDD_esp_net$LDMC, BDD_esp_net$score_normalise)
+plot(BDD_esp_net$Surface_F, BDD_esp_net$score_normalise)
+plot(BDD_esp_net$SD, BDD_esp_net$score_normalise)
+
+#modèles
+m_score0<-glm(score_normalise~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp_net,family="gaussian")
+summary(m_score0)
+
+###################### graph coefs ###############
+
+# Extraire coefficients (sans l'intercept)
+par(mar = c(5,5,5,5))
+coefs <- summary(m_score0)$coefficients[-1, ]
+
+# Variables utiles
+estimates <- coefs[, "Estimate"]
+stderr <- coefs[, "Std. Error"]
+pval <- coefs[, "Pr(>|t|)"]
+labels <- rownames(coefs)
+
+# Calcul des intervalles de confiance plus ou moins SE
+ci <- cbind(estimates - stderr, estimates + stderr)
+
+# Étoiles de significativité
+stars <- ifelse(pval < 0.001, "***",
+                ifelse(pval < 0.01, "**",
+                       ifelse(pval < 0.05, "*",
+                              ifelse(pval < 0.1, ".", ""))))
+
+# Couleurs selon signe du coefficient
+cols <- ifelse(estimates < 0, "#e90000", "#117304")
+
+# Ordre des variables (du bas vers le haut)
+y_pos <- length(estimates):1
+
+# Plot de base
+plot(estimates, y_pos,
+     xlim = c(-0.2,0.3),
+     ylim = c(1,length(estimates) +0.25 ),
+     pch = 16, col = cols,
+     xlab = "Estimate",
+     ylab = "",
+     axes = FALSE,
+     main = "Flammability",
+     cex.main = 1.5)
+
+# Ligne verticale à zéro
+abline(v = 0, lty = 2)
+
+# Barres d'erreur (IC)
+segments(ci[,1], y_pos, ci[,2], y_pos, col = cols)
+
+# Axe Y avec noms des variables
+axis(2, at = y_pos, labels = c("SD", "TD", "LA", "LDMC","LT"), las = 1)
+
+# Axe X
+axis(1)
+
+# Valeurs des coefficients + étoiles
+text(estimates, y_pos + 0.15,
+     labels = paste0(round(estimates, 4), stars),
+     col = cols, font = 2, cex = 1.3)
+
+# Ajouter un texte avec le pseudo R² (à modifier si besoin)
+mtext(expression(R^2~"= 0.53"), side = 3, adj = 0, line = 0.5, cex = 1.2)
+
+
+
+
+
+m_score1<-glm(score_normalise~SD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp_net,family="gaussian")       
+summary(m_score1)
+
+m_score2<-glm(score_normalise~SD_cr+LDMC_cr+LT_cr,data=BDD_esp_net,family="gaussian")       
+summary(m_score2)
+
+m_score3<-glm(score_normalise~LDMC_cr+LT_cr,data=BDD_esp_net,family="gaussian")  ##meilleur modèle     
+summary(m_score3)
+
+m_score4<-glm(score_normalise~LDMC_cr,data=BDD_esp_net,family="gaussian")       
+summary(m_score4)
+
+AIC(m_score4,m_score3)
+

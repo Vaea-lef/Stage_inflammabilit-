@@ -204,6 +204,11 @@ write.csv2(BDD_ana_ech,"Data/BDD_ana_ech.csv")
 
 
 
+
+
+
+
+
 ############# Base à l'échelle de l'échantillon #######################
 
 #création de table avec moyenne et sd pour chaque variable en fonction du nom de l'espèce
@@ -235,6 +240,20 @@ for (i in 2:ncol(temp)) {
   BDD_sd_ech <- merge(BDD_sd_ech, temp_sd,by = c("ID_echantillon", "Nom_scientifique", "ID_espece","Milieu_recolte"),all = TRUE)
   }
 
+
+
+# Vecteur des ID à supprimer
+ids_a_supprimer <- c("02_5", "13_6", "30_5", "39_6", "42_5")
+
+# Trouver les indices à supprimer
+lignes_a_supprimer <- c()
+for (id in ids_a_supprimer) {
+  lignes_a_supprimer <- c(lignes_a_supprimer, which(BDD_moy_ech$ID_echantillon == id))
+}
+
+# Supprimer ces lignes dans l'objet d'origine
+BDD_moy_ech <- BDD_moy_ech[-lignes_a_supprimer, ]
+
 # Résultats
 head(BDD_moy_ech)
 head(BDD_sd_ech)
@@ -243,35 +262,60 @@ head(BDD_sd_ech)
 write.csv2(BDD_moy_ech, "Data/BDD_moy_ech.csv", row.names = FALSE)
 write.csv2(BDD_sd_ech, "Data/BDD_sd_ech.csv", row.names = FALSE)
 
+View(BDD_moy_ech)
+
+
+####### suppression des échantillons "non brulés"
+BDD_moy_ech1 <- BDD_moy_ech[BDD_moy_ech$MT != 150, ]
+View(BDD_moy_ech1)
+
+# Export des données
+write.csv2(BDD_moy_ech1, "Data/BDD_moy_ech1.csv", row.names = FALSE)
+
+dim(BDD_moy_ech)
 
 
 
-############# Base à l'échelle de l'espèce ######################################
 
+
+
+
+
+
+
+
+
+
+
+
+############# Base à l'échelle de l'espèce (complète) ######################################
+#création de table avec moyenne et sd pour chaque variable en fonction du nom de l'espèce
+tem1<-BDD_moy_ech[,5:31] ###sélection des colonnes comprenant les variables pour les intégrer dans la boucle
+tem1
 #création d'un bdd d'origine pour moyenne (sert pour merge)
-BDD_moy_esp <- aggregate(temp[,1] ~ Nom_scientifique + ID_espece + Milieu_recolte, data = BDD_finale, FUN = mean, na.rm = TRUE)
+BDD_moy_esp <- aggregate(tem1[,1] ~ Nom_scientifique + ID_espece + Milieu_recolte, data = BDD_moy_ech, FUN = mean, na.rm = TRUE)
 BDD_moy_esp[,4] <- round(BDD_moy_esp[,4], 2)
-colnames(BDD_moy_esp)[4] <- colnames(temp)[1]
+colnames(BDD_moy_esp)[4] <- colnames(tem1)[1]
 
 #création d'un bdd d'origine pour sd (sert pour merge)
-BDD_sd_esp <- aggregate(temp[,1] ~ Nom_scientifique + ID_espece + Milieu_recolte, data = BDD_finale, FUN = sd, na.rm = TRUE)
+BDD_sd_esp <- aggregate(tem1[,1] ~ Nom_scientifique + ID_espece + Milieu_recolte, data = BDD_moy_ech, FUN = sd, na.rm = TRUE)
 BDD_sd_esp[,4] <- round(BDD_sd_esp[,4], 2)
-colnames(BDD_sd_esp)[4] <- colnames(temp)[1]
+colnames(BDD_sd_esp)[4] <- colnames(tem1)[1]
 
 #Boucle pour les calcul des moyennes et écart-types
-for (i in 2:ncol(temp)) {
+for (i in 2:ncol(tem1)) {
   
   # Moyenne
-  temp_moy_esp <- aggregate(temp[, i] ~ Nom_scientifique + ID_espece+ Milieu_recolte, data = BDD_finale, FUN = mean, na.rm = TRUE)
-  temp_moy_esp[,4] <- round(temp_moy_esp[,4], 2)
-  colnames(temp_moy_esp)[4] <- colnames(temp)[i]
-  BDD_moy_esp <- merge(BDD_moy_esp, temp_moy_esp, by = c("Nom_scientifique", "ID_espece", "Milieu_recolte"), all = TRUE)
+  tem1_moy_esp <- aggregate(tem1[, i] ~ Nom_scientifique + ID_espece+ Milieu_recolte, data = BDD_moy_ech, FUN = mean, na.rm = TRUE)
+  tem1_moy_esp[,4] <- round(tem1_moy_esp[,4], 2)
+  colnames(tem1_moy_esp)[4] <- colnames(tem1)[i]
+  BDD_moy_esp <- merge(BDD_moy_esp, tem1_moy_esp, by = c("Nom_scientifique", "ID_espece", "Milieu_recolte"), all = TRUE)
   
   # Ecart-type
-  temp_sd_esp <- aggregate(temp[, i] ~ Nom_scientifique + ID_espece+ Milieu_recolte, data = BDD_finale, FUN = sd, na.rm = TRUE)
-  temp_sd_esp[,4] <- round(temp_sd_esp[,4], 2)
-  colnames(temp_sd_esp)[4] <- colnames(temp)[i]
-  BDD_sd_esp <- merge(BDD_sd_esp, temp_sd_esp, by = c("Nom_scientifique", "ID_espece" , "Milieu_recolte"), all = TRUE)
+  tem1_sd_esp <- aggregate(tem1[, i] ~ Nom_scientifique + ID_espece+ Milieu_recolte, data = BDD_moy_ech, FUN = sd, na.rm = TRUE)
+  tem1_sd_esp[,4] <- round(tem1_sd_esp[,4], 2)
+  colnames(tem1_sd_esp)[4] <- colnames(tem1)[i]
+  BDD_sd_esp <- merge(BDD_sd_esp, tem1_sd_esp, by = c("Nom_scientifique", "ID_espece" , "Milieu_recolte"), all = TRUE)
 }
 
 
@@ -288,16 +332,86 @@ BDD_moy_esp <- merge(BDD_moy_esp, BDD_FI_esp,
                      by = c("Nom_scientifique", "ID_espece", "Milieu_recolte"), 
                      all.x = TRUE)
 
-
 #Résultat
 head(BDD_moy_esp)
 head(BDD_sd_esp)
 
-
+View(BDD_moy_esp)
 
 #export de la BDD 
 write.csv2(BDD_moy_esp,"Data/BDD_moy_esp.csv")
 write.csv2(BDD_sd_esp, "Data/BDD_sd_ech.csv")
+
+
+
+
+
+############# Base à l'échelle de l'espèce (sans non brulés) ######################################
+#création de table avec moyenne et sd pour chaque variable en fonction du nom de l'espèce
+tem2<-BDD_moy_ech1[,5:31] ###sélection des colonnes comprenant les variables pour les intégrer dans la boucle
+tem2
+#création d'un bdd d'origine pour moyenne (sert pour merge)
+BDD_moy_esp1 <- aggregate(tem2[,1] ~ Nom_scientifique + ID_espece + Milieu_recolte, data = BDD_moy_ech1, FUN = mean, na.rm = TRUE)
+BDD_moy_esp1[,4] <- round(BDD_moy_esp1[,4], 2)
+colnames(BDD_moy_esp1)[4] <- colnames(tem2)[1]
+
+#création d'un bdd d'origine pour sd (sert pour merge)
+BDD_sd_esp <- aggregate(tem2[,1] ~ Nom_scientifique + ID_espece + Milieu_recolte, data = BDD_moy_ech1, FUN = sd, na.rm = TRUE)
+BDD_sd_esp[,4] <- round(BDD_sd_esp[,4], 2)
+colnames(BDD_sd_esp)[4] <- colnames(tem2)[1]
+
+#Boucle pour les calcul des moyennes et écart-types
+for (i in 2:ncol(tem2)) {
+  
+  # Moyenne
+  tem2_moy_esp <- aggregate(tem2[, i] ~ Nom_scientifique + ID_espece+ Milieu_recolte, data = BDD_moy_ech1, FUN = mean, na.rm = TRUE)
+  tem2_moy_esp[,4] <- round(tem2_moy_esp[,4], 2)
+  colnames(tem2_moy_esp)[4] <- colnames(tem2)[i]
+  BDD_moy_esp1 <- merge(BDD_moy_esp1, tem2_moy_esp, by = c("Nom_scientifique", "ID_espece", "Milieu_recolte"), all = TRUE)
+  
+  # Ecart-type
+  tem2_sd_esp <- aggregate(tem2[, i] ~ Nom_scientifique + ID_espece+ Milieu_recolte, data = BDD_moy_ech1, FUN = sd, na.rm = TRUE)
+  tem2_sd_esp[,4] <- round(tem2_sd_esp[,4], 2)
+  colnames(tem2_sd_esp)[4] <- colnames(tem2)[i]
+  BDD_sd_esp <- merge(BDD_sd_esp, tem2_sd_esp, by = c("Nom_scientifique", "ID_espece" , "Milieu_recolte"), all = TRUE)
+}
+
+
+BDD_FI_esp <- aggregate(FI ~ Nom_scientifique + ID_espece + Milieu_recolte, 
+                        data = BDD_moy_ech11, 
+                        FUN = sum, 
+                        na.rm = TRUE)
+colnames(BDD_FI_esp)[4] <- "Nb_FI"
+
+BDD_FI_esp
+
+
+BDD_moy_esp1 <- merge(BDD_moy_esp1, BDD_FI_esp, 
+                     by = c("Nom_scientifique", "ID_espece", "Milieu_recolte"), 
+                     all.x = TRUE)
+
+#Résultat
+head(BDD_moy_esp1)
+View(BDD_moy_esp1)
+
+#export de la BDD 
+write.csv2(BDD_moy_esp1,"Data/BDD_moy_esp1.csv")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
