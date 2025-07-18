@@ -211,7 +211,7 @@ BDD_esp$score_normalise <- -1 + (BDD_esp$score - min_score) * 2 / (max_score - m
 n <- BDD_esp[BDD_esp$Nom_scientifique != "Scaevola taccada", ]
 BDD_esp_net$score_normalise <- n$score_normalise
 
-HCPC(res.pca,method="ward")
+HCPC(res.pca,method="complete")
 
 
 distcoord<-dist(coord[,1:2])
@@ -257,9 +257,9 @@ pal_vert_jaune <- colorRampPalette(c("darkgreen", "yellow"))
 pal_jaune_rouge <- colorRampPalette(c("yellow", "red"))
 
 # Définir les bornes du graph
-mean_score <- mean(BDD_esp$score_normalise, na.rm = TRUE)
-min_score <- min(BDD_esp$score_normalise, na.rm = TRUE)
-max_score <- max(BDD_esp$score_normalise, na.rm = TRUE)
+mean_score <- mean(BDD_esp$score, na.rm = TRUE)
+min_score <- min(BDD_esp$score, na.rm = TRUE)
+max_score <- max(BDD_esp$score, na.rm = TRUE)
 
 # Nombre de nuances de chaque côté
 n_colors <- 100
@@ -270,28 +270,28 @@ n_right <- n_colors - n_left
 couleurs <- c(pal_vert_jaune(n_left), pal_jaune_rouge(n_right))
 
 # Attribuer à chaque espèce une couleur selon sa position par rapport à la min–max
-score_scaled <- round((BDD_esp$score_normalise - min_score) / (max_score - min_score) * (length(couleurs) - 1)) + 1
+score_scaled <- round((BDD_esp$score - min_score) / (max_score - min_score) * (length(couleurs) - 1)) + 1
 
 # Ordre des points
-o <- order(BDD_esp$score_normalise)
+o <- order(BDD_esp$score)
 couleur_points <- couleurs[score_scaled][o]
 
 # Tracé
 par(mar = c(4, 9, 0, 0))
-plot(BDD_esp$score_normalise[o], 1:length(BDD_esp$Nom_scientifique), axes="n")
+plot(BDD_esp$score[o], 1:length(BDD_esp$Nom_scientifique), axes="n")
 # Axes
 axis(2, at = 1:length(BDD_esp$Nom_scientifique), labels = BDD_esp$Nom_scientifique[o], las = 1, cex.axis = 0.7)
 mtext("Espèces", side = 2, line = 8.5, cex = 1)
-axis(1, at = seq(-1, 1, 0.25), labels = seq(-1, 1, 0.25),labs(x="Score d'inflammabilité"))
+axis(1)
 mtext("Flammability score", side = 1, line = 3, cex = 1)
 
 # Lignes de référence
 abline(v = mean_score, lwd = 2)
-abline(v = quantile(BDD_esp$score_normalise, na.rm = TRUE)[2], lwd = 2, lty = 3)
-abline(v = quantile(BDD_esp$score_normalise, na.rm = TRUE)[4], lwd = 2, lty = 3)
+abline(v = quantile(BDD_esp$score, na.rm = TRUE)[2], lwd = 2, lty = 3)
+abline(v = quantile(BDD_esp$score, na.rm = TRUE)[4], lwd = 2, lty = 3)
 
 # Points colorés
-points(BDD_esp$score_normalise[o], 1:length(BDD_esp$Nom_scientifique), 
+points(BDD_esp$score[o], 1:length(BDD_esp$Nom_scientifique), 
        pch = 21, cex = 1.5, bg = couleur_points)
 
 
