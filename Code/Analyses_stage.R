@@ -83,7 +83,9 @@ hist(BDD_esp$BB)      # normale proportion
 hist(BDD_esp_net$BB_test,,xlab="BB",main="BB distribution") # normale proportion
 hist(BDD_esp_net$MT,xlab="MT",main="MT distribution",xlim=c(100,1000),ylim=c(0,25),breaks=seq(100,1000,100))      # normale 
 hist(BDD_esp$BB_prop)
-hist(BDD_esp$T_ambiante)
+hist(BDD_esp$T_ambiante,xlab="Temperature (°C)",main="T distribution")
+hist(BDD_esp$Vent,xlab="Wind (km/h)",main="Wind distribution")
+hist(BDD_esp$Humidite,xlab="Humidity (%)",main="Humidity distribution")
 plot(BDD_esp$T_ambiante,BDD_esp$DI_test)
 
 #traits
@@ -850,32 +852,41 @@ head(BDD_esp)
 
 
 
-mFI<-glm(cbind(Nb_FI,Nb_essais-Nb_FI)~LMC_t0,data=BDD_esp,family="binomial")
+
+mFI<-glm(cbind(Nb_FI,Nb_essais-Nb_FI)~LMC_t24,data=BDD_esp,family="binomial")
 summary(mFI)
 pred<-predict(mFI,type="response")
 
-ndata<-data.frame(LMC_t0=seq(min(BDD_esp$LMC_t0),max(BDD_esp$LMC_t0),1))
+ndata<-data.frame(LMC_t24=seq(min(BDD_esp$LMC_t24),max(BDD_esp$LMC_t24),1))
 pred<-predict(mFI,type="response",newdata=ndata)
 
-plot(pred~ndata$LMC_t0,type="l",lwd=2,xlab="LMC_t0",ylab="Ignition Frequency")
-points(BDD_esp$LMC_t0,(BDD_esp$Nb_FI/nb_essais))
+plot(pred~ndata$LMC_t24,type="l",lwd=2,xlab="LMC_t24",ylab="Ignition Frequency",ylim=c(0,1))
+points(BDD_esp$LMC_t24,(BDD_esp$Nb_FI/nb_essais))
 
 summary(pred)
 
 
-mFI<-glm(cbind(Nb_FI,Nb_essais-Nb_FI)~LDMC,data=BDD_esp,family="binomial")
-summary(mFI)
-pred<-predict(mFI,type="response")
+mFI1<-glm(cbind(Nb_FI,Nb_essais-Nb_FI)~LDMC,data=BDD_esp,family="binomial")
+summary(mFI1)
+pred<-predict(mFI1,type="response")
 
 ndata<-data.frame(LDMC=seq(min(BDD_esp$LDMC),max(BDD_esp$LDMC),1))
-pred<-predict(mFI,type="response",newdata=ndata)
+pred<-predict(mFI1,type="response",newdata=ndata)
 
-plot(pred~ndata$LDMC,type="l",lwd=2,xlab="LDMC",ylab="Ignition Frequency")
+plot(pred~ndata$LDMC,type="l",lwd=2,xlab="LDMC",ylab="Ignition Frequency",ylim=c(0,1))
 points(BDD_esp$LDMC,(BDD_esp$Nb_FI/nb_essais))
 
 summary(pred)
 
+mFI<-glm(cbind(Nb_FI,Nb_essais-Nb_FI)~LT,data=BDD_esp,family="binomial")
+summary(mFI)
+pred<-predict(mFI,type="response")
 
+ndata<-data.frame(LT=seq(min(BDD_esp$LT),max(BDD_esp$LT),1))
+pred<-predict(mFI,type="response",newdata=ndata)
+
+plot(pred~ndata$LT,type="l",lwd=2,xlab="LT",ylab="Ignition Frequency",ylim=c(0,1))
+points(BDD_esp$LT,(BDD_esp$Nb_FI/nb_essais))
 
 
 
@@ -896,7 +907,7 @@ AIC(mFI2,mFI3,mFI4)
 
 # Extraire coefficients (sans l'intercept)
 par(mar = c(5,7,5,5))
-coefs <- summary(mFI4)$coefficients[-1, ]
+coefs <- summary(mFI3)$coefficients[-1, ]
 
 # Variables utiles
 estimates <- coefs[, "Estimate"]
