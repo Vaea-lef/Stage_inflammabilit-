@@ -65,7 +65,7 @@ hist(log(BDD_esp$LMC_t24))   #normale
 hist(BDD_esp$LDMC)           #normale
 hist(log(BDD_esp$Surface_F)) #normale
 hist(BDD_esp$SLA)            #normale
-hist(log(BDD_esp$LT))        #normale
+hist((BDD_esp$LT))        #normale
 
 
 
@@ -827,6 +827,12 @@ corrplot(mat_cor_all, method = "color", tl.cex = 0.8, tl.col = "black", number.c
 
 
 
+
+
+
+
+
+
 ############################ MODELES #####################################
 #standardisation des données 
 BDD_esp$SD_cr<-scale(BDD_esp$SD)
@@ -838,6 +844,15 @@ BDD_esp$Vent_cr<-scale(BDD_esp$Vent)
 BDD_esp$Temp_cr<-scale(BDD_esp$T_ambiante)
 BDD_esp$LMC_t24_cr<-scale(BDD_esp$LMC_t24)
 BDD_esp$Nb_rami_cr<-scale(BDD_esp$Nb_rami)
+BDD_esp_net$SD_cr<-scale(BDD_esp_net$SD)
+BDD_esp_net$TD_cr<-scale(BDD_esp_net$TD)
+BDD_esp_net$LA_cr<-scale(BDD_esp_net$Surface_F)
+BDD_esp_net$LDMC_cr<-scale(BDD_esp_net$LDMC)
+BDD_esp_net$LT_cr<-scale(BDD_esp_net$LT)
+BDD_esp_net$Vent_cr<-scale(BDD_esp_net$Vent)
+BDD_esp_net$Temp_cr<-scale(BDD_esp_net$T_ambiante)
+BDD_esp_net$LMC_t24_cr<-scale(BDD_esp_net$LMC_t24)
+BDD_esp_net$Nb_rami_cr<-scale(BDD_esp_net$Nb_rami)
 
 ###### FI ########
 # Comptage du nombre d'essais par espèce dans BDD_ech
@@ -849,6 +864,9 @@ BDD_esp$Nb_essais <- essais_par_espece[BDD_esp$Nom_scientifique]
 
 # Vérification
 head(BDD_esp)
+
+plot(BDD_esp$FI,BDD_esp$LT)
+plot(BDD_esp$LT,BDD_esp$FI)
 
 
 
@@ -907,7 +925,7 @@ AIC(mFI2,mFI3,mFI4)
 
 # Extraire coefficients (sans l'intercept)
 par(mar = c(5,7,5,5))
-coefs <- summary(mFI3)$coefficients[-1, ]
+coefs <- summary(mFI4)$coefficients[-1, ]
 
 # Variables utiles
 estimates <- coefs[, "Estimate"]
@@ -959,7 +977,7 @@ text(estimates, y_pos + 0.15,
      col = cols, font = 2, cex = 1.7)
 
 # Ajouter un texte avec le pseudo R² (à modifier si besoin)
-mtext(expression(R^2~"= 0.75"), side = 3, adj = 0, line = 0.5, cex = 1.5)
+mtext(expression(R^2~"= 0.72"), side = 3, adj = 0, line = 0.5, cex = 1.5)
 
 
 
@@ -978,7 +996,7 @@ plot(BDD_esp$Surface_F, BDD_esp$MT)
 plot(BDD_esp$SD, BDD_esp$MT)
 
 #modèles
-m_MT0<-glm(MT~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp,family="gaussian")
+m_MT0<-glm(MT~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp_net,family="gaussian")
 summary(m_MT0)
 m_MT1<-glm(MT~SD_cr+LMC_t24_cr+LDMC_cr,data=BDD_esp,family="gaussian")
 summary(m_MT1)
@@ -1047,7 +1065,7 @@ text(estimates, y_pos + 0.15,
      col = cols, font = 2, cex =  1.7)
 
 # Ajouter un texte avec le pseudo R² (à modifier si besoin)
-mtext(expression(R^2~"= 0.56"), side = 3, adj = 0, line = 0.5, cex = 1.5)
+mtext(expression(R^2~"= 0.58"), side = 3, adj = 0, line = 0.5, cex = 1.5)
 
 
 
@@ -1115,8 +1133,10 @@ plot(BDD_esp$SD, BDD_esp$BB_test)
 #modèles
 hist(BDD_esp$BB_prop)
 BDD_esp$BB_prop <- BDD_esp$BB_test/100
+BDD_esp_net$BB_prop <- BDD_esp_net$BB_test/100
 
-m_BB0<-glm(BB_prop~SD_cr+TD_cr+LA_cr+LMC_t24_cr+LT_cr,data=BDD_esp_net,family="gaussian")
+
+m_BB0<-glm(BB_prop~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp_net,family="gaussian")
 summary(m_BB0)
 m_BB1<-glm(BB_prop~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp,family="gaussian")
 summary(m_BB1)
@@ -1181,7 +1201,7 @@ text(estimates, y_pos + 0.15,
      col = cols, font = 2, cex =  1.7)
 
 # Ajouter un texte avec le pseudo R² (à modifier si besoin)
-mtext(expression(R^2~"= 0.53"), side = 3, adj = 0, line = 0.5, cex = 1.5)
+mtext(expression(R^2~"= 0.46"), side = 3, adj = 0, line = 0.5, cex = 1.5)
 
 
 
@@ -1243,9 +1263,9 @@ plot(BDD_esp$Surface_F, BDD_esp$BT_test)
 plot(BDD_esp$SD, BDD_esp$BT_test)
 
 #modèles
-m_BT0<-glm(BT_test~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp_net,family="Gamma")
+m_BT0<-glm(BT_test~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp,family="Gamma")
 summary(m_BT0)
-m_BT1<-glm(BT_test~SD_cr+TD_cr+LA_cr+LMC_t24_cr+LT_cr,data=BDD_esp_net,family="Gamma")
+m_BT1<-glm(BT_test~SD_cr+TD_cr+LA_cr+LMC_t24_cr+LT_cr,data=BDD_esp,family="Gamma")
 summary(m_BT1)
 m_BT2<-glm(BT_test~SD_cr+TD_cr+LA_cr+LMC_t24_cr+LDMC_cr+LT_cr,data=BDD_esp,family="Gamma")
 summary(m_BT2)
@@ -1256,7 +1276,7 @@ AIC(m_BT0,m_BT1,m_BT2)
 
 # Extraire coefficients (sans l'intercept)
 par(mar = c(5,7,5,5))
-coefs <- summary(m_BT1)$coefficients[-1, ]
+coefs <- summary(m_BT0)$coefficients[-1, ]
 
 # Variables utiles
 estimates <- coefs[, "Estimate"]
@@ -1308,7 +1328,7 @@ text(estimates, y_pos + 0.15,
      col = cols, font = 2, cex =  1.7)
 
 # Ajouter un texte avec le pseudo R² (à modifier si besoin)
-mtext(expression(R^2~"= 0.6"), side = 3, adj = 0, line = 0.5, cex = 1.5)
+mtext(expression(R^2~"= 0.51"), side = 3, adj = 0, line = 0.5, cex = 1.5)
 
 
 
@@ -1341,9 +1361,9 @@ plot(BDD_esp$Surface_F, BDD_esp$DI_test)
 plot(BDD_esp$SD, BDD_esp$DI_test)
 
 #modèles
-m_DI0<-glm(DI_test~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp_net,family="Gamma")
+m_DI0<-glm(DI_test~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp,family="Gamma")
 summary(m_DI0)
-m_DI1<-glm(DI_test~SD_cr+TD_cr+LA_cr+LMC_t24_cr+LT_cr,data=BDD_esp_net,family="Gamma")
+m_DI1<-glm(DI_test~SD_cr+TD_cr+LA_cr+LMC_t24_cr+LT_cr,data=BDD_esp,family="Gamma")
 summary(m_DI1)
 m_DI2<-glm(DI_test~SD_cr+TD_cr+LA_cr+LMC_t24_cr+LDMC_cr+LT_cr,data=BDD_esp,family="Gamma")
 summary(m_DI2)
@@ -1354,7 +1374,7 @@ AIC(m_DI0,m_DI1,m_DI2)
 
 # Extraire coefficients (sans l'intercept)
 par(mar = c(5,7,5,5))
-coefs <- summary(m_DI1)$coefficients[-1, ]
+coefs <- summary(m_DI0)$coefficients[-1, ]
 
 # Variables utiles
 estimates <- coefs[, "Estimate"]
@@ -1406,7 +1426,7 @@ text(estimates, y_pos + 0.15,
      col = cols, font = 2, cex =  1.7)
 
 # Ajouter un texte avec le pseudo R² (à modifier si besoin)
-mtext(expression(R^2~"= 0.58"), side = 3, adj = 0, line = 0.5, cex = 1.5)
+mtext(expression(R^2~"= 0.62"), side = 3, adj = 0, line = 0.5, cex = 1.5)
 
 
 
@@ -1427,9 +1447,9 @@ plot(BDD_esp$Surface_F, BDD_esp$score_normalise)
 plot(BDD_esp$SD, BDD_esp$score_normalise)
 
 #modèles
-m_score0<-glm(score_normalise~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp_net,family="gaussian")
+m_score0<-glm(score_normalise~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp,family="gaussian")
 summary(m_score0)
-m_score1<-glm(score_normalise~SD_cr+TD_cr+LA_cr+LMC_t24_cr+LT_cr,data=BDD_esp_net,family="gaussian")
+m_score1<-glm(score_normalise~SD_cr+TD_cr+LA_cr+LMC_t24_cr+LT_cr,data=BDD_esp,family="gaussian")
 summary(m_score1)
 m_score2<-glm(score_normalise~SD_cr+TD_cr+LA_cr+LMC_t24_cr+LDMC_cr+LT_cr,data=BDD_esp,family="gaussian")
 summary(m_score2)
@@ -1494,7 +1514,7 @@ text(estimates, y_pos + 0.15,
      col = cols, font = 2, cex =  1.7)
 
 # Ajouter un texte avec le pseudo R² (à modifier si besoin)
-mtext(expression(R^2~"= 0.6"), side = 3, adj = 0, line = 0.5, cex = 1.5)
+mtext(expression(R^2~"= 0.75"), side = 3, adj = 0, line = 0.5, cex = 1.5)
 
 
 

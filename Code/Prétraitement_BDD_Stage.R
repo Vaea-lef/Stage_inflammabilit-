@@ -30,12 +30,14 @@ LDMC
 
 #calcul surface foliaire spécifique (SLA) (mm²/g)
 SLA<-((BDD_leaf$Surface_F*100)/BDD_leaf$Masse_F_Tsec)
+SLA
 SLA<-round(SLA,2)
 SLA
 
 #Leaf Thickness (LT) = épaisseur de la feuille (mm)
-LT<-((1/SLA)*LDMC)
-LT<-round(LT,4)
+LT<-(((1/SLA)*LDMC)*1000)
+LT
+LT<-round(LT,2)
 LT
 
 #Perte en eau des feuilles (PEF)(%)
