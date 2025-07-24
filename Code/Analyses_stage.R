@@ -71,7 +71,7 @@ hist((BDD_esp$LT))        #normale
 
 
 
-############################################################## ECHELLE ESPECE #############################################################
+######################################################## ECHELLE ESPECE #############################################################
 
 ################## DISTRIBUTION DES DONNEES #####################
 #Infla
@@ -915,8 +915,25 @@ summary(mFI1)
 
 mFI2<-glm(cbind(Nb_FI,Nb_essais-Nb_FI)~SD_cr+TD_cr+LA_cr+LMC_t24_cr+LDMC_cr+LT_cr,data=BDD_esp,family="binomial")
 summary(mFI2)
+
 mFI3<-glm(cbind(Nb_FI,Nb_essais-Nb_FI)~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp,family="binomial")
 summary(mFI3)
+
+
+ndata<-data.frame(LMC_t24=seq(min(BDD_esp$LMC_t24),max(BDD_esp$LMC_t24),1))
+pred<-predict(mFI3,type="response",newdata=ndata)
+
+plot(pred~ndata$LMC_t24,type="l",lwd=2,xlab="LMC_t24",ylab="Ignition Frequency",ylim=c(0,1))
+points(BDD_esp$LMC_t24,(BDD_esp$Nb_FI/nb_essais))
+
+
+
+
+
+
+
+
+
 mFI4<-glm(cbind(Nb_FI,Nb_essais-Nb_FI)~SD_cr+TD_cr+LA_cr+LMC_t24_cr+LT_cr,data=BDD_esp,family="binomial")
 summary(mFI4)
 AIC(mFI2,mFI3,mFI4)
@@ -2054,7 +2071,7 @@ plot(BDD_esp$Gmin,BDD_esp$LMC_t24)
 
 foo<-seq(min(BDD_esp$Gmin),max(BDD_esp$Gmin),1)
 pred_data1<-data.frame(Gmin=foo,
-                       LDMC=rep(quantile(BDD_esp$LDMC,p=0.25),length(foo)))
+                       LDMC=rep(mean(BDD_esp$LDMC),length(foo)))
 
 pred_data2<-data.frame(Gmin=foo,
                        LDMC=rep(quantile(BDD_esp$LDMC,p=0.75),length(foo)))
@@ -2093,6 +2110,44 @@ plot(BDD_esp$Nb_FI~BDD_esp$LMC_t24)
 
 
 
+# Modèle
+m <- glm(LMC_t24 ~ Gmin + LDMC, data = BDD_esp, family = "Gamma")
+
+# Valeurs de Gmin
+foo <- seq(min(BDD_esp$Gmin), max(BDD_esp$Gmin), length.out = 100)
+
+# Trois niveaux de LDMC : moyen, haut (Q75), bas (Q5)
+pred_data1 <- data.frame(Gmin = foo,
+                         LDMC = rep(mean(BDD_esp$LDMC), length(foo)))
+
+pred_data2 <- data.frame(Gmin = foo,
+                         LDMC = rep(quantile(BDD_esp$LDMC, 0.75), length(foo)))
+
+pred_data3 <- data.frame(Gmin = foo,
+                         LDMC = rep(quantile(BDD_esp$LDMC, 0.05), length(foo)))
+
+# Prédictions
+pred1 <- predict(m, type = "response", newdata = pred_data1, se.fit = TRUE)
+pred2 <- predict(m, type = "response", newdata = pred_data2, se.fit = TRUE)
+pred3 <- predict(m, type = "response", newdata = pred_data3, se.fit = TRUE)
+
+# Plot des points observés
+plot(BDD_esp$Gmin, BDD_esp$LMC_t24, 
+     xlab = "Gmin", ylab = "LMC_t24", 
+     main = "Effet de Gmin sur LMC_t24 selon LDMC")
+
+# Courbes de prédiction
+lines(foo, pred1$fit, col = "blue", lwd = 2)  # LDMC moyen
+lines(foo, pred2$fit, col = "darkgreen", lwd = 2)  # LDMC haut
+lines(foo, pred3$fit, col = "orange", lwd = 2)  # LDMC bas
+
+# Intervalle de confiance pour LDMC moyen
+lines(foo, pred1$fit + 1.96 * pred1$se.fit, col = "blue", lty = 3)
+lines(foo, pred1$fit - 1.96 * pred1$se.fit, col = "blue", lty = 3)
+
+# Légende
+legend("topright", legend = c("LDMC moyen", "LDMC Q75", "LDMC Q5"),
+       col = c("blue", "darkgreen", "orange"), lwd = 2, bty = "n")
 
 
 
@@ -2114,676 +2169,354 @@ plot(BDD_esp$Nb_FI~BDD_esp$LMC_t24)
 
 
 
-############################ MODELES #####################################
-hist(BDD_esp_net$DI_test)
-#standardisation des données 
-BDD_esp_net$SD_cr<-scale(BDD_esp_net$SD)
-BDD_esp_net$TD_cr<-scale(BDD_esp_net$TD)
-BDD_esp_net$LA_cr<-scale(BDD_esp_net$Surface_F)
-BDD_esp_net$LDMC_cr<-scale(BDD_esp_net$LDMC)
-BDD_esp_net$LT_cr<-scale(BDD_esp_net$LT)
-BDD_esp_net$Vent_cr<-scale(BDD_esp_net$Vent)
-BDD_esp_net$Temp_cr<-scale(BDD_esp_net$T_ambiante)
-BDD_esp_net$LMC_t24_cr<-scale(BDD_esp_net$LMC_t24)
-
-###### FI ########
-# Comptage du nombre d'essais par espèce dans BDD_ech
-essais_par_espece <- table(BDD_ech$Nom_scientifique)
-essais_par_espece
-
-# Création d'une nouvelle colonne Nb_essais dans BDD_esp_net en s'appuyant sur le nom scientifique
-BDD_esp_net$Nb_essais <- essais_par_espece[BDD_esp_net$Nom_scientifique]
-
-# Vérification
-head(BDD_esp_net)
-
-
-
-mFI<-glm(cbind(Nb_FI,Nb_essais-Nb_FI)~LMC_t0,data=BDD_esp_net,family="binomial")
-summary(mFI)
-pred<-predict(mFI,type="response")
-
-ndata<-data.frame(LMC_t0=seq(min(BDD_esp_net$LMC_t0),max(BDD_esp_net$LMC_t0),1))
-pred<-predict(mFI,type="response",newdata=ndata)
-
-plot(pred~ndata$LMC_t0,type="l",lwd=2,xlab="LMC_t0",ylab="Ignition Frequency")
-points(BDD_esp_net$LMC_t0,(BDD_esp_net$Nb_FI/nb_essais))
-
-summary(pred)
-
-
-mFI<-glm(cbind(Nb_FI,Nb_essais-Nb_FI)~LDMC,data=BDD_esp_net,family="binomial")
-summary(mFI)
-pred<-predict(mFI,type="response")
-
-ndata<-data.frame(LDMC=seq(min(BDD_esp_net$LDMC),max(BDD_esp_net$LDMC),1))
-pred<-predict(mFI,type="response",newdata=ndata)
-
-plot(pred~ndata$LDMC,type="l",lwd=2,xlab="LDMC",ylab="Ignition Frequency")
-points(BDD_esp_net$LDMC,(BDD_esp_net$Nb_FI/nb_essais))
-
-summary(pred)
 
 
 
 
+################################ graphs prédiction ##############################
 
 
-mFI1<-glm(cbind(Nb_FI,Nb_essais-Nb_FI)~LDMC+LT+Surface_F+TD+SD,data=BDD_esp_net,family="binomial")
-summary(mFI1)
+vars <- c("SD_cr", "TD_cr", "LA_cr", "LMC_t24_cr", "LT_cr")
+BDD_esp[vars] <- lapply(BDD_esp[vars], function(x) as.numeric(x))
 
+############ FI ######################
+# Modèle GLM binomial
+mFI3 <- glm(cbind(Nb_FI, Nb_essais - Nb_FI) ~ SD_cr + TD_cr + LA_cr + LMC_t24_cr + LT_cr,data = BDD_esp, family = "binomial")
 
-mFI2<-glm(cbind(Nb_FI,Nb_essais-Nb_FI)~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp_net,family="binomial")
-summary(mFI2)
-mFI3<-glm(cbind(Nb_FI,Nb_essais-Nb_FI)~SD_cr+TD_cr+LA_cr+LMC_t24_cr+LT_cr,data=BDD_esp_net,family="binomial")
 summary(mFI3)
-mFI4<-glm(cbind(Nb_FI,Nb_essais-Nb_FI)~SD_cr+TD_cr+LA_cr+LMC_t24_cr+LDMC_cr+LT_cr,data=BDD_esp_net,family="binomial")
-summary(mFI4)
 
-AIC(mFI2,mFI3,mFI4)
+moy <- mean(BDD_esp$LMC_t24, na.rm = TRUE)
+ecart <- sd(BDD_esp$LMC_t24, na.rm = TRUE)
 
-###################### graph bleu rouge ###############
+# Valeurs de LMC_t24
+foo <- seq(min(BDD_esp$LMC_t24_cr), max(BDD_esp$LMC_t24_cr),length.out = 100)
 
-# Extraire coefficients (sans l'intercept)
-par(mar = c(5,5,5,5))
-coefs <- summary(mFI2)$coefficients[-1, ]
+# on fait varier LMDC et on fixe les autres variables
+pred_data1 <- data.frame(
+  LMC_t24_cr = foo,
+  SD_cr = rep(mean(BDD_esp$SD_cr,na.rm = TRUE), length(foo)),
+  TD_cr = rep(mean(BDD_esp$TD_cr), length(foo)),
+  LA_cr = rep(mean(BDD_esp$LA_cr), length(foo)),
+  LT_cr = rep(mean(BDD_esp$LT_cr), length(foo))
+)
 
-# Variables utiles
-estimates <- coefs[, "Estimate"]
-stderr <- coefs[, "Std. Error"]
-pval <- coefs[, "Pr(>|z|)"]
-labels <- rownames(coefs)
 
-# Calcul des intervalles de confiance plus ou moins SE
-ci <- cbind(estimates - stderr, estimates + stderr)
+# Prédictions
+pred1 <- predict(mFI3, type = "response", newdata = pred_data1, se.fit = TRUE)
 
-# Étoiles de significativité
-stars <- ifelse(pval < 0.001, "***",
-                ifelse(pval < 0.01, "**",
-                       ifelse(pval < 0.05, "*",
-                              ifelse(pval < 0.1, ".", ""))))
 
-# Couleurs selon signe du coefficient
-cols <- ifelse(estimates < 0, "#e90000", "#117304")
+# Plot des points observés
+plot(BDD_esp$LMC_t24, BDD_esp$Nb_FI / BDD_esp$Nb_essais, 
+     xlab = "LMC_t24", ylab = "Ignition Frequency",ylim = c(0,1), 
+     main = "Effet de LMC_t24 sur LMC_t24 selon SD")
 
-# Ordre des variables (du bas vers le haut)
-y_pos <- length(estimates):1
+# Courbes de prédiction
+lines((foo*ecart+moy), pred1$fit, col = "blue", lwd = 2) 
 
-# Plot de base
-plot(estimates, y_pos,
-     xlim = c(-3,3),
-     ylim = c(1,length(estimates) +0.25 ),
-     pch = 16, col = cols,
-     xlab = "Estimate",
-     ylab = "",
-     axes = FALSE,
-     main = "Ignition Frequency",
-     cex.main = 1.5)
+axis(2)
 
-# Ligne verticale à zéro
-abline(v = 0, lty = 2)
-
-# Barres d'erreur (IC)
-segments(ci[,1], y_pos, ci[,2], y_pos, col = cols)
-
-# Axe Y avec noms des variables
-axis(2, at = y_pos, labels = c("SD", "TD", "LA", "LDMC","LT"), las = 1)
-
-# Axe X
-axis(1)
-
-# Valeurs des coefficients + étoiles
-text(estimates, y_pos + 0.15,
-     labels = paste0(round(estimates, 2), stars),
-     col = cols, font = 2, cex = 1.3)
-
-# Ajouter un texte avec le pseudo R² (à modifier si besoin)
-mtext(expression(R^2~"= 0.78"), side = 3, adj = 0, line = 0.5, cex = 1.2)
+# Intervalle de confiance pour SD moyen
+lines((foo*ecart+moy), pred1$fit + 1.96 * pred1$se.fit, col = "blue", lty = 3)
+lines((foo*ecart+moy), pred1$fit - 1.96 * pred1$se.fit, col = "blue", lty = 3)
 
 
 
-
-
-
-
-
-
-###### MT #########
-#plot avec traits (VE)
-plot(BDD_esp_net$TD, BDD_esp_net$MT)
-plot(BDD_esp_net$LT, BDD_esp_net$MT)
-plot(BDD_esp_net$LDMC, BDD_esp_net$MT)
-plot(BDD_esp_net$Surface_F, BDD_esp_net$MT)
-plot(BDD_esp_net$SD, BDD_esp_net$MT)
-
-#modèles
+############ MT ######################
+# Modèle GLM 
 m_MT0<-glm(MT~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp_net,family="gaussian")
 summary(m_MT0)
-m_MT1<-glm(MT~SD_cr+TD_cr+LA_cr+LMC_t24_cr+LT_cr,data=BDD_esp_net,family="gaussian")
-summary(m_MT1)
-m_MT2<-glm(MT~SD_cr+TD_cr+LA_cr+LMC_t24_cr+LDMC_cr+LT_cr,data=BDD_esp_net,family="gaussian")
-summary(m_MT2)
+moy <- mean(BDD_esp$LDMC_cr, na.rm = TRUE)
+ecart <- sd(BDD_esp$LDMC_cr, na.rm = TRUE)
 
-AIC(m_MT0,m_MT1,m_MT2)
+# Valeurs de LDMC
+foo <- seq(min(BDD_esp_net$LDMC_cr, na.rm = TRUE), max(BDD_esp_net$LDMC_cr,na.rm = TRUE))
 
-###################### graph coefs ###############
+# on fait varier 1 variable et on fixe les autres variables
+pred_data1 <- data.frame(
+  LDMC = foo,
+  SD = rep(mean(BDD_esp_net$SD,na.rm = TRUE), length(foo)),
+  TD = rep(mean(BDD_esp_net$TD), length(foo)),
+  Surface_F = rep(mean(BDD_esp_net$Surface_F), length(foo)),
+  LT = rep(mean(BDD_esp_net$LT), length(foo))
+)
 
-# Extraire coefficients (sans l'intercept)
-par(mar = c(5,5,5,5))
-coefs <- summary(m_MT0)$coefficients[-1, ]
 
-# Variables utiles
-estimates <- coefs[, "Estimate"]
-stderr <- coefs[, "Std. Error"]
-pval <- coefs[, "Pr(>|t|)"]
-labels <- rownames(coefs)
+# Prédictions
+pred1 <- predict(m_MT0, type = "response", newdata = pred_data1, se.fit = TRUE)
 
-# Calcul des intervalles de confiance plus ou moins SE
-ci <- cbind(estimates - stderr, estimates + stderr)
 
-# Étoiles de significativité
-stars <- ifelse(pval < 0.001, "***",
-                ifelse(pval < 0.01, "**",
-                       ifelse(pval < 0.05, "*",
-                              ifelse(pval < 0.1, ".", ""))))
+# Plot des points observés
+plot(BDD_esp_net$LDMC, BDD_esp_net$MT, 
+     xlab = "LDMC", ylab = "Maximum Temperature", 
+     main = "MT selon LDMC")
 
-# Couleurs selon signe du coefficient
-cols <- ifelse(estimates < 0, "#e90000", "#117304")
+# Courbes de prédiction
+lines(foo, pred1$fit, col = "blue", lwd = 2) 
 
-# Ordre des variables (du bas vers le haut)
-y_pos <- length(estimates):1
+# Intervalle de confiance pour SD moyen
+lines(foo, pred1$fit + 1.96 * pred1$se.fit, col = "blue", lty = 3)
+lines(foo, pred1$fit - 1.96 * pred1$se.fit, col = "blue", lty = 3)
 
-# Plot de base
-plot(estimates, y_pos,
-     xlim = c(-100,150),
-     ylim = c(1,length(estimates) +0.25 ),
-     pch = 16, col = cols,
-     xlab = "Estimate",
-     ylab = "",
-     axes = FALSE,
-     main = "Maximum Temperature",
-     cex.main = 1.5)
 
-# Ligne verticale à zéro
-abline(v = 0, lty = 2)
+#################pour les autres variables ###################
+# Modèle GLM 
+m_MT0<-glm(MT~SD+TD+Surface_F+LDMC+LT,data=BDD_esp_net,family="gaussian")
+summary(m_MT0)
 
-# Barres d'erreur (IC)
-segments(ci[,1], y_pos, ci[,2], y_pos, col = cols)
+# Valeurs de LDMC
+foo <- seq(min(BDD_esp_net$Surface_F,na.rm = TRUE), max(BDD_esp_net$Surface_F,na.rm = TRUE))
 
-# Axe Y avec noms des variables
-axis(2, at = y_pos, labels = c("SD", "TD", "LA", "LDMC","LT"), las = 1)
+# on fait varier 1 variable et on fixe les autres variables
+pred_data1 <- data.frame(
+  Surface_F = foo,
+  LDMC = rep(mean(BDD_esp_net$LDMC,na.rm = TRUE), length(foo)),
+  TD = rep(mean(BDD_esp_net$TD,na.rm = TRUE), length(foo)),
+  LT = rep(mean(BDD_esp_net$LT,na.rm = TRUE), length(foo)),
+  SD = rep(mean(BDD_esp_net$SD,na.rm = TRUE), length(foo))
+)
 
-# Axe X
-axis(1)
 
-# Valeurs des coefficients + étoiles
-text(estimates, y_pos + 0.15,
-     labels = paste0(round(estimates, 2), stars),
-     col = cols, font = 2, cex = 1.3)
+# Prédictions
+pred1 <- predict(m_MT0, type = "response", newdata = pred_data1, se.fit = TRUE)
 
-# Ajouter un texte avec le pseudo R² (à modifier si besoin)
-mtext(expression(R^2~"= 0.58"), side = 3, adj = 0, line = 0.5, cex = 1.2)
 
+# Plot des points observés
+plot(BDD_esp_net$Surface_F, BDD_esp_net$MT, 
+     xlab = "Surface_F", ylab = "Maximum Temperature", 
+     main = "MT selon Surface_F")
 
+# Courbes de prédiction
+lines(foo, pred1$fit, col = "#329c2f", lwd = 2) 
 
+# Intervalle de confiance pour Surface_F moyen
+lines(foo, pred1$fit + 1.96 * pred1$se.fit, col = "#329c2f", lty = 3)
+lines(foo, pred1$fit - 1.96 * pred1$se.fit, col = "#329c2f", lty = 3)
 
 
 
 
-m_MT01<-glm(MT~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp_net,family="gaussian")
-summary(m_MT01)
-plot(m_MT01)
 
-m_MT1<-glm(MT~SD_cr+TD_cr+LDMC_cr+LT_cr,data=BDD_esp_net,family="gaussian")        # meilleur modèle
-summary(m_MT1)
-
-m_MT2<-glm(MT~SD_cr+LDMC_cr+LT_cr,data=BDD_esp_net,family="gaussian")
-summary(m_MT2)
-
-m_MT3<-glm(MT~SD_cr+LDMC_cr,data=BDD_esp_net,family="gaussian")
-summary(m_MT3)
-
-AIC(m_MT0,m_MT01,m_MT1,m_MT2,m_MT3) 
-
-
-
-
-plot(BDD_esp_net$Gmin,BDD_esp_net$LMC_t24)
-
-
-foo<-seq(min(BDD_esp_net$Gmin),max(BDD_esp_net$Gmin),1)
-pred_data1<-data.frame(Gmin=foo,
-                       LDMC=rep(quantile(BDD_esp_net$LDMC,p=0.25),length(foo)))
-
-pred_data2<-data.frame(Gmin=foo,
-                       LDMC=rep(quantile(BDD_esp_net$LDMC,p=0.75),length(foo)))
-
-pred_data3<-data.frame(Gmin=foo,
-                       LDMC=rep(quantile(BDD_esp_net$LDMC,p=0.05),length(foo)))
-
-
-pred1<-predict(m,type="response",newdata=pred_data1,se.fit=TRUE)
-pred2<-predict(m,type="response",newdata=pred_data2,se.fit=TRUE)
-pred3<-predict(m,type="response",newdata=pred_data3,se.fit=TRUE)
-
-plot(BDD_esp_net$LMC_t24~BDD_esp_net$Gmin)
-lines(pred1$fit~pred_data$Gmin,lwd=2)
-lines(pred2$fit~pred_data$Gmin,lwd=2)
-lines(pred3$fit~pred_data$Gmin,lwd=2)
-
-
-pred<-predict(m,type = "response")
-plot(BDD_esp_net$MT,pred)
-abline(a=0,b=1)
-
-
-
-
-###### BB #########
-#plot avec traits (VE)
-plot(BDD_esp_net$TD, BDD_esp_net$BB_test)
-plot(BDD_esp_net$LT, BDD_esp_net$BB_test)
-plot(BDD_esp_net$LDMC, BDD_esp_net$BB_test)
-plot(BDD_esp_net$Surface_F, BDD_esp_net$BB_test)
-plot(BDD_esp_net$SD, BDD_esp_net$BB_test)
-
-#modèles
-hist(BDD_esp_net$BB_prop)
-BDD_esp_net$BB_prop <- BDD_esp_net$BB_test/100
-
-m_BB0<-glm(BB_prop~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp_net,family="gaussian")
-summary(m_BB0)
-m_BB1<-glm(BB_prop~SD_cr+TD_cr+LA_cr+LMC_t24_cr+LT_cr,data=BDD_esp_net,family="gaussian")
-summary(m_BB1)
-m_BB2<-glm(BB_prop~SD_cr+TD_cr+LA_cr+LMC_t24_cr+LDMC_cr+LT_cr,data=BDD_esp_net,family="gaussian")
-summary(m_BB2)
-
-AIC(m_BB0,m_BB1,m_BB2)
-
-###################### graph coefs ###############
-
-# Extraire coefficients (sans l'intercept)
-par(mar = c(5,5,5,5))
-coefs <- summary(m_BB0)$coefficients[-1, ]
-
-# Variables utiles
-estimates <- coefs[, "Estimate"]
-stderr <- coefs[, "Std. Error"]
-pval <- coefs[, "Pr(>|t|)"]
-labels <- rownames(coefs)
-
-# Calcul des intervalles de confiance plus ou moins SE
-ci <- cbind(estimates - stderr, estimates + stderr)
-
-# Étoiles de significativité
-stars <- ifelse(pval < 0.001, "***",
-                ifelse(pval < 0.01, "**",
-                       ifelse(pval < 0.05, "*",
-                              ifelse(pval < 0.1, ".", ""))))
-
-# Couleurs selon signe du coefficient
-cols <- ifelse(estimates < 0, "#e90000", "#117304")
-
-# Ordre des variables (du bas vers le haut)
-y_pos <- length(estimates):1
-
-# Plot de base
-plot(estimates, y_pos,
-     xlim = range(ci),
-     ylim = c(1,length(estimates) +0.25 ),
-     pch = 16, col = cols,
-     xlab = "Estimate",
-     ylab = "",
-     axes = FALSE,
-     main = "Burnt Biomass",
-     cex.main = 1.5)
-
-# Ligne verticale à zéro
-abline(v = 0, lty = 2)
-
-# Barres d'erreur (IC)
-segments(ci[,1], y_pos, ci[,2], y_pos, col = cols)
-
-# Axe Y avec noms des variables
-axis(2, at = y_pos, labels = c("SD", "TD", "LA", "LDMC","LT"), las = 1)
-
-# Axe X
-axis(1)
-
-# Valeurs des coefficients + étoiles
-text(estimates, y_pos + 0.15,
-     labels = paste0(round(estimates, 2), stars),
-     col = cols, font = 2, cex = 1.3)
-
-# Ajouter un texte avec le pseudo R² (à modifier si besoin)
-mtext(expression(R^2~"= 0.47"), side = 3, adj = 0, line = 0.5, cex = 1.2)
-
-
-
-
-
-m_BB0<-glm(BB_prop~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr+Vent_cr+Temp_cr,data=BDD_esp_net,family="quasibinomial")
+##################### BB #######################
+############ BB ######################
+# Modèle GLM 
+m_BB0<-glm(BB_prop~SD+TD+Surface_F+LDMC+LT,data=BDD_esp_net,family="gaussian")
 summary(m_BB0)
 
-m_BB01<-glm(BB_prop~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp_net,family="binomial")
+# Valeurs de LDMC
+foo <- seq(min(BDD_esp_net$LDMC, na.rm = TRUE), max(BDD_esp_net$LDMC,na.rm = TRUE))
+
+# on fait varier 1 variable et on fixe les autres variables
+pred_data1 <- data.frame(
+  LDMC = foo,
+  SD = rep(mean(BDD_esp_net$SD,na.rm = TRUE), length(foo)),
+  TD = rep(mean(BDD_esp_net$TD), length(foo)),
+  Surface_F = rep(mean(BDD_esp_net$Surface_F), length(foo)),
+  LT = rep(mean(BDD_esp_net$LT), length(foo))
+)
+
+
+# Prédictions
+pred1 <- predict(m_BB0, type = "response", newdata = pred_data1, se.fit = TRUE)
+
+
+# Plot des points observés
+plot(BDD_esp_net$LDMC, BDD_esp_net$BB_prop, 
+     xlab = "LDMC", ylab = "Burnt Biomass", 
+     main = "BB selon LDMC")
+
+# Courbes de prédiction
+lines(foo, pred1$fit, col = "blue", lwd = 2) 
+
+# Intervalle de confiance pour SD moyen
+lines(foo, pred1$fit + 1.96 * pred1$se.fit, col = "blue", lty = 3)
+lines(foo, pred1$fit - 1.96 * pred1$se.fit, col = "blue", lty = 3)
+
+
+#################pour les autres variables ###################
+# Modèle GLM 
+m_BB0<-glm(BB_prop~SD+TD+Surface_F+LDMC+LT,data=BDD_esp_net,family="gaussian")
 summary(m_BB0)
 
-m_BB1<-glm(BB_prop~LDMC_cr,data=BDD_esp_net,family="binomial")        # meilleur modèle
-summary(m_BB1)
+# Valeurs de LDMC
+foo <- seq(min(BDD_esp_net$LT,na.rm = TRUE), max(BDD_esp_net$LT,na.rm = TRUE))
 
-library(betareg)
-model <- betareg(BB_prop~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr+Vent_cr+Temp_cr,data=BDD_esp_net)
-summary(model)
+# on fait varier 1 variable et on fixe les autres variables
+pred_data1 <- data.frame(
+  LT = foo,
+  LDMC = rep(mean(BDD_esp_net$LDMC,na.rm = TRUE), length(foo)),
+  TD = rep(mean(BDD_esp_net$TD,na.rm = TRUE), length(foo)),
+  Surface_F = rep(mean(BDD_esp_net$Surface_F,na.rm = TRUE), length(foo)),
+  SD = rep(mean(BDD_esp_net$SD,na.rm = TRUE), length(foo))
+)
 
 
-AIC(m_BB0,model) #!!! pas le même nombre d'observation car SD a deux esp de moins 
+# Prédictions
+pred1 <- predict(m_BB0, type = "response", newdata = pred_data1, se.fit = TRUE)
 
 
+# Plot des points observés
+plot(BDD_esp_net$LT, BDD_esp_net$BB_prop, 
+     xlab = "LT", ylab = "Burnt Biomass", 
+     main = "BB selon LT")
 
-m_BB0<-glm(BB_prop~LDMC+LT,data=BDD_esp_net,family="gaussian")
-summary(m_BB0)
-m_BB1<-glm(BB_prop~LDMC+LT,data=BDD_esp_net,family="quasibinomial")
-summary(m_BB1)
-m_BB2<-glm(BB_prop~LDMC+LT,data=BDD_esp_net,family="binomial")
-summary(m_BB2)
-library(betareg)
-model <- betareg(BB_prop~LDMC+LT,data=BDD_esp_net)
-summary(model)
+# Courbes de prédiction
+lines(foo, pred1$fit, col = "#329c2f", lwd = 2) 
 
-c<-seq(1,1000,0.1)
-
-new<-data.frame(LDMC=c)
-
-pred1<-predict(m_BB0,newdata=new,type = "response")
-plot(BDD_esp_net$BB_prop,pred1)
-pred2<-predict(m_BB1,type = "response",newdata=new)
-plot(BDD_esp_net$BB_prop,pred2)
-pred3<-predict(m_BB2,type = "response",newdata=new)
-
-pred1
-plot(pred1~c,type="l",lwd=3)
-lines(pred2~c,lwd=3,lty=3)
-lines(pred3~c,lwd=3,lty=2)
-points(BDD_esp_net$BB_prop~BDD_esp_net$LDMC)
+# Intervalle de confiance pour LT moyen
+lines(foo, pred1$fit + 1.96 * pred1$se.fit, col = "#329c2f", lty = 3)
+lines(foo, pred1$fit - 1.96 * pred1$se.fit, col = "#329c2f", lty = 3)
 
 
 
 
 
-###### BT #########
-#plot avec traits (VE)
-plot(BDD_esp_net$TD, BDD_esp_net$BT_test)
-plot(BDD_esp_net$LT, BDD_esp_net$BT_test)
-plot(BDD_esp_net$LDMC, BDD_esp_net$BT_test)
-plot(BDD_esp_net$Surface_F, BDD_esp_net$BT_test)
-plot(BDD_esp_net$SD, BDD_esp_net$BT_test)
 
-#modèles
-m_BT0<-glm(BT_test~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp_net,family="Gamma")
+
+
+
+##################### BT #######################
+############ BT ######################
+# Modèle GLM 
+m_BT0<-glm(BT~SD+TD+Surface_F+LDMC+LT,data=BDD_esp_net,family="Gamma")
 summary(m_BT0)
-m_BT1<-glm(BT_test~SD_cr+TD_cr+LA_cr+LMC_t24_cr+LT_cr,data=BDD_esp_net,family="Gamma")
-summary(m_BT1)
-m_BT2<-glm(BT_test~SD_cr+TD_cr+LA_cr+LMC_t24_cr+LDMC_cr+LT_cr,data=BDD_esp_net,family="Gamma")
-summary(m_BT2)
 
-AIC(m_BT0,m_BT1,m_BT2)
+# Valeurs de LDMC
+foo <- seq(min(BDD_esp_net$LDMC, na.rm = TRUE), max(BDD_esp_net$LDMC,na.rm = TRUE))
 
-###################### graph coefs ###############
-
-# Extraire coefficients (sans l'intercept)
-par(mar = c(5,5,5,5))
-coefs <- summary(m_BT0)$coefficients[-1, ]
-
-# Variables utiles
-estimates <- coefs[, "Estimate"]
-stderr <- coefs[, "Std. Error"]
-pval <- coefs[, "Pr(>|t|)"]
+# on fait varier 1 variable et on fixe les autres variables
+pred_data1 <- data.frame(
+  LDMC = foo,
+  SD = rep(mean(BDD_esp_net$SD,na.rm = TRUE), length(foo)),
+  TD = rep(mean(BDD_esp_net$TD), length(foo)),
+  Surface_F = rep(mean(BDD_esp_net$Surface_F), length(foo)),
+  LT = rep(mean(BDD_esp_net$LT), length(foo))
+)
 
 
-# Calcul des intervalles de confiance plus ou moins SE
-ic <- cbind(estimates - stderr, estimates + stderr)
-
-# Étoiles de significativité
-stars <- ifelse(pval < 0.001, "***",
-                ifelse(pval < 0.01, "**",
-                       ifelse(pval < 0.05, "*",
-                              ifelse(pval < 0.1, ".", ""))))
-
-# Couleurs selon signe du coefficient
-cols <- ifelse(estimates < 0, "#e90000", "#117304")
-
-# Ordre des variables (du bas vers le haut)
-y_pos <- length(estimates):1
-
-# Plot de base
-plot(estimates, y_pos,
-     xlim = c(-0.015,0.010),
-     ylim = c(1,length(estimates) +0.25 ),
-     pch = 16, col = cols,
-     xlab = "Estimate",
-     ylab = "",
-     axes = FALSE,
-     main = "Burning Time",
-     cex.main = 1.5)
-
-# Ligne verticale à zéro
-abline(v = 0, lty = 2)
-
-# Barres d'erreur (IC)
-segments(ic[,1], y_pos, ic[,2], y_pos, col = cols)
-
-# Axe Y avec noms des variables
-axis(2, at = y_pos, labels = c("SD", "TD", "LA", "LDMC","LT"), las = 1)
-
-# Axe X
-axis(1)
-
-# Valeurs des coefficients + étoiles
-text(estimates, y_pos + 0.15,
-     labels = paste0(round(estimates, 4), stars),
-     col = cols, font = 2, cex = 1.3)
-
-# Ajouter un texte avec le pseudo R² (à modifier si besoin)
-mtext(expression(R^2~"= 0.61"), side = 3, adj = 0, line = 0.5, cex = 1.2)
+# Prédictions
+pred1 <- predict(m_BT0, type = "response", newdata = pred_data1, se.fit = TRUE)
 
 
+# Plot des points observés
+plot(BDD_esp_net$LDMC, BDD_esp_net$BT, 
+     xlab = "LDMC", ylab = "Burning Time", 
+     main = "BT selon LDMC")
+
+# Courbes de prédiction
+lines(foo, pred1$fit, col = "blue", lwd = 2) 
+
+# Intervalle de confiance pour SD moyen
+lines(foo, pred1$fit + 1.96 * pred1$se.fit, col = "blue", lty = 3)
+lines(foo, pred1$fit - 1.96 * pred1$se.fit, col = "blue", lty = 3)
 
 
-m_BT1<-glm(BT_test~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp_net,family="Gamma")       
-summary(m_BT1)
+#################pour les autres variables ###################
+# Modèle GLM 
+m_BT0<-glm(BT~SD+TD+Surface_F+LDMC+LT,data=BDD_esp_net,family="Gamma")
+summary(m_BT0)
 
-m_BT2<-glm(BT_test~SD_cr+TD_cr+LA_cr+LDMC_cr,data=BDD_esp_net,family="Gamma")    ### meilleur modèle 
-summary(m_BT2)
+# Valeurs de LDMC
+foo <- seq(min(BDD_esp_net$SD,na.rm = TRUE), max(BDD_esp_net$SD,na.rm = TRUE),length.out = 100)
 
-m_BT3<-glm(BT_test~SD_cr+TD_cr+LDMC_cr,data=BDD_esp_net,family="Gamma")
-summary(m_BT3)
+# on fait varier 1 variable et on fixe les autres variables
+pred_data1 <- data.frame(
+  SD = foo,
+  LDMC = rep(mean(BDD_esp_net$LDMC,na.rm = TRUE), length(foo)),
+  TD = rep(mean(BDD_esp_net$TD,na.rm = TRUE), length(foo)),
+  Surface_F = rep(mean(BDD_esp_net$Surface_F,na.rm = TRUE), length(foo)),
+  LT = rep(mean(BDD_esp_net$LT,na.rm = TRUE), length(foo))
+)
 
 
-AIC(m_BT0,m_BT1,m_BT2,m_BT3,m_BT4) #!!! pas le même nombre d'observation car SD a deux esp de moins 
+# Prédictions
+pred1 <- predict(m_BT0, type = "response", newdata = pred_data1, se.fit = TRUE)
 
 
-pred<-predict(m,type = "response")
-plot(BDD_esp_net$MT,pred)
-abline(a=0,b=1)
+# Plot des points observés
+plot(BDD_esp_net$SD, BDD_esp_net$BT, 
+     xlab = "SD", ylab = "Burning Time", 
+     main = "BT selon SD")
+
+# Courbes de prédiction
+lines(foo, pred1$fit, col = "#329c2f", lwd = 2) 
+
+# Intervalle de confiance pour SD moyen
+lines(foo, pred1$fit + 1.96 * pred1$se.fit, col = "#329c2f", lty = 3)
+lines(foo, pred1$fit - 1.96 * pred1$se.fit, col = "#329c2f", lty = 3)
 
 
 
-###### DI #########
-#plot avec traits (VE)
-plot(BDD_esp_net$TD, BDD_esp_net$DI_test)
-plot(BDD_esp_net$LT, BDD_esp_net$DI_test)
-plot(BDD_esp_net$LDMC, BDD_esp_net$DI_test)
-plot(BDD_esp_net$Surface_F, BDD_esp_net$DI_test)
-plot(BDD_esp_net$SD, BDD_esp_net$DI_test)
 
-#modèles
-m_DI0<-glm(DI_test~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp_net,family="Gamma")
+
+##################### DI #######################
+############ DI ######################
+# Modèle GLM 
+m_DI0<-glm(DI~SD+TD+Surface_F+LMC_t24+LT,data=BDD_esp_net,family="Gamma")
 summary(m_DI0)
-m_DI1<-glm(DI_test~SD_cr+TD_cr+LA_cr+LMC_t24_cr+LT_cr,data=BDD_esp_net,family="Gamma")
-summary(m_DI1)
-m_DI2<-glm(DI_test~SD_cr+TD_cr+LA_cr+LMC_t24_cr+LDMC_cr+LT_cr,data=BDD_esp_net,family="Gamma")
-summary(m_DI2)
 
-AIC(m_DI0,m_DI1,m_DI2)
+# Valeurs de LMC_t24
+foo <- seq(min(BDD_esp_net$LMC_t24, na.rm = TRUE), max(BDD_esp_net$LMC_t24,na.rm = TRUE))
 
-###################### graph coefs ###############
-
-# Extraire coefficients (sans l'intercept)
-par(mar = c(5,5,5,5))
-coefs <- summary(m_DI0)$coefficients[-1, ]
-
-# Variables utiles
-estimates <- coefs[, "Estimate"]
-stderr <- coefs[, "Std. Error"]
-pval <- coefs[, "Pr(>|t|)"]
-
-# Calcul des intervalles de confiance plus ou moins SE
-ci <- cbind(estimates - stderr, estimates + stderr)
-
-# Étoiles de significativité
-stars <- ifelse(pval < 0.001, "***",
-                ifelse(pval < 0.01, "**",
-                       ifelse(pval < 0.05, "*",
-                              ifelse(pval < 0.1, ".", ""))))
-
-# Couleurs selon signe du coefficient
-cols <- ifelse(estimates < 0, "#e90000", "#117304")
-
-# Ordre des variables (du bas vers le haut)
-y_pos <- length(estimates):1
-
-# Plot de base
-plot(estimates, y_pos,
-     xlim = c(-0.4,0.6),
-     ylim = c(1,length(estimates) +0.25 ),
-     pch = 16, col = cols,
-     xlab = "Estimate",
-     ylab = "",
-     axes = FALSE,
-     main = "Ignition Delay",
-     cex.main = 1.5)
-
-# Ligne verticale à zéro
-abline(v = 0, lty = 2)
-
-# Barres d'erreur (IC)
-segments(ci[,1], y_pos, ci[,2], y_pos, col = cols)
-
-# Axe Y avec noms des variables
-axis(2, at = y_pos, labels = c("SD", "TD", "LA", "LDMC","LT"), las = 1)
-
-# Axe X
-axis(1)
-
-# Valeurs des coefficients + étoiles
-text(estimates, y_pos + 0.15,
-     labels = paste0(round(estimates, 4), stars),
-     col = cols, font = 2, cex = 1.3)
-
-# Ajouter un texte avec le pseudo R² (à modifier si besoin)
-mtext(expression(R^2~"= 0.53"), side = 3, adj = 0, line = 0.5, cex = 1.2)
+# on fait varier 1 variable et on fixe les autres variables
+pred_data1 <- data.frame(
+  LMC_t24 = foo,
+  SD = rep(mean(BDD_esp_net$SD,na.rm = TRUE), length(foo)),
+  TD = rep(mean(BDD_esp_net$TD), length(foo)),
+  Surface_F = rep(mean(BDD_esp_net$Surface_F), length(foo)),
+  LT = rep(mean(BDD_esp_net$LT), length(foo))
+)
 
 
-
-m_DI1<-glm(DI_test~TD_cr+LDMC_cr+LA_cr+LT_cr+Vent_cr+Temp_cr,data=BDD_esp_net,family="Gamma")       
-summary(m_DI1)
-
-AIC(m_DI0,m_DI1) #!!! pas le même nombre d'observation car SD a deux esp de moins 
+# Prédictions
+pred1 <- predict(m_DI0, type = "response", newdata = pred_data1, se.fit = TRUE)
 
 
+# Plot des points observés
+plot(BDD_esp_net$LMC_t24, BDD_esp_net$DI, 
+     xlab = "LMC_t24", ylab = "Ignition Delay", 
+     main = "DI selon LMC_t24")
 
-###### Score ########
-hist(BDD_esp_net$score_normalise)
-#plot avec traits (VE)
-plot(BDD_esp_net$TD, BDD_esp_net$score_normalise)
-plot(BDD_esp_net$LT, BDD_esp_net$score_normalise)
-plot(BDD_esp_net$LDMC, BDD_esp_net$score_normalise)
-plot(BDD_esp_net$Surface_F, BDD_esp_net$score_normalise)
-plot(BDD_esp_net$SD, BDD_esp_net$score_normalise)
+# Courbes de prédiction
+lines(foo, pred1$fit, col = "blue", lwd = 2) 
 
-#modèles
-m_score0<-glm(score_normalise~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp_net,family="gaussian")
-summary(m_score0)
-m_score1<-glm(score_normalise~SD_cr+TD_cr+LA_cr+LMC_t24_cr+LT_cr,data=BDD_esp_net,family="gaussian")
-summary(m_score1)
-m_score2<-glm(score_normalise~SD_cr+TD_cr+LA_cr+LMC_t24_cr+LDMC_cr+LT_cr,data=BDD_esp_net,family="gaussian")
-summary(m_score2)
-
-AIC(m_score0,m_score1,m_score2)
-
-###################### graph coefs ###############
-
-# Extraire coefficients (sans l'intercept)
-par(mar = c(5,5,5,5))
-coefs <- summary(m_score0)$coefficients[-1, ]
-
-# Variables utiles
-estimates <- coefs[, "Estimate"]
-stderr <- coefs[, "Std. Error"]
-pval <- coefs[, "Pr(>|t|)"]
-labels <- rownames(coefs)
-
-# Calcul des intervalles de confiance plus ou moins SE
-ci <- cbind(estimates - stderr, estimates + stderr)
-
-# Étoiles de significativité
-stars <- ifelse(pval < 0.001, "***",
-                ifelse(pval < 0.01, "**",
-                       ifelse(pval < 0.05, "*",
-                              ifelse(pval < 0.1, ".", ""))))
-
-# Couleurs selon signe du coefficient
-cols <- ifelse(estimates < 0, "#e90000", "#117304")
-
-# Ordre des variables (du bas vers le haut)
-y_pos <- length(estimates):1
-
-# Plot de base
-plot(estimates, y_pos,
-     xlim = c(-0.2,0.3),
-     ylim = c(1,length(estimates) +0.25 ),
-     pch = 16, col = cols,
-     xlab = "Estimate",
-     ylab = "",
-     axes = FALSE,
-     main = "Flammability",
-     cex.main = 1.5)
-
-# Ligne verticale à zéro
-abline(v = 0, lty = 2)
-
-# Barres d'erreur (IC)
-segments(ci[,1], y_pos, ci[,2], y_pos, col = cols)
-
-# Axe Y avec noms des variables
-axis(2, at = y_pos, labels = c("SD", "TD", "LA", "LDMC","LT"), las = 1)
-
-# Axe X
-axis(1)
-
-# Valeurs des coefficients + étoiles
-text(estimates, y_pos + 0.15,
-     labels = paste0(round(estimates, 4), stars),
-     col = cols, font = 2, cex = 1.3)
-
-# Ajouter un texte avec le pseudo R² (à modifier si besoin)
-mtext(expression(R^2~"= 0.53"), side = 3, adj = 0, line = 0.5, cex = 1.2)
+# Intervalle de confiance pour SD moyen
+lines(foo, pred1$fit + 1.96 * pred1$se.fit, col = "blue", lty = 3)
+lines(foo, pred1$fit - 1.96 * pred1$se.fit, col = "blue", lty = 3)
 
 
+#################pour les autres variables ###################
+# Modèle GLM 
+m_DI0<-glm(DI~SD+TD+Surface_F+LDMC+LT,data=BDD_esp_net,family="Gamma")
+summary(m_DI0)
+
+# Valeurs de LDMC
+foo <- seq(min(BDD_esp_net$TD,na.rm = TRUE), max(BDD_esp_net$TD,na.rm = TRUE),length.out = 100)
+
+# on fait varier 1 variable et on fixe les autres variables
+pred_data1 <- data.frame(
+  TD = foo,
+  LDMC = rep(mean(BDD_esp_net$LDMC,na.rm = TRUE), length(foo)),
+  SD = rep(mean(BDD_esp_net$SD,na.rm = TRUE), length(foo)),
+  Surface_F = rep(mean(BDD_esp_net$Surface_F,na.rm = TRUE), length(foo)),
+  LT = rep(mean(BDD_esp_net$LT,na.rm = TRUE), length(foo))
+)
 
 
+# Prédictions
+pred1 <- predict(m_DI0, type = "response", newdata = pred_data1, se.fit = TRUE)
 
-m_score1<-glm(score_normalise~SD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp_net,family="gaussian")       
-summary(m_score1)
 
-m_score2<-glm(score_normalise~SD_cr+LDMC_cr+LT_cr,data=BDD_esp_net,family="gaussian")       
-summary(m_score2)
+# Plot des points observés
+plot(BDD_esp_net$TD, BDD_esp_net$DI, 
+     xlab = "TD", ylab = "Ignition Delay", 
+     main = "DI selon TD")
 
-m_score3<-glm(score_normalise~LDMC_cr+LT_cr,data=BDD_esp_net,family="gaussian")  ##meilleur modèle     
-summary(m_score3)
+# Courbes de prédiction
+lines(foo, pred1$fit, col = "#329c2f", lwd = 2) 
 
-m_score4<-glm(score_normalise~LDMC_cr,data=BDD_esp_net,family="gaussian")       
-summary(m_score4)
+# Intervalle de confiance pour TD moyen
+lines(foo, pred1$fit + 1.96 * pred1$se.fit, col = "#329c2f", lty = 3)
+lines(foo, pred1$fit - 1.96 * pred1$se.fit, col = "#329c2f", lty = 3)
 
-AIC(m_score4,m_score3)
+
 
