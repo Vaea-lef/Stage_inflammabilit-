@@ -33,13 +33,17 @@ dim(BDD_esp)
 names(BDD_esp)[which(names(BDD_esp) == "Nb_ramifications")] <- "Nb_rami"
 View(BDD_esp)
 
-BDD_esp_net<-read.csv2("Data/BDD_moy_esp1.csv", header = TRUE) #importation de la base
-BDD_esp_net
-dim(BDD_esp_net)
-names(BDD_esp_net)[which(names(BDD_esp_net) == "Nb_ramifications")] <- "Nb_rami"
-View(BDD_esp_net)
+BDD_esp_netMT<-read.csv2("Data/BDD_moy_esp1.csv", header = TRUE) #importation de la base
+BDD_esp_netMT
+dim(BDD_esp_netMT)
+names(BDD_esp_netMT)[which(names(BDD_esp_netMT) == "Nb_ramifications")] <- "Nb_rami"
+View(BDD_esp_netMT)
 
-
+BDD_esp_net3<-read.csv2("Data/BDD_moy_esp2.csv", header = TRUE) #importation de la base
+BDD_esp_net3
+dim(BDD_esp_net3)
+names(BDD_esp_net3)[which(names(BDD_esp_net3) == "Nb_ramifications")] <- "Nb_rami"
+View(BDD_esp_net3)
 
 ################## DISTRIBUTION DES DONNEES #####################
 #Infla
@@ -103,58 +107,6 @@ hist(BDD_esp$LDMC)      #normale
 hist(BDD_esp$Surface_F) #asymétrique droite
 hist(BDD_esp$SLA)       #normale
 hist(BDD_esp$LT)        #asymétrique droite
-
-
-
-
-
-
-
-
-
-################ EFFET DES CONDITIONS METEO ##################
-#MT
-m<-glm(MT~T_ambiante+Vent+Humidite,data=BDD_esp,family="gaussian")
-summary(m)
-
-pred<-predict(m,type = "response")
-plot(BDD_esp$MT,pred)
-abline(a=0,b=1)
-
-
-#BB 
-BDD_esp$BB_prop <- BDD_esp$BB_test/100
-m<-glm(BB_prop~T_ambiante+Vent+Humidite,data=BDD_esp,family="binomial")
-summary(m)
-
-pred<-predict(m,type = "response")
-plot(BDD_esp$BB_prop,pred)
-abline(a=0,b=1)
-
-
-#DI
-m<-glm(DI_test~T_ambiante+Vent,data=BDD_esp,family="Gamma")
-summary(m)
-
-pred<-predict(m)
-plot(BDD_esp$DI_test,pred)
-abline(a=0,b=1)
-
-plot(BDD_esp$T_ambiante,1/BDD_esp$DI_test)
-
-
-#BT
-m<-glm(BT_test~T_ambiante,data=BDD_esp,family="Gamma")
-summary(m)
-
-pred<-predict(m,type = "response")
-plot(BDD_esp$BT,pred)
-abline(a=0,b=1)
-
-plot(BDD_esp$Vent,BDD_esp$BT_test)
-
-
-
 
 
 
@@ -844,15 +796,26 @@ BDD_esp$Vent_cr<-scale(BDD_esp$Vent)
 BDD_esp$Temp_cr<-scale(BDD_esp$T_ambiante)
 BDD_esp$LMC_t24_cr<-scale(BDD_esp$LMC_t24)
 BDD_esp$Nb_rami_cr<-scale(BDD_esp$Nb_rami)
-BDD_esp_net$SD_cr<-scale(BDD_esp_net$SD)
-BDD_esp_net$TD_cr<-scale(BDD_esp_net$TD)
-BDD_esp_net$LA_cr<-scale(BDD_esp_net$Surface_F)
-BDD_esp_net$LDMC_cr<-scale(BDD_esp_net$LDMC)
-BDD_esp_net$LT_cr<-scale(BDD_esp_net$LT)
-BDD_esp_net$Vent_cr<-scale(BDD_esp_net$Vent)
-BDD_esp_net$Temp_cr<-scale(BDD_esp_net$T_ambiante)
-BDD_esp_net$LMC_t24_cr<-scale(BDD_esp_net$LMC_t24)
-BDD_esp_net$Nb_rami_cr<-scale(BDD_esp_net$Nb_rami)
+
+BDD_esp_net_MT$SD_cr<-scale(BDD_esp_net_MT$SD)
+BDD_esp_net_MT$TD_cr<-scale(BDD_esp_net_MT$TD)
+BDD_esp_net_MT$LA_cr<-scale(BDD_esp_net_MT$Surface_F)
+BDD_esp_net_MT$LDMC_cr<-scale(BDD_esp_net_MT$LDMC)
+BDD_esp_net_MT$LT_cr<-scale(BDD_esp_net_MT$LT)
+BDD_esp_net_MT$Vent_cr<-scale(BDD_esp_net_MT$Vent)
+BDD_esp_net_MT$Temp_cr<-scale(BDD_esp_net_MT$T_ambiante)
+BDD_esp_net_MT$LMC_t24_cr<-scale(BDD_esp_net_MT$LMC_t24)
+BDD_esp_net_MT$Nb_rami_cr<-scale(BDD_esp_net_MT$Nb_rami)
+
+BDD_esp_net3$SD_cr<-scale(BDD_esp_net3$SD)
+BDD_esp_net3$TD_cr<-scale(BDD_esp_net3$TD)
+BDD_esp_net3$LA_cr<-scale(BDD_esp_net3$Surface_F)
+BDD_esp_net3$LDMC_cr<-scale(BDD_esp_net3$LDMC)
+BDD_esp_net3$LT_cr<-scale(BDD_esp_net3$LT)
+BDD_esp_net3$Vent_cr<-scale(BDD_esp_net3$Vent)
+BDD_esp_net3$Temp_cr<-scale(BDD_esp_net3$T_ambiante)
+BDD_esp_net3$LMC_t24_cr<-scale(BDD_esp_net3$LMC_t24)
+BDD_esp_net3$Nb_rami_cr<-scale(BDD_esp_net3$Nb_rami)
 
 ###### FI ########
 # Comptage du nombre d'essais par espèce dans BDD_ech
