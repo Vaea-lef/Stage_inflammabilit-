@@ -277,7 +277,7 @@ View(BDD_moy_ech2)
 
 # Export des données
 write.csv2(BDD_moy_ech1, "Data/BDD_moy_ech1.csv", row.names = FALSE)
-
+write.csv2(BDD_moy_ech2, "Data/BDD_moy_ech2.csv", row.names = FALSE)
 dim(BDD_moy_ech)
 
 
@@ -346,7 +346,7 @@ View(BDD_moy_esp)
 
 #export de la BDD 
 write.csv2(BDD_moy_esp,"Data/BDD_moy_esp.csv")
-write.csv2(BDD_sd_esp, "Data/BDD_sd_ech.csv")
+write.csv2(BDD_sd_esp, "Data/BDD_sd_esp.csv")
 
 
 

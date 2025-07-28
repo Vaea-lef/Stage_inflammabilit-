@@ -17,6 +17,12 @@ setwd("C:/IRD/Stage_inflammabilit-") #définition du répertoire de travail
 BDD_ech<-read.csv2("Data/BDD_moy_ech.csv", header = TRUE) #importation de l
 names(BDD_ech)[which(names(BDD_ech) == "Nb_ramifications")] <- "Nb_rami"
 
+BDD_echMT<-read.csv2("Data/BDD_moy_ech1.csv", header = TRUE) #importation de l
+names(BDD_echMT)[which(names(BDD_echMT) == "Nb_ramifications")] <- "Nb_rami"
+
+BDD_ech3<-read.csv2("Data/BDD_moy_ech2.csv", header = TRUE) #importation de l
+names(BDD_ech3)[which(names(BDD_ech3) == "Nb_ramifications")] <- "Nb_rami"
+
 ##  importation BDD_sd_esp en format CSV
 BDD_sd_esp<-read.csv2("Data/BDD_sd_esp.csv", header = TRUE)
 
@@ -596,7 +602,7 @@ pred3 <- predict(m_MT0, type = "response", newdata = pred_data3, se.fit = TRUE)
 
 # Plot des points observés
 plot(BDD_esp_netMT$LDMC, BDD_esp_netMT$MT, 
-     xlab = "LDMC", ylab = "Ignition Frequency", 
+     xlab = "LDMC", ylab = "Maximum temperature", 
      main = "Effet de LDMC sur LDMC selon SD")
 
 # Courbes de prédiction
@@ -627,13 +633,13 @@ summary(m_BB0)
 m_BB1<-glm(BB_prop~SD_cr+TD_cr+LA_cr+LMC_t24_cr+LT_cr,data=BDD_esp_net3,family="gaussian")
 summary(m_BB1)
 
-AIC (m_BB0,m_BB1)
+
 
 ###################### graph coefs ###############
 
 # Extraire coefficients (sans l'intercept)
 par(mar = c(5,7,5,5))
-coefs <- summary(m_BB0)$coefficients[-1, ]
+coefs <- summary(m_BB1)$coefficients[-1, ]
 
 # Variables utiles
 estimates <- coefs[, "Estimate"]
@@ -685,19 +691,71 @@ text(estimates, y_pos + 0.15,
      col = cols, font = 2, cex =  1.7)
 
 # Ajouter un texte avec le pseudo R² (à modifier si besoin)
-mtext(expression(R^2~"= 0.46"), side = 3, adj = 0, line = 0.5, cex = 1.5)
+mtext(expression(R^2~"= 0.43"), side = 3, adj = 0, line = 0.5, cex = 1.5)
 
 ################# Prédiction ########################
+###################### prédicion ############### mettre LMC_t24 ou LDMC
+# Modèle GLM binomial (m_BB0 ou m_BB1)
+moy <- mean(BDD_esp_net3$LDMC, na.rm = TRUE)
+ecart <- sd(BDD_esp_net3$LDMC, na.rm = TRUE)
 
+# Valeurs de LDMC
+foo <- seq(min(BDD_esp_net3$LDMC_cr), max(BDD_esp_net3$LDMC_cr),length.out = 100)
+
+# on fait varier LMDC et on fixe les autres variables
+pred_data1 <- data.frame(
+  LDMC_cr = foo,
+  SD_cr = rep(mean(BDD_esp_net3$SD_cr,na.rm = TRUE), length(foo)),
+  TD_cr = rep(mean(BDD_esp_net3$TD_cr), length(foo)),
+  LA_cr = rep(mean(BDD_esp_net3$LA_cr), length(foo)),
+  LT_cr = rep(mean(BDD_esp_net3$LT_cr), length(foo))
+)
+
+pred_data2 <- data.frame(
+  LDMC_cr = foo,
+  SD_cr = rep(mean(BDD_esp_net3$SD_cr,na.rm = TRUE), length(foo)),
+  TD_cr = rep(mean(BDD_esp_net3$TD_cr), length(foo)),
+  LA_cr = rep(mean(BDD_esp_net3$LA_cr), length(foo)),
+  LT_cr = rep(quantile(BDD_esp_net3$LT_cr,0.75), length(foo))
+)
+
+pred_data3 <- data.frame(
+  LDMC_cr = foo,
+  SD_cr = rep(mean(BDD_esp_net3$SD_cr,na.rm = TRUE), length(foo)),
+  TD_cr = rep(mean(BDD_esp_net3$TD_cr), length(foo)),
+  LA_cr = rep(mean(BDD_esp_net3$LA_cr), length(foo)),
+  LT_cr = rep(quantile(BDD_esp_net3$LT_cr,0.25), length(foo))
+)
+
+# Prédictions
+pred1 <- predict(m_BB0, type = "response", newdata = pred_data1, se.fit = TRUE)
+pred2 <- predict(m_BB0, type = "response", newdata = pred_data2, se.fit = TRUE)
+pred3 <- predict(m_BB0, type = "response", newdata = pred_data3, se.fit = TRUE)
+
+# Plot des points observés
+plot(BDD_esp_net3$LDMC, BDD_esp_net3$BB_prop, 
+     xlab = "LDMC", ylab = "Burnt Biomass", 
+     main = "Effet de LDMC sur BB selon SD")
+
+# Courbes de prédiction
+lines((foo*ecart+moy), pred1$fit, col = "black", lwd = 2) 
+lines((foo*ecart+moy), pred2$fit, col = "red" ,lty=3) 
+lines((foo*ecart+moy), pred3$fit, col = "red",lty=3) 
+
+axis(2)
+
+# Intervalle de confiance pour SD moyen
+lines((foo*ecart + moy), pred1$fit + 1.96 * pred1$se.fit, col = "blue", lty = 3)
+lines((foo*ecart + moy), pred1$fit - 1.96 * pred1$se.fit, col = "blue", lty = 3)
 
 
 
 
 ###### BT #########
 #modèles
-m_BT0<-glm(BT_test~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp_net3,family="Gamma")
+m_BT0<-glm(BT_test~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp_net3,family=Gamma(link="log"))
 summary(m_BT0)
-m_BT1<-glm(BT_test~SD_cr+TD_cr+LA_cr+LMC_t24_cr+LT_cr,data=BDD_esp_net3,family="Gamma")
+m_BT1<-glm(BT_test~SD_cr+TD_cr+LA_cr+LMC_t24_cr+LT_cr,data=BDD_esp_net3,family=Gamma(link="log"))
 summary(m_BT1)
 
 AIC(m_BT0,m_BT1)
@@ -731,7 +789,7 @@ y_pos <- length(estimates):1
 
 # Plot de base
 plot(estimates, y_pos,
-     xlim = c(-0.015,0.015),
+     xlim = c(-0.5,0.5),
      ylim = c(1,length(estimates) +0.25 ),
      pch = 16, col = cols,
      xlab = "Estimate",
@@ -747,7 +805,7 @@ abline(v = 0, lty = 2)
 segments(ci[,1], y_pos, ci[,2], y_pos, col = cols)
 
 # Axe Y avec noms des variables
-axis(2, at = y_pos, labels = c("SD", "TD", "LA", "LMC_t24","LT"), las = 1,cex.axis = 1.5)
+axis(2, at = y_pos, labels = c("SD", "TD", "LA", "LDMC","LT"), las = 1,cex.axis = 1.5)
 
 # Axe X
 axis(1,cex.axis = 1.5)
@@ -758,19 +816,73 @@ text(estimates, y_pos + 0.15,
      col = cols, font = 2, cex =  1.7)
 
 # Ajouter un texte avec le pseudo R² (à modifier si besoin)
-mtext(expression(R^2~"= 0.51"), side = 3, adj = 0, line = 0.5, cex = 1.5)
+mtext(expression(R^2~"= 0.62"), side = 3, adj = 0, line = 0.5, cex = 1.5)
 
 
 ############### prédiction ###############
+###################### prédicion ############### mettre LMC_t24 ou LDMC
+# Modèle GLM binomial (m_BT0 ou m_BT1)
+moy <- mean(BDD_esp_net3$LDMC, na.rm = TRUE)
+ecart <- sd(BDD_esp_net3$LDMC, na.rm = TRUE)
+
+# Valeurs de LDMC
+foo <- seq(min(BDD_esp_net3$LDMC_cr), max(BDD_esp_net3$LDMC_cr),length.out = 100)
+
+# on fait varier LMDC et on fixe les autres variables
+pred_data1 <- data.frame(
+  LDMC_cr = foo,
+  SD_cr = rep(mean(BDD_esp_net3$SD_cr,na.rm = TRUE), length(foo)),
+  TD_cr = rep(mean(BDD_esp_net3$TD_cr), length(foo)),
+  LA_cr = rep(mean(BDD_esp_net3$LA_cr), length(foo)),
+  LT_cr = rep(mean(BDD_esp_net3$LT_cr), length(foo))
+)
+
+pred_data2 <- data.frame(
+  LDMC_cr = foo,
+  SD_cr = rep(mean(BDD_esp_net3$SD_cr,na.rm = TRUE), length(foo)),
+  LT_cr = rep(mean(BDD_esp_net3$LT_cr), length(foo)),
+  LA_cr = rep(mean(BDD_esp_net3$LA_cr), length(foo)),
+  TD_cr = rep(quantile(BDD_esp_net3$TD_cr,0.75), length(foo))
+)
+
+pred_data3 <- data.frame(
+  LDMC_cr = foo,
+  SD_cr = rep(mean(BDD_esp_net3$SD_cr,na.rm = TRUE), length(foo)),
+  LT_cr = rep(mean(BDD_esp_net3$LT_cr), length(foo)),
+  LA_cr = rep(mean(BDD_esp_net3$LA_cr), length(foo)),
+  TD_cr = rep(quantile(BDD_esp_net3$TD_cr,0.25), length(foo))
+)
+
+# Prédictions
+pred1 <- predict(m_BT0, type = "response", newdata = pred_data1, se.fit = TRUE)
+pred2 <- predict(m_BT0, type = "response", newdata = pred_data2, se.fit = TRUE)
+pred3 <- predict(m_BT0, type = "response", newdata = pred_data3, se.fit = TRUE)
+
+# Plot des points observés
+plot(BDD_esp_net3$LDMC, BDD_esp_net3$BT, 
+     xlab = "LDMC", ylab = "Burning Time", 
+     main = "Effet de LDMC sur BT selon SD")
+
+# Courbes de prédiction
+lines((foo*ecart+moy), pred1$fit, col = "black", lwd = 2) 
+lines((foo*ecart+moy), pred2$fit, col = "red" ,lty=3) 
+lines((foo*ecart+moy), pred3$fit, col = "red",lty=3) 
+
+axis(2)
+
+# Intervalle de confiance pour SD moyen
+lines((foo*ecart + moy), pred1$fit + 1.96 * pred1$se.fit, col = "blue", lty = 3)
+lines((foo*ecart + moy), pred1$fit - 1.96 * pred1$se.fit, col = "blue", lty = 3)
 
 
+###################
+###### DI ######################################################################
+###################
 
-
-###### DI #########
 #modèles
-m_DI0<-glm(DI_test~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp,family="Gamma")
+m_DI0<-glm(DI_test~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp_net3,family=Gamma(link="log"))
 summary(m_DI0)
-m_DI1<-glm(DI_test~SD_cr+TD_cr+LA_cr+LMC_t24_cr+LT_cr,data=BDD_esp,family="Gamma")
+m_DI1<-glm(DI_test~SD_cr+TD_cr+LA_cr+LMC_t24_cr+LT_cr,data=BDD_esp_net3,family=Gamma(link="log"))
 summary(m_DI1)
 
 AIC(m_DI0,m_DI1)
@@ -820,7 +932,7 @@ abline(v = 0, lty = 2)
 segments(ci[,1], y_pos, ci[,2], y_pos, col = cols)
 
 # Axe Y avec noms des variables
-axis(2, at = y_pos, labels = c("SD", "TD", "LA", "LMC_t24","LT"), las = 1,cex.axis = 1.5)
+axis(2, at = y_pos, labels = c("SD", "TD", "LA", "LDMC","LT"), las = 1,cex.axis = 1.5)
 
 # Axe X
 axis(1,cex.axis = 1.5)
@@ -831,9 +943,63 @@ text(estimates, y_pos + 0.15,
      col = cols, font = 2, cex =  1.7)
 
 # Ajouter un texte avec le pseudo R² (à modifier si besoin)
-mtext(expression(R^2~"= 0.62"), side = 3, adj = 0, line = 0.5, cex = 1.5)
+mtext(expression(R^2~"= 0.52"), side = 3, adj = 0, line = 0.5, cex = 1.5)
 
 ############ prédiction ##########
+###################### prédicion ############### mettre LMC_t24 ou LDMC
+# Modèle GLM binomial (m_DI0 ou m_DI1)
+moy <- mean(BDD_esp_net3$LDMC, na.rm = TRUE)
+ecart <- sd(BDD_esp_net3$LDMC, na.rm = TRUE)
+
+# Valeurs de LDMC
+foo <- seq(min(BDD_esp_net3$LDMC_cr), max(BDD_esp_net3$LDMC_cr),length.out = 100)
+
+# on fait varier LMDC et on fixe les autres variables
+pred_data1 <- data.frame(
+  LDMC_cr = foo,
+  SD_cr = rep(mean(BDD_esp_net3$SD_cr,na.rm = TRUE), length(foo)),
+  TD_cr = rep(mean(BDD_esp_net3$TD_cr), length(foo)),
+  LA_cr = rep(mean(BDD_esp_net3$LA_cr), length(foo)),
+  LT_cr = rep(mean(BDD_esp_net3$LT_cr), length(foo))
+)
+
+
+pred_data2 <- data.frame(
+  LDMC_cr = foo,
+  SD_cr = rep(mean(BDD_esp_net3$SD_cr,na.rm = TRUE), length(foo)),
+  LT_cr = rep(mean(BDD_esp_net3$LT_cr), length(foo)),
+  LA_cr = rep(mean(BDD_esp_net3$LA_cr), length(foo)),
+  TD_cr = rep(quantile(BDD_esp_net3$TD_cr,0.75), length(foo))
+)
+
+pred_data3 <- data.frame(
+  LDMC_cr = foo,
+  SD_cr = rep(mean(BDD_esp_net3$SD_cr,na.rm = TRUE), length(foo)),
+  LT_cr = rep(mean(BDD_esp_net3$LT_cr), length(foo)),
+  LA_cr = rep(mean(BDD_esp_net3$LA_cr), length(foo)),
+  TD_cr = rep(quantile(BDD_esp_net3$TD_cr,0.25), length(foo))
+)
+
+# Prédictions
+pred1 <- predict(m_DI0, type = "response", newdata = pred_data1, se.fit = TRUE)
+pred2 <- predict(m_DI0, type = "response", newdata = pred_data2, se.fit = TRUE)
+pred3 <- predict(m_DI0, type = "response", newdata = pred_data3, se.fit = TRUE)
+
+# Plot des points observés
+plot(BDD_esp_net3$LDMC, BDD_esp_net3$DI_test, 
+     xlab = "LDMC", ylab = "Ignition Delay", 
+     main = "Effet de LDMC sur DI selon SD")
+
+# Courbes de prédiction
+lines((foo*ecart+moy), pred1$fit, col = "black", lwd = 2) 
+lines((foo*ecart+moy), pred2$fit, col = "red" ,lty=3) 
+lines((foo*ecart+moy), pred3$fit, col = "red",lty=3) 
+
+axis(2)
+
+# Intervalle de confiance pour SD moyen
+lines((foo*ecart + moy), pred1$fit + 1.96 * pred1$se.fit, col = "blue", lty = 3)
+lines((foo*ecart + moy), pred1$fit - 1.96 * pred1$se.fit, col = "blue", lty = 3)
 
 
 
@@ -907,10 +1073,116 @@ text(estimates, y_pos + 0.15,
 # Ajouter un texte avec le pseudo R² (à modifier si besoin)
 mtext(expression(R^2~"= 0.75"), side = 3, adj = 0, line = 0.5, cex = 1.5)
 
+###################### prédicion ############### mettre LMC_t24 ou LDMC
+# Modèle GLM binomial (m_score0 ou m_score1)
+moy <- mean(BDD_esp$LDMC, na.rm = TRUE)
+ecart <- sd(BDD_esp$LDMC, na.rm = TRUE)
+
+# Valeurs de LDMC
+foo <- seq(min(BDD_esp$LDMC_cr), max(BDD_esp$LDMC_cr),length.out = 100)
+
+# on fait varier LMDC et on fixe les autres variables
+pred_data1 <- data.frame(
+  LDMC_cr = foo,
+  SD_cr = rep(mean(BDD_esp$SD_cr,na.rm = TRUE), length(foo)),
+  TD_cr = rep(mean(BDD_esp$TD_cr), length(foo)),
+  LA_cr = rep(mean(BDD_esp$LA_cr), length(foo)),
+  LT_cr = rep(mean(BDD_esp$LT_cr), length(foo))
+)
+
+pred_data2 <- data.frame(
+  LDMC_cr = foo,
+  SD_cr = rep(mean(BDD_esp$SD_cr,na.rm = TRUE), length(foo)),
+  LT_cr = rep(mean(BDD_esp$LT_cr), length(foo)),
+  LA_cr = rep(mean(BDD_esp$LA_cr), length(foo)),
+  TD_cr = rep(quantile(BDD_esp$TD_cr,0.75), length(foo))
+)
+
+pred_data3 <- data.frame(
+  LDMC_cr = foo,
+  SD_cr = rep(mean(BDD_esp$SD_cr,na.rm = TRUE), length(foo)),
+  LT_cr = rep(mean(BDD_esp$LT_cr), length(foo)),
+  LA_cr = rep(mean(BDD_esp$LA_cr), length(foo)),
+  TD_cr = rep(quantile(BDD_esp$TD_cr,0.25), length(foo))
+)
+
+# Prédictions
+pred1 <- predict(m_score0, type = "response", newdata = pred_data1, se.fit = TRUE)
+pred2 <- predict(m_score0, type = "response", newdata = pred_data2, se.fit = TRUE)
+pred3 <- predict(m_score0, type = "response", newdata = pred_data3, se.fit = TRUE)
+
+# Plot des points observés
+plot(BDD_esp$LDMC, BDD_esp$score, 
+     xlab = "LDMC", ylab = "score", 
+     main = "Effet de LDMC sur score",
+     ylim=c(-3,3))
+
+# Courbes de prédiction
+lines((foo*ecart+moy), pred1$fit, col = "black", lwd = 2) 
+lines((foo*ecart+moy), pred2$fit, col = "red" ,lty=3) 
+lines((foo*ecart+moy), pred3$fit, col = "red",lty=3) 
+
+axis(2)
+
+# Intervalle de confiance pour SD moyen
+lines((foo*ecart + moy), pred1$fit + 1.96 * pred1$se.fit, col = "blue", lty = 3)
+lines((foo*ecart + moy), pred1$fit - 1.96 * pred1$se.fit, col = "blue", lty = 3)
 
 
+###################### prédicion ############### mettre LMC_t24 ou LMC_t24
+# Modèle GLM binomial (m_score0 ou m_score1)
+moy <- mean(BDD_esp$LMC_t24, na.rm = TRUE)
+ecart <- sd(BDD_esp$LMC_t24, na.rm = TRUE)
 
+# Valeurs de LMC_t24
+foo <- seq(min(BDD_esp$LMC_t24_cr), max(BDD_esp$LMC_t24_cr),length.out = 100)
 
+# on fait varier LMDC et on fixe les autres variables
+pred_data1 <- data.frame(
+  LMC_t24_cr = foo,
+  SD_cr = rep(mean(BDD_esp$SD_cr,na.rm = TRUE), length(foo)),
+  TD_cr = rep(mean(BDD_esp$TD_cr), length(foo)),
+  LA_cr = rep(mean(BDD_esp$LA_cr), length(foo)),
+  LT_cr = rep(mean(BDD_esp$LT_cr), length(foo))
+)
+
+pred_data2 <- data.frame(
+  LMC_t24_cr = foo,
+  SD_cr = rep(mean(BDD_esp$SD_cr,na.rm = TRUE), length(foo)),
+  LT_cr = rep(mean(BDD_esp$LT_cr), length(foo)),
+  LA_cr = rep(mean(BDD_esp$LA_cr), length(foo)),
+  TD_cr = rep(quantile(BDD_esp$TD_cr,0.75), length(foo))
+)
+
+pred_data3 <- data.frame(
+  LMC_t24_cr = foo,
+  SD_cr = rep(mean(BDD_esp$SD_cr,na.rm = TRUE), length(foo)),
+  LT_cr = rep(mean(BDD_esp$LT_cr), length(foo)),
+  LA_cr = rep(mean(BDD_esp$LA_cr), length(foo)),
+  TD_cr = rep(quantile(BDD_esp$TD_cr,0.25), length(foo))
+)
+
+# Prédictions
+pred1 <- predict(m_score1, type = "response", newdata = pred_data1, se.fit = TRUE)
+pred2 <- predict(m_score1, type = "response", newdata = pred_data2, se.fit = TRUE)
+pred3 <- predict(m_score1, type = "response", newdata = pred_data3, se.fit = TRUE)
+
+# Plot des points observés
+plot(BDD_esp$LMC_t24, BDD_esp$score, 
+     xlab = "LMC_t24", ylab = "Score", 
+     main = "Effet de LMC_t24 sur score ",
+     ylim=c(-3,3))
+
+# Courbes de prédiction
+lines((foo*ecart+moy), pred1$fit, col = "black", lwd = 2) 
+lines((foo*ecart+moy), pred2$fit, col = "red" ,lty=3) 
+lines((foo*ecart+moy), pred3$fit, col = "red",lty=3) 
+
+axis(2)
+
+# Intervalle de confiance pour SD moyen
+lines((foo*ecart + moy), pred1$fit + 1.96 * pred1$se.fit, col = "blue", lty = 3)
+lines((foo*ecart + moy), pred1$fit - 1.96 * pred1$se.fit, col = "blue", lty = 3)
 
 
 
