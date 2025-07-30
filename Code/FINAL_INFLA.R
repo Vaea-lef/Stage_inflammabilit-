@@ -1006,11 +1006,12 @@ lines((foo*ecart + moy), pred1$fit - 1.96 * pred1$se.fit, col = "blue", lty = 3)
 
 ###### Score ########
 #modèles
-m_score0<-glm(score_normalise~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp,family="gaussian")
+m_score0<-glm(score~SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr,data=BDD_esp,family="gaussian")
 summary(m_score0)
-m_score1<-glm(score_normalise~SD_cr+TD_cr+LA_cr+LMC_t24_cr+LT_cr,data=BDD_esp,family="gaussian")
+m_score1<-glm(score~SD_cr+TD_cr+LA_cr+LMC_t24_cr+LT_cr,data=BDD_esp,family="gaussian")
 summary(m_score1)
-
+m_score2<-glm(score~LDMC_cr,data=BDD_esp,family="gaussian")
+summary(m_score0)
 
 AIC(m_score0,m_score1)
 
@@ -1106,6 +1107,7 @@ pred_data3 <- data.frame(
   TD_cr = rep(quantile(BDD_esp$TD_cr,0.25), length(foo))
 )
 
+
 # Prédictions
 pred1 <- predict(m_score0, type = "response", newdata = pred_data1, se.fit = TRUE)
 pred2 <- predict(m_score0, type = "response", newdata = pred_data2, se.fit = TRUE)
@@ -1113,16 +1115,13 @@ pred3 <- predict(m_score0, type = "response", newdata = pred_data3, se.fit = TRU
 
 # Plot des points observés
 plot(BDD_esp$LDMC, BDD_esp$score, 
-     xlab = "LDMC", ylab = "score", 
-     main = "Effet de LDMC sur score",
-     ylim=c(-3,3))
+     xlab = "Contenu en matière sèche (mg/g)", ylab = "Inflammabilité",ylim=c(-5,3))
 
 # Courbes de prédiction
 lines((foo*ecart+moy), pred1$fit, col = "black", lwd = 2) 
 lines((foo*ecart+moy), pred2$fit, col = "red" ,lty=3) 
 lines((foo*ecart+moy), pred3$fit, col = "red",lty=3) 
 
-axis(2)
 
 # Intervalle de confiance pour SD moyen
 lines((foo*ecart + moy), pred1$fit + 1.96 * pred1$se.fit, col = "blue", lty = 3)
@@ -1169,9 +1168,7 @@ pred3 <- predict(m_score1, type = "response", newdata = pred_data3, se.fit = TRU
 
 # Plot des points observés
 plot(BDD_esp$LMC_t24, BDD_esp$score, 
-     xlab = "LMC_t24", ylab = "Score", 
-     main = "Effet de LMC_t24 sur score ",
-     ylim=c(-3,3))
+     xlab = "Contenu en eau", ylab = "Inflammabilité")
 
 # Courbes de prédiction
 lines((foo*ecart+moy), pred1$fit, col = "black", lwd = 2) 
