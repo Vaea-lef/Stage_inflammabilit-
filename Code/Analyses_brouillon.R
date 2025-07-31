@@ -17,10 +17,15 @@ BDD_ech
 names(BDD_ech)[which(names(BDD_ech) == "Nb_ramifications")] <- "Nb_rami"
 View(BDD_ech)
 
-BDD_ech_net<-read.csv2("Data/BDD_moy_ech1.csv", header = TRUE) #importation de l
-BDD_ech_net
-names(BDD_ech_net)[which(names(BDD_ech_net) == "Nb_ramifications")] <- "Nb_rami"
-View(BDD_ech_net)
+BDD_echMT<-read.csv2("Data/BDD_moy_ech1.csv", header = TRUE) #importation de l
+BDD_echMT
+names(BDD_echMT)[which(names(BDD_echMT) == "Nb_ramifications")] <- "Nb_rami"
+View(BDD_echMT)
+
+BDD_ech3<-read.csv2("Data/BDD_moy_ech2.csv", header = TRUE) #importation de l
+BDD_ech3
+names(BDD_ech3)[which(names(BDD_ech3) == "Nb_ramifications")] <- "Nb_rami"
+View(BDD_ech3)
 
 ##  importation BDD_sd_esp en format CSV
 BDD_sd_esp<-read.csv2("Data/BDD_sd_esp.csv", header = TRUE)
@@ -48,6 +53,15 @@ View(BDD_esp_net3)
 ################## DISTRIBUTION DES DONNEES #####################
 #Infla
 hist(BDD_esp$DI)      # plus de grande valeurs que petites
+hist(BDD_esp$DI_test) # same DI
+hist(scale(log(BDD_esp$BT)))      # plus de petites valeurs que grande
+hist(BDD_esp$BT_test) # same BT
+hist(scale(BDD_esp$BB))      # normale
+hist(qlogis(BDD_esp$BB_test)) # same BB
+hist(scale(BDD_esp$MT))      # normale 
+
+#Infla
+hist(BDD_ech3$DI_test)      # plus de grande valeurs que petites
 hist(BDD_esp$DI_test) # same DI
 hist(scale(log(BDD_esp$BT)))      # plus de petites valeurs que grande
 hist(BDD_esp$BT_test) # same BT
@@ -704,6 +718,19 @@ for (var in vars) {
 print(var_partition)
 
 
+
+
+kruskal.test(BDD_echMT$MT~BDD_echMT$Nom_scientifique)
+kruskal.test(BDD_ech3$BB_test~BDD_ech3$Nom_scientifique)
+kruskal.test(BDD_ech3$BT_test~BDD_ech3$Nom_scientifique)
+kruskal.test(BDD_ech3$DI_test~BDD_ech3$Nom_scientifique)
+
+kruskal.test(BDD_ech$LDMC~BDD_ech$Nom_scientifique)
+kruskal.test(BDD_ech$LMC_t24~BDD_ech$Nom_scientifique)
+kruskal.test(BDD_ech$SD~BDD_ech$Nom_scientifique)
+kruskal.test(BDD_ech$TD~BDD_ech$Nom_scientifique)
+kruskal.test(BDD_ech$Surface_F~BDD_ech$Nom_scientifique)
+kruskal.test(BDD_ech$LT~BDD_ech$Nom_scientifique)
 
 
 #################### GLM POUR VARIABILITE INTRA et INTER ESPECES ######################
@@ -2482,4 +2509,18 @@ lines(foo, pred1$fit + 1.96 * pred1$se.fit, col = "#329c2f", lty = 3)
 lines(foo, pred1$fit - 1.96 * pred1$se.fit, col = "#329c2f", lty = 3)
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+############################### variabilité ################################
+kruskal.test(MT ~ Nom_scientifique, data = BDD_esp_netMT)
 

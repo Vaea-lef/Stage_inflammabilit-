@@ -149,8 +149,15 @@ score_DI
 FI <- ifelse(BDD_infla$MT > 150, 1, 0)
 FI
 
+#calcul VPD
+#VPD = VPsaturated − VPair, with VPsaturated = 0.61 08 × exp((17.27 × T°)/(T° + 237.2)) and VPair = HR/(100 × VPsaturated)
+VPsat<-0.6108*exp((17.27*BDD_infla$T_ambiante)/(BDD_infla$T_ambiante+237.2))
+VPair<- (BDD_infla$Humidite/100)*VPsat
+VPD<-VPsat-VPair
+summary(VPD)
+
 # création d'une nouvelle base de données calculée avec ajout des colonnes
-BDD_infla_calcule<-data.frame(BDD_infla,score_DI,BT, BT_test,FI,SD)
+BDD_infla_calcule<-data.frame(BDD_infla,score_DI,BT, BT_test,FI,SD,VPD)
 BDD_infla_calcule #pour voir la BDD finale
 
 ###### Export de la base infla calculée CSV
@@ -196,7 +203,7 @@ colnames(BDD_finale)
 
 
 ############# création d'une BDD avec seulement les infos pour les analyses ############
-BDD_ana_ech<-subset(BDD_finale, select=c(Nom_scientifique, Milieu_recolte,ID_espece,ID_echantillon,ID_Feuille,T_ambiante,Vent,Humidite,DI,DI_test,score_DI,BT,BT_test,MT,BB,BB_test,FI,Nb_ramifications,SD,TMC_t0,TMC_t24,TDMC,TD,TDIA,Gmin,LMC_t0,LMC_t24,PEF,LDMC,Surface_F,SLA,LT))
+BDD_ana_ech<-subset(BDD_finale, select=c(Nom_scientifique, Milieu_recolte,ID_espece,ID_echantillon,ID_Feuille,T_ambiante,Vent,Humidite,DI,DI_test,score_DI,BT,BT_test,MT,BB,BB_test,FI,Nb_ramifications,SD,TMC_t0,TMC_t24,TDMC,TD,TDIA,Gmin,LMC_t0,LMC_t24,PEF,LDMC,Surface_F,SLA,LT,VPD))
 head(BDD_ana_ech)
 dim(BDD_ana_ech)
 #export de la BDD 
@@ -214,7 +221,7 @@ write.csv2(BDD_ana_ech,"Data/BDD_ana_ech.csv")
 ############# Base à l'échelle de l'échantillon #######################
 
 #création de table avec moyenne et sd pour chaque variable en fonction du nom de l'espèce
-temp<-BDD_ana_ech[,6:32] ###sélection des colonnes comprenant les variables pour les intégrer dans la boucle
+temp<-BDD_ana_ech[,6:33] ###sélection des colonnes comprenant les variables pour les intégrer dans la boucle
 temp
 
 #création d'une bdd d'origine pour moyenne (sert pour merge)
@@ -296,7 +303,7 @@ dim(BDD_moy_ech)
 
 ############# Base à l'échelle de l'espèce (complète) ######################################
 #création de table avec moyenne et sd pour chaque variable en fonction du nom de l'espèce
-tem1<-BDD_moy_ech[,5:31] ###sélection des colonnes comprenant les variables pour les intégrer dans la boucle
+tem1<-BDD_moy_ech[,5:32] ###sélection des colonnes comprenant les variables pour les intégrer dans la boucle
 tem1
 #création d'un bdd d'origine pour moyenne (sert pour merge)
 BDD_moy_esp <- aggregate(tem1[,1] ~ Nom_scientifique + ID_espece + Milieu_recolte, data = BDD_moy_ech, FUN = mean, na.rm = TRUE)
@@ -342,7 +349,7 @@ BDD_moy_esp <- merge(BDD_moy_esp, BDD_FI_esp,
 head(BDD_moy_esp)
 head(BDD_sd_esp)
 
-View(BDD_moy_esp)
+View(BDD_sd_esp)
 
 #export de la BDD 
 write.csv2(BDD_moy_esp,"Data/BDD_moy_esp.csv")
@@ -351,10 +358,9 @@ write.csv2(BDD_sd_esp, "Data/BDD_sd_esp.csv")
 
 
 
-
 ############# Base à l'échelle de l'espèce (nettoyée MT) ######################################
 #création de table avec moyenne et sd pour chaque variable en fonction du nom de l'espèce
-tem2<-BDD_moy_ech1[,5:31] ###sélection des colonnes comprenant les variables pour les intégrer dans la boucle
+tem2<-BDD_moy_ech1[,5:32] ###sélection des colonnes comprenant les variables pour les intégrer dans la boucle
 tem2
 #création d'un bdd d'origine pour moyenne (sert pour merge)
 BDD_moy_esp1 <- aggregate(tem2[,1] ~ Nom_scientifique + ID_espece + Milieu_recolte, data = BDD_moy_ech1, FUN = mean, na.rm = TRUE)
@@ -407,7 +413,7 @@ write.csv2(BDD_moy_esp1,"Data/BDD_moy_esp1.csv")
 
 ############# Base à l'échelle de l'espèce (nettoyée reste) ######################################
 #création de table avec moyenne et sd pour chaque variable en fonction du nom de l'espèce
-tem2<-BDD_moy_ech2[,5:31] ###sélection des colonnes comprenant les variables pour les intégrer dans la boucle
+tem2<-BDD_moy_ech2[,5:32] ###sélection des colonnes comprenant les variables pour les intégrer dans la boucle
 tem2
 #création d'un bdd d'origine pour moyenne (sert pour merge)
 BDD_moy_esp2 <- aggregate(tem2[,1] ~ Nom_scientifique + ID_espece + Milieu_recolte, data = BDD_moy_ech2, FUN = mean, na.rm = TRUE)
@@ -541,3 +547,31 @@ BDD_infla <- BDD_infla[
       BDD_infla$ID_echantillon == "30_5" |
       BDD_infla$ID_echantillon == "39_6" |
       BDD_infla$ID_echantillon == "42_5"), ]
+
+
+
+
+
+
+
+
+
+
+########### coef de variation ################
+BDD_coef<-merge(BDD_moy_esp,BDD_sd_esp,"ID_espece","ID_espece",all.x=T)
+View(BDD_coef)
+
+BDD_coef$coefMT<-(BDD_coef$MT.y/BDD_coef$MT.x)*100
+BDD_coef$coefBB<-(BDD_coef$BB_test.y/BDD_coef$BB_test.x)*100
+BDD_coef$coefBT<-(BDD_coef$BT_test.y/BDD_coef$BT_test.x)*100
+BDD_coef$coefDI<-(BDD_coef$DI_test.y/BDD_coef$DI_test.x)*100
+
+
+BDD_coef$coefSLA<-(BDD_coef$SLA.y/BDD_coef$SLA.x)*100
+BDD_coef$coefLA<-(BDD_coef$Surface_F.y/BDD_coef$Surface_F.x)*100
+BDD_coef$coefLDMC<-(BDD_coef$LDMC.y/BDD_coef$LDMC.x)*100
+BDD_coef$coefLMC_t24<-(BDD_coef$LMC_t24.y/BDD_coef$LMC_t24.x)*100
+BDD_coef$coefTD<-(BDD_coef$TD.y/BDD_coef$TD.x)*100
+BDD_coef$coefLT<-(BDD_coef$LT.y/BDD_coef$LT.x)*100
+
+write.csv2(BDD_coef,"Data/BDD_coef.csv")
