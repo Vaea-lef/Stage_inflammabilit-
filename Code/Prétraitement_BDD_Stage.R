@@ -390,7 +390,7 @@ for (i in 2:ncol(tem2)) {
 
 
 BDD_FI_esp <- aggregate(FI ~ Nom_scientifique + ID_espece + Milieu_recolte, 
-                        data = BDD_moy_ech11, 
+                        data = BDD_moy_ech1, 
                         FUN = sum, 
                         na.rm = TRUE)
 colnames(BDD_FI_esp)[4] <- "Nb_FI"

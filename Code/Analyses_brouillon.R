@@ -733,9 +733,32 @@ kruskal.test(BDD_ech$Surface_F~BDD_ech$Nom_scientifique)
 kruskal.test(BDD_ech$LT~BDD_ech$Nom_scientifique)
 
 
+
+
+
+
+
+
+
 #################### GLM POUR VARIABILITE INTRA et INTER ESPECES ######################
 #chargement pckage 
 library(lme4)
+library(lme4)
+library(performance)
+install.packages("performance")  # à faire une seule fois
+library(performance)
+
+
+# Modèle avec espèce comme effet aléatoire
+mod <- glmer(LMC_t24 ~ 1 + (1|Nom_scientifique),family=Gamma(link="log"), data = BDD_ech3)
+r.squaredGLMM(mod)
+
+m_DI2 <- glmer(DI_test ~ SD_cr+TD_cr+LA_cr+LDMC_cr+LT_cr+VPD_cr + (1 | Nom_scientifique), family=Gamma(link="log"), data = BDD_ech3)  #meilleur modèle
+summary(m_DI2)
+
+# Partition de la variance
+variance_partition(mod)
+
 
 # BT_test : durée de combustion (Gamma)
 mod_BT <- glmer(BT_test ~ 1 + (1 | Nom_scientifique),family = "Gamma", data = BDD_ech)
