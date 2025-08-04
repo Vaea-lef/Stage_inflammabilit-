@@ -1164,6 +1164,8 @@ colonnes_clean <- na.omit(colonnes_infla_cr)
 
 # ACP centrée et réduite
 res.pca <- prcomp(colonnes_clean, scale. = FALSE)
+summary(res.pca)
+res.pca
 
 M_S1<-aggregate(res.pca$x[,1],by=list(BDD_ech$Nom_scientifique),mean)
 SD_S1<-aggregate(res.pca$x[,1],by=list(BDD_ech$Nom_scientifique),sd)
@@ -1185,7 +1187,10 @@ BDD_ech$score <- ind_coords[,1]
 par(mar = c(6, 6, 4, 2))  # marges
 
 HC<-hclust(d=dist(cbind(M_S1$x,M_S2$x)),method="ward.D2")
+plot(HC, hang = -1,labels=F, axes="n")
+axis(2,cex.axis=0.6)
 GR<-cutree(HC,k=5)
+
 COL<-character()
 COL[GR==5]<-"#00610D"
 COL[GR==4]<-"red"
