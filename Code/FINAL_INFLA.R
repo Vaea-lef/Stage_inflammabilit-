@@ -1190,6 +1190,7 @@ HC<-hclust(d=dist(cbind(M_S1$x,M_S2$x)),method="ward.D2")
 plot(HC, hang = -1,labels=F, axes="n")
 axis(2,cex.axis=0.6)
 GR<-cutree(HC,k=5)
+GR
 
 COL<-character()
 COL[GR==5]<-"#00610D"
@@ -1240,6 +1241,74 @@ points(M_S1$x,M_S2$x,pch=21,bg=COL,cex=1.5)
 
 
 dim(BDD_ech)
+HC1<-hclust(d=dist(cbind(res.pca$x[,1],res.pca$x[,2])),method="ward.D2")
+plot(HC1, hang = -1,labels=F, axes="n")
+axis(2,cex.axis=0.6)
+GR1<-cutree(HC1,k=5)
+GR1
+#ajout colonne groupe
+BDD_ech$groupe<-GR1
+View(BDD_ech)
+
+# Reclassement de la variable groupe 
+BDD_esp$groupe <- factor(BDD_esp$groupe, levels = c(5, 3, 2, 1, 4))
+
+# boxplot MT
+boxplot(MT ~ groupe, data = BDD_esp,
+        main = "Distribution de MT par groupe",
+        xlab = "Groupe",
+        ylab = "MT (°C)",col=c("#00610D","#63B802","#FFDD1F","#FF6D1F", "red"))
+
+# boxplot BT
+boxplot(BT_test ~ groupe, data = BDD_esp,
+        main = "Distribution de BT par groupe",
+        xlab = "Groupe",
+        ylab = "BT (s)",col=c("#00610D","#63B802","#FFDD1F","#FF6D1F", "red"))
+
+
+# boxplot BB
+boxplot(BB_test ~ groupe, data = BDD_esp,
+        main = "Distribution de BB par groupe",
+        xlab = "Groupe",
+        ylab = "BB (%)",col=c("#00610D","#63B802","#FFDD1F","#FF6D1F", "red"))
+
+# boxplot DI
+boxplot(DI_test ~ groupe, data = BDD_esp,
+        main = "Distribution de DI par groupe",
+        xlab = "Groupe",
+        ylab = "DI (s)",col=c("#00610D","#63B802","#FFDD1F","#FF6D1F", "red"))
+
+
+
+
+# boxplot MT
+boxplot(MT ~ groupe, data = BDD_ech,
+        main = "Distribution de MT par groupe",
+        xlab = "Groupe",
+        ylab = "MT (°C)")
+
+# boxplot BT
+boxplot(BT_test ~ groupe, data = BDD_ech,
+        main = "Distribution de BT par groupe",
+        xlab = "Groupe",
+        ylab = "BT (s)")
+
+
+# boxplot BB
+boxplot(BB_test ~ groupe, data = BDD_ech,
+        main = "Distribution de BB par groupe",
+        xlab = "Groupe",
+        ylab = "BB (%)")
+
+# boxplot DI
+boxplot(DI_test ~ groupe, data = BDD_ech,
+        main = "Distribution de DI par groupe",
+        xlab = "Groupe",
+        ylab = "DI (s)")
+
+
+
+
 
 
 
