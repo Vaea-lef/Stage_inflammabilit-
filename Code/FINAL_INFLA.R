@@ -2750,20 +2750,23 @@ hist(BDD_esp$LMC_t0)
 hist(BDD_esp$Gmin)
 BDD_esp$ratio <- BDD_esp$LMC_t24 / BDD_esp$LMC_t0
 hist(BDD_esp$ratio)
+BDD_esp$logLMC24<-log(BDD_esp$LMC_t24)
+BDD_esp$logLMC0<-log(BDD_esp$LMC_t0)
 
 BDD_esp$LMC_t0_cr<-as.numeric(scale(BDD_esp$LMC_t0))
 BDD_esp$Gmin_cr<-as.numeric(scale(BDD_esp$Gmin))
 
 
-
-m_gmin2<-glm(LMC_t24~LMC_t0_cr+Gmin_cr,family=Gamma(link="log"),data=BDD_esp)
+m_gmin2<-glm(logLMC24~logLMC0+Gmin_cr,family=gaussian,data=BDD_esp)
+summary(m_gmin2)
+m_gmin2<-glm(LMC_t24~LMC_t0_cr+Gmin_cr,family=Gamma(link = "log"),data=BDD_esp)
 summary(m_gmin2)
 m_gmin3<-glm(ratio~LMC_t0_cr+Gmin_cr,family=gaussian,data=BDD_esp)
 summary(m_gmin3)
 
 AIC(m_gmin2,m_gmin3)
 
-
+hist(resid(m_gmin2))
 
 ################# Prédiction ########################
 # LMC_t0
@@ -2795,7 +2798,7 @@ pred2 <- predict(m_gmin3, type = "response", newdata = pred_data2, se.fit = TRUE
 pred3 <- predict(m_gmin3, type = "response", newdata = pred_data3, se.fit = TRUE, re.form = NA)
 
 # Plot des points observés
-plot(BDD_esp$LMC_t0, BDD_esp$LMC_t24, type="n",
+plot(BDD_esp$LMC_t0, BDD_esp$LMC_t24, 
      xlab = "LMC_t0 (%)", ylab = "LMC_t24 (%)", 
      main = "Effet de LMC_t0 sur LMC_t24 selon gmin ",ylim=c(0,700))
 
@@ -2810,8 +2813,94 @@ pred1 <- predict(m_gmin2, type = "response", newdata = pred_data1, se.fit = TRUE
 pred2 <- predict(m_gmin2, type = "response", newdata = pred_data2, se.fit = TRUE, re.form = NA)
 pred3 <- predict(m_gmin2, type = "response", newdata = pred_data3, se.fit = TRUE, re.form = NA)
 
+
+# Créer le graphique
+plot(BDD_esp$LMC_t0, BDD_esp$LMC_t24, 
+     xlab = "LMC_t0 (%)", ylab = "LMC_t24 (%)", 
+     main = "Effet de LMC_t0 sur LMC_t24 selon gmin",
+     xlim = c(100,800), ylim = c(0,800))
+
+# Ajouter les courbes de prédiction
+lines((foo * ecart + moy), pred1$fit, col = "#3B393B", lwd = 2) 
+lines((foo * ecart + moy), pred2$fit, col = "#005ED1", lwd = 2) 
+lines((foo * ecart + moy), pred3$fit, col = "#BD0000", lwd = 2)
+
+# Ajouter le polygone hachuré (zone où y > x)
+polygon(x = c(100, 100, 820), 
+        y = c(820, 100, 820), 
+        col = "white", border = NA)
+
+polygon(x = c(-50, -50, 850), 
+        y = c(850, -50, 850), 
+        density = 15, angle = -45, col = "#615B5B", border = NA)
+
+# Ajouter la ligne y = x
+abline(a = 0, b = 1)
+
+esp_a_annoter <- BDD_esp$Nom_scientifique == "Scaevola taccada" | 
+  BDD_esp$Nom_scientifique == "Scaevola montana" |
+  BDD_esp$Nom_scientifique== "Barringtonia asiatica"  
+
+points (BDD_esp$LMC_t0[esp_a_annoter],
+        BDD_esp$LMC_t24[esp_a_annoter],pch=21,bg = rgb(1,0,0),cex=1.2
+)
+
+text(BDD_esp$LMC_t0[esp_a_annoter] -10 ,
+     BDD_esp$LMC_t24[esp_a_annoter] + 25,
+     labels = c("B. asiatica","S. montana","S. taccada"),
+     cex = 1)
+
+
+
+
+
+
+
+
+
+
+# ZOOM
+plot(BDD_esp$LMC_t0, BDD_esp$LMC_t24, 
+     xlab = "LMC_t0 (%)", ylab = "LMC_t24 (%)", 
+     main = "Effet de LMC_t0 sur LMC_t24 selon gmin",
+     xlim = c(70,410), ylim = c(0,400))
+
+# Ajouter les courbes de prédiction
+lines((foo * ecart + moy), pred1$fit, col = "#3B393B", lwd = 2) 
+lines((foo * ecart + moy), pred2$fit, col = "#005ED1", lwd = 2) 
+lines((foo * ecart + moy), pred3$fit, col = "#BD0000", lwd = 2)
+
+# Ajouter le polygone hachuré (zone où y > x)
+polygon(x = c(-50, -50, 850), 
+        y = c(850, -50, 850), 
+        density = 15, angle = -45, col = "#615B5B", border = NA)
+
+# Ajouter la ligne y = x
+abline(a = 0, b = 1)
+
+esp_a_annoter <- BDD_esp$Nom_scientifique == "Scaevola montana" | 
+  BDD_esp$Nom_scientifique == "Hibiscus tiliaceus R" |
+  BDD_esp$Nom_scientifique== "Acropogon bullatus" | 
+  BDD_esp$Nom_scientifique== "Barringtonia asiatica" | 
+  BDD_esp$Nom_scientifique== "Alphitonia neocaledonica" |
+  BDD_esp$Nom_scientifique== "Leucaena leucocephala"
+
+points (BDD_esp$LMC_t0[esp_a_annoter],
+        BDD_esp$LMC_t24[esp_a_annoter],pch=21,bg = rgb(1,0,0),cex=1.2
+)
+
+text(BDD_esp$LMC_t0[esp_a_annoter] + 2,
+     BDD_esp$LMC_t24[esp_a_annoter] + 15,
+     labels = c("A. bullatus","A. neocaledonica","B. asiatica","H. tiliaceus R","L. leucocephala","S. montana"),
+      cex = 1)
+
+
+
+
+
+
 # Plot des points observés
-plot(BDD_esp$LMC_t0, BDD_esp$LMC_t24, type="n",
+plot(BDD_esp$LMC_t0, BDD_esp$LMC_t24, 
      xlab = "LMC_t0 (%)", ylab = "LMC_t24 (%)", 
      main = "Effet de LMC_t0 sur LMC_t24 selon gmin ",ylim=c(0,700))
 
@@ -2821,16 +2910,26 @@ lines((foo*ecart+moy), pred1$fit, col = "#3B393B", lwd = 2)
 lines((foo*ecart+moy), pred2$fit, col = "#005ED1" ,lwd = 2) 
 lines((foo*ecart+moy), pred3$fit, col = "#BD0000",lwd = 2)
 
+abline(a=0,b=1)
+abline
 
 
 
 ########################## PLOT GMIN LMC_t0 ###########################
 
+M_L2<-aggregate(BDD_ech$LMC_t0,by=list(BDD_ech$Nom_scientifique),mean)
+SD_L2<-aggregate(BDD_ech$LMC_t0,by=list(BDD_ech$Nom_scientifique),sd)
+
+M_L1<-aggregate(BDD_ech$Gmin,by=list(BDD_ech$Nom_scientifique),mean)
+SD_L1<-aggregate(BDD_ech$Gmin,by=list(BDD_ech$Nom_scientifique),sd)
+
+
+
 # Création du scatterplot
-plot(BDD_esp$LMC_t0 ~ BDD_esp$Gmin, 
+plot(BDD_esp$LMC_t0 ~ BDD_esp$Gmin, type="n",
      xlab = "Gmin", 
      ylab = "LMC_t0 (%)", 
-     main = "Relation entre Gmin et LMC_t0",ylim=c(0,500),xlim=c(0,110))
+     main = "Relation entre Gmin et LMC_t0",ylim=c(0,450),xlim=c(0,100))
 
 esp_a_annoter <- BDD_esp$Nom_scientifique == "Scaevola montana" | 
   BDD_esp$Nom_scientifique == "Hibiscus tiliaceus R" |
@@ -2838,7 +2937,16 @@ esp_a_annoter <- BDD_esp$Nom_scientifique == "Scaevola montana" |
   BDD_esp$Nom_scientifique== "Leucaena leucocephala" | 
   BDD_esp$Nom_scientifique== "Cerbera manghas" | 
   BDD_esp$Nom_scientifique== "Diospyros fasciculosa" |
-  BDD_esp$Nom_scientifique== "Calophylum caledonicum"
+  BDD_esp$Nom_scientifique== "Calophylum caledonicum" |
+  BDD_esp$Nom_scientifique== "Alphitonia neocaledonica" |
+
+segments(x0=BDD_esp$Gmin[esp_a_annoter],x1=BDD_esp$Gmin[esp_a_annoter],y0=BDD_esp$LMC_t0[esp_a_annoter]-SD_L2$x[esp_a_annoter],y1=BDD_esp$LMC_t0[esp_a_annoter]+SD_L2$x[esp_a_annoter])
+segments(x0=BDD_esp$Gmin[esp_a_annoter]-SD_L1$x[esp_a_annoter],x1=BDD_esp$Gmin[esp_a_annoter]+SD_L1$x[esp_a_annoter],y0=BDD_esp$LMC_t0[esp_a_annoter],y1=BDD_esp$LMC_t0[esp_a_annoter])
+points(M_L1$x,M_L2$x,pch=19,cex=0.8)
+points (BDD_esp$Gmin[esp_a_annoter],
+        BDD_esp$LMC_t0[esp_a_annoter],pch=21,bg = rgb(1,0,0),cex=1.2
+)
+
 
 text(BDD_esp$Gmin[esp_a_annoter],
      BDD_esp$LMC_t0[esp_a_annoter],
@@ -2849,8 +2957,7 @@ points (BDD_esp$Gmin[esp_a_annoter],
          BDD_esp$LMC_t0[esp_a_annoter],pch=21,bg = rgb(1,0,0)
          )
 
-
-plot(BDD_esp$LMC_t24 , BDD_esp$LMC_t0, xlim=c(0,300),ylim=c(0,300))
-text(BDD_esp$LMC_t24,
-     BDD_esp$LMC_t0,
-     labels = BDD_esp$Nom_scientifique,cex=0.5,pos=2)
+xlim=c(0,300),ylim=c(0,300)
+plot(BDD_esp$LMC_t0,BDD_esp$LMC_t24 ,xlim=c(0,300),ylim=c(0,300))
+text(BDD_esp$LMC_t0,BDD_esp$LMC_t24,
+     labels = BDD_esp$Nom_scientifique,cex=1,pos=2)
