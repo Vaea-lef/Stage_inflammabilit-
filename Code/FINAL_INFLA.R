@@ -414,9 +414,9 @@ pred_data1 <- data.frame(
 
 # Prédictions
 pred1 <- predict(mFI4, type = "response", newdata = pred_data1, se.fit = TRUE)
-pred_data1$LMC_t24_cr[pred1$fit<0.5]
-pred_data1$LMC_t24_cr[(pred1$fit+(1.96*pred1$se.fit))<0.5]
-pred_data1$LMC_t24_cr[(pred1$fit-(1.96*pred1$se.fit))<0.5]
+pred_data1$LMC_t24_cr[pred1$fit<0.5]*ecart+moy
+pred_data1$LMC_t24_cr[(pred1$fit+(1.96*pred1$se.fit))<0.5]*ecart+moy
+pred_data1$LMC_t24_cr[(pred1$fit-(1.96*pred1$se.fit))<0.5]*ecart+moy
 
 # Plot des points observés
 plot(BDD_esp$LMC_t24, BDD_esp$Nb_FI / BDD_esp$Nb_essais, 
@@ -425,11 +425,11 @@ plot(BDD_esp$LMC_t24, BDD_esp$Nb_FI / BDD_esp$Nb_essais,
 
 # Courbes de prédiction
 lines((foo*ecart+moy), pred1$fit, col = "black", lwd = 2) 
-abline(v = 315,  lty = 2, col = "blue")
-abline(v = 375,  lty = 2,col="red")
-abline(v = 452,  lty = 2, col = "blue")
-segments(315, 0.5, 452,0.5, col = "blue",lwd = 2)
-points(375,0.5,pch=19,col="red")
+abline(v = 329,  lty = 2, col = "blue")
+abline(v = 382,  lty = 2,col="red")
+abline(v = 462,  lty = 2, col = "blue")
+segments(329, 0.5, 462,0.5, col = "blue",lwd = 2)
+points(382,0.5,pch=19,col="red")
 
 axis(2)
 
@@ -1156,15 +1156,15 @@ lines((foo*ecart + moy), pred1$fit - 1.96 * pred1$se.fit, col = "blue", lty = 3)
 head(BDD_ech)
 # Sélection des colonnes des composantes de l'inflammabilité
 colonnes_infla <- BDD_ech[, c(10,12,13,15)]
-colonnes_infla
-# Vérification des données
 head(colonnes_infla)
+
+#sélection de variabes supplémentaires
+colonnes_traits <- BDD_ech [, c(18,22,26,28,29,30)]
+head(colonnes_traits)
 
 # Centrage-réduction des données
 colonnes_infla_cr <- scale(colonnes_infla)
-
-# Vérification des données standardisées
-head(colonnes_infla_cr)
+colonnes_traits_cr <- scale(colonnes_traits)
 
 # Nettoyage des données
 colonnes_clean <- na.omit(colonnes_infla_cr)
@@ -1186,12 +1186,14 @@ var_coords <- res.pca$rotation             # variables
 eig_vals <- res.pca$sdev^2                 # valeurs propres
 explained_var <- round(100 * eig_vals / sum(eig_vals), 1)
 
+colonnes_taits_coord <- cor(colonnes_traits_cr, ind_coords)
+
 # Ajout d'un score d'inflammabilité basé sur la coordonnée de l'axe 1 
 BDD_ech$score <- ind_coords[,1]
 
 
 # Graphique de base
-par(mar = c(6, 6, 4, 2))  # marges
+par(mar = c(5,5,5,5))  # marges
 
 HC<-hclust(d=dist(cbind(M_S1$x,M_S2$x)),method="ward.D2")
 plot(HC, hang = -1,labels=F, axes="n")
@@ -1226,6 +1228,16 @@ arrows(0, 0,                        # départ
        var_coords[,2]*max(abs(ind_coords[,2])),
        length = 0.1, col = "red", lwd = 2)
 
+# Variables supplémentaires en bleu
+arrows(0, 0,
+       colonnes_taits_coord[,1]*max(abs(ind_coords[,1])),
+       colonnes_taits_coord[,2]*max(abs(ind_coords[,2])),
+       length = 0.1, col = "#5490FF")
+
+text(colonnes_taits_coord[,1]*max(abs(ind_coords[,1])),
+     colonnes_taits_coord[,2]*max(abs(ind_coords[,2])),
+     labels = colnames(vars_supp),
+     col = "blue", cex = 0.8)
 
 
 # Tracer les individus
@@ -1330,6 +1342,7 @@ HCPC(res.pca,method="ward")
 
 
 ####################### CLASSEMENT ESPECES ############################
+par(mar = c(5,7,6,5))
 # Palette de couleur
 pal_vert_jaune <- colorRampPalette(c("darkgreen", "yellow"))
 pal_jaune_rouge <- colorRampPalette(c("yellow", "red"))
@@ -1362,7 +1375,7 @@ sd_aligned <- BDD_sd_score$score[match(BDD_moy_score$Nom_scientifique[o], BDD_sd
 y_pos <- 1:length(BDD_moy_score$Nom_scientifique)
 
 # Tracé
-par(mar = c(4, 9, 0, 0))
+par(mar = c(4, 10, 0, 0))
 plot(BDD_moy_score$score[o], 1:length(BDD_moy_score$Nom_scientifique), axes="n",xlim = c(-6,3))
 # Axes
 axis(2, at = 1:length(BDD_moy_score$Nom_scientifique), labels = BDD_moy_score$Nom_scientifique[o], las = 1, cex.axis = 0.7)
@@ -2235,7 +2248,7 @@ pred_data1 <- data.frame(
 
 # Prédictions
 pred1 <- predict(m_BT1, type = "response", newdata = pred_data1, se.fit = TRUE, re.form = NA)
-
+pred1
 
 # Plot des points observés
 plot(BDD_ech3$LDMC, BDD_ech3$BT_test,type="n", 
@@ -2825,14 +2838,11 @@ lines((foo * ecart + moy), pred1$fit, col = "#3B393B", lwd = 2)
 lines((foo * ecart + moy), pred2$fit, col = "#005ED1", lwd = 2) 
 lines((foo * ecart + moy), pred3$fit, col = "#BD0000", lwd = 2)
 
-# Ajouter le polygone hachuré (zone où y > x)
-polygon(x = c(100, 100, 820), 
-        y = c(820, 100, 820), 
-        col = "white", border = NA)
+
 
 polygon(x = c(-50, -50, 850), 
         y = c(850, -50, 850), 
-        density = 15, angle = -45, col = "#615B5B", border = NA)
+        density = 20, angle = -45, col = "#615B5B", border = NA)
 
 # Ajouter la ligne y = x
 abline(a = 0, b = 1)

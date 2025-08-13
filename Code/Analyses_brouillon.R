@@ -319,8 +319,9 @@ plot(BDD_esp$Gmin~BDD_esp$PEF)
 ######## ACP INFLA avec projection des axes TRAITS (TEST) ####################
 
 # Sélection des lignes complètes (pas de NA dans les colonnes 3 à 22)
-colonnes_complet_test <- na.omit(BDD_esp[, setdiff(8:30, c(8,9,11,14,23, 26))])
+colonnes_complet_test <- na.omit(BDD_esp[, setdiff(8:30, c(8,9,11,14,16,17,19,20,21,23,24,25,27))])
 dim (colonnes_complet_test)
+head (colonnes_complet_test)
 
 colonnes_complet_test_cr <- scale(colonnes_complet_test)
 head(colonnes_complet_test_cr)
@@ -328,7 +329,7 @@ head(colonnes_complet_test_cr)
 # colonnes 1 à 4 : inflammabilité (axes actifs)
 # colonnes 5 à 20 : traits (axes supplémentaires)
 res.pca <- PCA(colonnes_complet_test_cr, scale.unit = FALSE, 
-               quanti.sup = 5:17, graph = FALSE)
+               quanti.sup = 5:10, graph = FALSE)
 
 # Visualisation ACP
 fviz_pca_var(res.pca, col.var = "red", repel = TRUE) +
