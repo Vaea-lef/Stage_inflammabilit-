@@ -1154,12 +1154,15 @@ lines((foo*ecart + moy), pred1$fit - 1.96 * pred1$se.fit, col = "blue", lty = 3)
 
 ############################### ACP INFLA ######################################
 head(BDD_ech)
+BDD_ech$SD_mean <- BDD_ech$SD           # copier la colonne originale
+BDD_ech$SD_mean[is.na(BDD_ech$SD_mean)] <- mean(BDD_ech$SD, na.rm = TRUE)
+head(BDD_ech)
 # Sélection des colonnes des composantes de l'inflammabilité
 colonnes_infla <- BDD_ech[, c(10,12,13,15)]
 head(colonnes_infla)
 
 #sélection de variabes supplémentaires
-colonnes_traits <- BDD_ech [, c(18,22,26,28,29,30)]
+colonnes_traits <- BDD_ech [, c(22,26,28,29,30,33)]
 head(colonnes_traits)
 
 # Centrage-réduction des données
@@ -1236,7 +1239,7 @@ arrows(0, 0,
 
 text(colonnes_taits_coord[,1]*max(abs(ind_coords[,1])),
      colonnes_taits_coord[,2]*max(abs(ind_coords[,2])),
-     labels = colnames(vars_supp),
+     labels = colnames(colonnes_traits_cr),
      col = "blue", cex = 0.8)
 
 
@@ -1266,6 +1269,7 @@ BDD_esp$groupe<-GR
 
 # Reclassement de la variable groupe 
 BDD_esp$groupe <- factor(BDD_esp$groupe, levels = c(5, 3, 2, 1, 4))
+write.csv2(BDD_esp,"Data/BDD_esp.csv")
 
 # boxplot MT
 boxplot(MT ~ groupe, data = BDD_esp,
