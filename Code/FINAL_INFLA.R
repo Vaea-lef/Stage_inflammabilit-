@@ -363,7 +363,7 @@ plot(estimates1, y_pos1,type = "n",
      main = "Fréquence d'ignition",
      cex.main = 1.1)
 
-dev(0)
+
 
 # Ligne verticale à zéro
 abline(v = 0, lty = 2)

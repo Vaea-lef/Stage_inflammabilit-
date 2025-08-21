@@ -1,15 +1,14 @@
 
 #### TRAITEMENT DONNEE STAGE INFLAMMABILITE ####
 
-############# Traitement des données feuille ###########################
 
+
+
+############# Traitement des données feuille ###########################
 
 ##  importation BDD_feuille en format CSV
 setwd("C:/IRD/Stage_inflammabilit-") #définition du répertoire de travail
 BDD_leaf<-read.csv2("Data/BDD_Feuille.csv", header = TRUE) #importation de la base
-
-# pour éventuellement visualiser la base importée
-BDD_leaf
 
 ## Manipulation des données : calcul de Leaf Moisture Content (LMC) à t0 et t24,Leaf Dry Matter Content (LDMC) et Specific leaf area (SLA) 
 
@@ -47,7 +46,7 @@ PEF
 
 # création d'une nouvelle base de données "feuille" calculée avec ajout des colonnes calculées
 BDD_leaf_calcule<-data.frame(BDD_leaf,LMC_t0,LMC_t24,PEF,LDMC,SLA,LT)
-BDD_leaf_calcule #pour voir la BDD finale
+head(BDD_leaf_calcule) #pour voir si les colonnes sont bien présentes
 
 ###### Export de la BDD_Leaf_F CSV
 write.csv2(BDD_leaf_F,"Data/BDD_leaf_calcule.csv")
@@ -61,9 +60,6 @@ write.csv2(BDD_leaf_F,"Data/BDD_leaf_calcule.csv")
 
 ##  importation BDD_traits CSV
 BDD_traits<-read.csv2("Data/BDD_Traits.csv")
-
-# pour éventuellement visualiser la base importée
-BDD_traits 
 
 ## Manipulation des données : calcul du Volume et de la densité de la tige ainsi que Twig Moisture Content (TMC) et Twig Dry Matter Content (TDMC)
 
@@ -99,7 +95,7 @@ TDIA
 
 # création d'une nouvelle base de données calculée avec ajout des colonnes
 BDD_traits_calcule<-data.frame(BDD_traits,TV,TD,TMC_t0,TMC_t24,TDMC,TDIA)
-BDD_traits_calcule #pour voir la BDD finale
+head(BDD_traits_calcule) #pour voir si les colonnes sont bien présentes
 
 ###### Export de la BDD traits calculée CSV
 
@@ -109,16 +105,18 @@ write.csv2(BDD_traits_calcule,"Data/BDD_traits_calcule.csv")
 
 
 
+
+
 ############# Traitement des données Inflammabilité ###########################
 
-
+##  importation BDD_traits CSV
 BDD_infla<-read.csv2("Data/BDD_Inflammabilite.csv")
 
-
-
-BDD_infla
+## modif d'un échantillon
 BDD_infla[BDD_infla$ID_echantillon == "21_2", "MT"] <- 150
 BDD_infla[BDD_infla$ID_echantillon == "21_2", "temps_total"] <- 130
+
+## Manipulation des données :calcul de la bulk density (SV), burning time, 
 
 #calcul de la SD density (kg/m3)
 SD<-((BDD_infla$masse/1000)/(((2/3)*pi*BDD_infla$longeur*((BDD_infla$largeur/2)*(BDD_infla$hauteur/2)))/1000000))
@@ -138,7 +136,6 @@ BT_test
 #calcul de l'inverse de DI_test
 BDD_infla$DI<-(10-BDD_infla$DI)
 BDD_infla$DI
-
 
 
 #calcul de l'inverse de DI_test
