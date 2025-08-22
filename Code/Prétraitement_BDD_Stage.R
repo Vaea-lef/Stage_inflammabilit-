@@ -155,7 +155,7 @@ summary(VPD)
 
 # création d'une nouvelle base de données calculée avec ajout des colonnes
 BDD_infla_calcule<-data.frame(BDD_infla,score_DI,BT, BT_test,FI,SD,VPD)
-BDD_infla_calcule #pour voir la BDD finale
+head(BDD_infla_calcule) #pour voir la BDD finale
 
 ###### Export de la base infla calculée CSV
 # Exporter les données avec les colonnes calculées CSV
@@ -168,16 +168,18 @@ write.csv2(BDD_infla_calcule,"Data/BDD_infla_calcule.csv")
 ######### Assembler les bases de données en une seule base avec TOUTES les infos  #########
 print(BDD_esp$Nom.scientifique)
 
-##  importation BDD_esp CSV
+##  importation base espèces
 BDD_esp<-read.csv2("Data/BDD_Espece.csv")
+#rennomer colonne
 names(BDD_esp)[which(names(BDD_esp) == "Nom.scientifique")] <- "Nom_scientifique"
-
+#afficher BDD esp
 BDD_esp
+
 #importation de la base échantillonnage
 BDD_ech<-read.csv2("Data/BDD_Echantillonnage.csv")
 BDD_ech
 
-#assemblage : BDD esp et ech
+#assemblage : BDD esp et echantillonnage
 data1 <- merge(BDD_ech, BDD_esp, by.x = "ID_espece", by.y = "ID.espece", all.x = TRUE)
 data1
 
@@ -196,7 +198,7 @@ BDD_finale
 #export de la BDD finale 
 write.csv2(BDD_finale,"Data/BDD_finale.csv")
 
-colnames(BDD_finale)
+
 
 
 ############# création d'une BDD avec seulement les infos pour les analyses ############
@@ -215,7 +217,7 @@ write.csv2(BDD_ana_ech,"Data/BDD_ana_ech.csv")
 
 
 
-############# Base à l'échelle de l'échantillon #######################
+############# Base à l'échelle de l'échantillon (moyenne des données feuille pour chaque échantillon) #######################
 
 #création de table avec moyenne et sd pour chaque variable en fonction du nom de l'espèce
 temp<-BDD_ana_ech[,6:33] ###sélection des colonnes comprenant les variables pour les intégrer dans la boucle
@@ -246,38 +248,29 @@ for (i in 2:ncol(temp)) {
   BDD_sd_ech <- merge(BDD_sd_ech, temp_sd,by = c("ID_echantillon", "Nom_scientifique", "ID_espece","Milieu_recolte"),all = TRUE)
   }
 
-
-
-# Vecteur des ID à supprimer
+# Vecteur des ID à supprimer (échantillon qui n'étaient pas bien placés au dessus du chalumeau)
 ids_a_supprimer <- c("02_5", "13_6", "30_5", "39_6", "42_5")
 
-# Trouver les indices à supprimer
+# Trouver leslignes des ids à supprimer
 lignes_a_supprimer <- c()
-for (id in ids_a_supprimer) {
-  lignes_a_supprimer <- c(lignes_a_supprimer, which(BDD_moy_ech$ID_echantillon == id))
-}
+for (id in ids_a_supprimer) {lignes_a_supprimer <- c(lignes_a_supprimer, which(BDD_moy_ech$ID_echantillon == id))}
 
 # Supprimer ces lignes dans l'objet d'origine
 BDD_moy_ech <- BDD_moy_ech[-lignes_a_supprimer, ]
 
-# Résultats
-head(BDD_moy_ech)
-head(BDD_sd_ech)
 
 # Export des données
 write.csv2(BDD_moy_ech, "Data/BDD_moy_ech.csv", row.names = FALSE)
 write.csv2(BDD_sd_ech, "Data/BDD_sd_ech.csv", row.names = FALSE)
 
-View(BDD_moy_ech)
 
 
-####### suppression des échantillons pour MT
+
+####### suppression des échantillons qui ont une valeur par défaut pour MT (pour analyser MT)
 BDD_moy_ech1 <- BDD_moy_ech[BDD_moy_ech$MT != 150, ]
-View(BDD_moy_ech1)
 
-####### suppression des échantillons pour reste composates
+####### suppression des échantillons qui ont une valeur par défaut pour reste composates (pour analyser DI, BB et BT)
 BDD_moy_ech2 <- BDD_moy_ech[BDD_moy_ech$DI_test != 10, ]
-View(BDD_moy_ech2)
 
 # Export des données
 write.csv2(BDD_moy_ech1, "Data/BDD_moy_ech1.csv", row.names = FALSE)
@@ -293,12 +286,7 @@ dim(BDD_moy_ech)
 
 
 
-
-
-
-
-
-############# Base à l'échelle de l'espèce (complète) ######################################
+############# Base à l'échelle de l'espèce (complète : sans suppression des valeurs par défaut) ######################################
 #création de table avec moyenne et sd pour chaque variable en fonction du nom de l'espèce
 tem1<-BDD_moy_ech[,5:32] ###sélection des colonnes comprenant les variables pour les intégrer dans la boucle
 tem1
@@ -474,101 +462,3 @@ write.csv2(BDD_moy_esp2,"Data/BDD_moy_esp2.csv")
 
 
 
-
-
-
-
-################ NOMBRE D'ESPECES PAR MILIEU ###########
-library(dplyr)
-library(tidyr)
-library(ggplot2)
-
-# Comptage des espèces par milieu
-df_plot <- aggregate(Nom_scientifique ~ Milieu_recolte, data = BDD_esp, FUN = length)
-colnames(df_plot) <- c("Milieu", "Nb_especes") 
-
-# Tri du plus grand au plus petit
-df_plot <- df_plot[order(df_plot$Nb_especes, decreasing = TRUE), ]
-
-# Diagramme
-ggplot(df_plot, aes(x = reorder(Milieu, -Nb_especes), y = Nb_especes)) +
-  geom_bar(stat = "identity", fill = "darkorange") +
-  labs(x = "Milieu", y = "Nombre d'espèces", title = "Nombre d'espèces par milieu") +
-  theme_minimal()
-
-
-################ NOMBRE D'ESPECES PAR statut ###########
-
-# comptage des espèces par milieu
-df_statut <- aggregate(BDD_esp$Nom_scientifique ~ BDD_esp$Statut, FUN = length)
-colnames(df_statut)[1] <- "Statut"
-colnames(df_statut)[2] <- "Nb_especes"
-
-# tri du plus grand au plus petit
-df_statut <- df_statut[order(df_statut$Nb_especes, decreasing = TRUE), ]
-names(df_statut)
-
-# Étape 4 : diagramme
-ggplot(df_statut, aes(x = reorder(Statut, -Nb_especes), y = Nb_especes)) +
-  geom_bar(stat = "identity", fill = "darkorange") +
-  labs(x = "Milieu", y = "Nombre d'espèces", title = "Nombre d'espèces par milieu")
-
-
-
-
-
-
-# Vecteur des ID à supprimer
-ids_a_supprimer <- c("02_5", "13_6", "30_5", "39_6", "42_5")
-# Initialisation d'un vecteur d'indices à supprimer
-lignes_a_supprimer <- c()
-lignes_a_supprimer <- unique(lignes_a_supprimer)  # au cas où il y aurait des doublons
-
-
-# Boucle pour trouver les indices à supprimer
-for (id in ids_a_supprimer) {
-  lignes_a_supprimer <- c(lignes_a_supprimer, which(BDD_infla$ID_echantillon == id))
-}
-
-# Suppression des lignes
-BDD_infla <- BDD_infla[-lignes_a_supprimer, ]
-BDD_infla <- BDD_infla[BDD_infla$MT != 150, ]
-
-
-
-ID_a_supprimer <- c("02_5", "13_6", "30_5", "39_6", "42_5")
-
-BDD_infla <- BDD_infla[
-  !(BDD_infla$ID_echantillon == "02_5" |
-      BDD_infla$ID_echantillon == "13_6" |
-      BDD_infla$ID_echantillon == "30_5" |
-      BDD_infla$ID_echantillon == "39_6" |
-      BDD_infla$ID_echantillon == "42_5"), ]
-
-
-
-
-
-
-
-
-
-
-########### coef de variation ################
-BDD_coef<-merge(BDD_moy_esp,BDD_sd_esp,"ID_espece","ID_espece",all.x=T)
-View(BDD_coef)
-
-BDD_coef$coefMT<-(BDD_coef$MT.y/BDD_coef$MT.x)*100
-BDD_coef$coefBB<-(BDD_coef$BB_test.y/BDD_coef$BB_test.x)*100
-BDD_coef$coefBT<-(BDD_coef$BT_test.y/BDD_coef$BT_test.x)*100
-BDD_coef$coefDI<-(BDD_coef$DI_test.y/BDD_coef$DI_test.x)*100
-
-
-BDD_coef$coefSLA<-(BDD_coef$SLA.y/BDD_coef$SLA.x)*100
-BDD_coef$coefLA<-(BDD_coef$Surface_F.y/BDD_coef$Surface_F.x)*100
-BDD_coef$coefLDMC<-(BDD_coef$LDMC.y/BDD_coef$LDMC.x)*100
-BDD_coef$coefLMC_t24<-(BDD_coef$LMC_t24.y/BDD_coef$LMC_t24.x)*100
-BDD_coef$coefTD<-(BDD_coef$TD.y/BDD_coef$TD.x)*100
-BDD_coef$coefLT<-(BDD_coef$LT.y/BDD_coef$LT.x)*100
-
-write.csv2(BDD_coef,"Data/BDD_coef.csv")
