@@ -591,11 +591,11 @@ sd_aligned <- BDD_sd_score$score[match(BDD_moy_score$Nom_scientifique[o], BDD_sd
 y_pos <- 1:length(BDD_moy_score$Nom_scientifique)
 
 # Tracé
-par(mar = c(4, 10, 0, 0))
+par(mar = c(4, 13, 0, 0))
 plot(BDD_moy_score$score[o], 1:length(BDD_moy_score$Nom_scientifique), axes="n",xlim = c(-6,3))
 # Axes
-axis(2, at = 1:length(BDD_moy_score$Nom_scientifique), labels = BDD_moy_score$Nom_scientifique[o], las = 1, cex.axis = 0.7)
-mtext("Espèces", side = 2, line = 8.5, cex = 1)
+axis(2, at = 1:length(BDD_moy_score$Nom_scientifique), labels = BDD_moy_score$Nom_scientifique[o], las = 1, cex.axis = 0.85,font=3)
+mtext("Espèces", side = 2, line = 11, cex = 1)
 axis(1, at = seq(-6, 4, by = 1))
 mtext("Score d'inflammabilité", side = 1, line = 3, cex = 1)
 
