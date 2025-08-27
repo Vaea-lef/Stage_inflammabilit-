@@ -519,7 +519,7 @@ boxplot(DI_test ~ groupe, data = BDD_esp,
 
 #Calcul de la moyenne du score 
 #création de table avec moyenne et sd pour chaque variable en fonction du nom de l'espèce
-tem3<-BDD_ech[,5:33] ###sélection des colonnes comprenant les variables pour les intégrer dans la boucle
+tem3<-BDD_ech[,5:34] ###sélection des colonnes comprenant les variables pour les intégrer dans la boucle
 tem3
 #création d'un bdd d'origine pour moyenne (sert pour merge)
 BDD_moy_score <- aggregate(tem3[,1] ~ Nom_scientifique + ID_espece + Milieu_recolte, data = BDD_ech, FUN = mean, na.rm = TRUE)
