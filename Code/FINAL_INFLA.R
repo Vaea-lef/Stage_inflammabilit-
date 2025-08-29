@@ -159,35 +159,9 @@ BDD_esp$SD_cr<-as.numeric(scale(BDD_esp$SD))
 BDD_esp$TD_cr<-as.numeric(scale(BDD_esp$TD))
 BDD_esp$LA_cr<-as.numeric(scale(BDD_esp$Surface_F))
 BDD_esp$LDMC_cr<-as.numeric(scale(BDD_esp$LDMC))
-BDD_esp$LT_cr<-as.numeric(scale(BDD_esp$LT))
-BDD_esp$Vent_cr<-as.numeric(scale(BDD_esp$Vent))
-BDD_esp$Temp_cr<-as.numeric(scale(BDD_esp$T_ambiante))
 BDD_esp$LMC_t24_cr<-as.numeric(scale(BDD_esp$LMC_t24))
-BDD_esp$Nb_rami_cr<-as.numeric(scale(BDD_esp$Nb_rami))
 BDD_esp$SLA_cr<-as.numeric(scale(BDD_esp$SLA))
 
-BDD_esp_netMT$SD_cr<-as.numeric(scale(BDD_esp_netMT$SD))
-BDD_esp_netMT$TD_cr<-as.numeric(scale(BDD_esp_netMT$TD))
-BDD_esp_netMT$LA_cr<-as.numeric(scale(BDD_esp_netMT$Surface_F))
-BDD_esp_netMT$LDMC_cr<-as.numeric(scale(BDD_esp_netMT$LDMC))
-BDD_esp_netMT$LT_cr<-as.numeric(scale(BDD_esp_netMT$LT))
-BDD_esp_netMT$Vent_cr<-as.numeric(scale(BDD_esp_netMT$Vent))
-BDD_esp_netMT$Temp_cr<-as.numeric(scale(BDD_esp_netMT$T_ambiante))
-BDD_esp_netMT$LMC_t24_cr<-as.numeric(scale(BDD_esp_netMT$LMC_t24))
-BDD_esp_netMT$Nb_rami_cr<-as.numeric(scale(BDD_esp_netMT$Nb_rami))
-BDD_esp_netMT$VPD_cr<-as.numeric(scale(BDD_esp_netMT$VPD))
-
-
-BDD_esp_net3$SD_cr<-as.numeric(scale(BDD_esp_net3$SD))
-BDD_esp_net3$TD_cr<-as.numeric(scale(BDD_esp_net3$TD))
-BDD_esp_net3$LA_cr<-as.numeric(scale(BDD_esp_net3$Surface_F))
-BDD_esp_net3$LDMC_cr<-as.numeric(scale(BDD_esp_net3$LDMC))
-BDD_esp_net3$LT_cr<-as.numeric(scale(BDD_esp_net3$LT))
-BDD_esp_net3$Vent_cr<-as.numeric(scale(BDD_esp_net3$Vent))
-BDD_esp_net3$Temp_cr<-as.numeric(scale(BDD_esp_net3$T_ambiante))
-BDD_esp_net3$LMC_t24_cr<-as.numeric(scale(BDD_esp_net3$LMC_t24))
-BDD_esp_net3$Nb_rami_cr<-as.numeric(scale(BDD_esp_net3$Nb_rami))
-BDD_esp_net3$VPD_cr<-as.numeric(scale(BDD_esp_net3$VPD))
 
 
 ############### MODELES #############################
@@ -271,7 +245,7 @@ plot(estimates1, y_pos1,type = "n",
 abline(v = 0, lty = 2)
 abline(h = y_pos1 -0.2, lwd = 0.5, lty = 3, col="grey")
 
-
+#points des coefs
 points(estimates1, y_pos1 ,pch = 16, col = cols1,cex = 1.1)
 points(estimates2, y_pos2 - 0.4,pch = 17, col = cols2,cex = 1.1)
 
@@ -314,7 +288,7 @@ pred_data1 <- data.frame(
 )
 
 
-# Prédictions
+# Prédictions et IC
 pred1 <- predict(mFI4, type = "response", newdata = pred_data1, se.fit = TRUE)
 pred_data1$LMC_t24_cr[pred1$fit<0.5]*ecart+moy
 pred_data1$LMC_t24_cr[(pred1$fit+(1.96*pred1$se.fit))<0.5]*ecart+moy
@@ -475,7 +449,7 @@ points(M_S1$x,M_S2$x,pch=21,bg=COL,cex=1.5)
 
 
 
-#ajout colonne groupe
+#ajout colonne groupe dans BDD
 BDD_esp$groupe<-GR
 
 
@@ -517,7 +491,7 @@ boxplot(DI_test ~ groupe, data = BDD_esp,
 
 
 
-#Calcul de la moyenne du score 
+#Calcul de la moyenne du score pour ajout dans BDD_esp
 #création de table avec moyenne et sd pour chaque variable en fonction du nom de l'espèce
 tem3<-BDD_ech[,5:34] ###sélection des colonnes comprenant les variables pour les intégrer dans la boucle
 tem3
@@ -550,9 +524,6 @@ for (i in 2:ncol(tem3)) {
 BDD_moy_score
 
 
-HCPC(res.pca,method="ward")
-
-?HCPC
 
 
 
@@ -850,9 +821,7 @@ BDD_ech$SD_cr<-as.numeric(scale(BDD_ech$SD))
 BDD_ech$TD_cr<-as.numeric(scale(BDD_ech$TD))
 BDD_ech$LA_cr<-as.numeric(scale(BDD_ech$Surface_F))
 BDD_ech$LDMC_cr<-as.numeric(scale(BDD_ech$LDMC))
-BDD_ech$LT_cr<-as.numeric(scale(BDD_ech$LT))
 BDD_ech$LMC_t24_cr<-as.numeric(scale(BDD_ech$LMC_t24))
-BDD_ech$Nb_rami_cr<-as.numeric(scale(BDD_ech$Nb_rami))
 BDD_ech$VPD_cr<-as.numeric(scale(BDD_ech$VPD))
 BDD_ech$SLA_cr<-as.numeric(scale(BDD_ech$SLA))
 
@@ -860,11 +829,7 @@ BDD_echMT$SD_cr<-as.numeric(scale(BDD_echMT$SD))
 BDD_echMT$TD_cr<-as.numeric(scale(BDD_echMT$TD))
 BDD_echMT$LA_cr<-as.numeric(scale(BDD_echMT$Surface_F))
 BDD_echMT$LDMC_cr<-as.numeric(scale(BDD_echMT$LDMC))
-BDD_echMT$LT_cr<-as.numeric(scale(BDD_echMT$LT))
-BDD_echMT$Vent_cr<-as.numeric(scale(BDD_echMT$Vent))
-BDD_echMT$Temp_cr<-as.numeric(scale(BDD_echMT$T_ambiante))
 BDD_echMT$LMC_t24_cr<-as.numeric(scale(BDD_echMT$LMC_t24))
-BDD_echMT$Nb_rami_cr<-as.numeric(scale(BDD_echMT$Nb_rami))
 BDD_echMT$VPD_cr<-as.numeric(scale(BDD_echMT$VPD))
 BDD_echMT$SLA_cr<-as.numeric(scale(BDD_echMT$SLA))
 
@@ -872,11 +837,7 @@ BDD_ech3$SD_cr<-as.numeric(scale(BDD_ech3$SD))
 BDD_ech3$TD_cr<-as.numeric(scale(BDD_ech3$TD))
 BDD_ech3$LA_cr<-as.numeric(scale(BDD_ech3$Surface_F))
 BDD_ech3$LDMC_cr<-as.numeric(scale(BDD_ech3$LDMC))
-BDD_ech3$LT_cr<-as.numeric(scale(BDD_ech3$LT))
-BDD_ech3$Vent_cr<-as.numeric(scale(BDD_ech3$Vent))
-BDD_ech3$Temp_cr<-as.numeric(scale(BDD_ech3$T_ambiante))
 BDD_ech3$LMC_t24_cr<-as.numeric(scale(BDD_ech3$LMC_t24))
-BDD_ech3$Nb_rami_cr<-as.numeric(scale(BDD_ech3$Nb_rami))
 BDD_ech3$VPD_cr<-as.numeric(scale(BDD_ech3$VPD))
 BDD_ech3$SLA_cr<-as.numeric(scale(BDD_ech3$SLA))
 
@@ -2183,7 +2144,6 @@ points (BDD_esp$Gmin[esp_a_annoter],
          BDD_esp$LMC_t0[esp_a_annoter],pch=21,bg = rgb(1,0,0)
          )
 
-xlim=c(0,300),ylim=c(0,300)
 plot(BDD_esp$LMC_t0,BDD_esp$LMC_t24 ,xlim=c(0,300),ylim=c(0,300))
 text(BDD_esp$LMC_t0,BDD_esp$LMC_t24,
      labels = BDD_esp$Nom_scientifique,cex=1,pos=2)
