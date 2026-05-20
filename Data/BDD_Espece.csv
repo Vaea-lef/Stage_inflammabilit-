@@ -1,55 +1,71 @@
-﻿ID espece;Nom verna;Nom scientifique;Famille;Habitat;Milieu_recolte;Statut;Type feuille;Forme feuille;Texture feuille;Type ecorce;Forme croissance;Inflammabilite presume
-1;Manguier;Mangifera indica;Anacardiaceae;I;I;Introduite;Simple;Lancéollée;Douce;Fissurée;Arbre;Faible
-2;Badamier;Terminalia catappa;Combretaceae;N;I;Introduite;Simple;Obovale;Douce;Crevacée;Arbre;Moyenne
-3;Bois savon;Alphitonia neocaledonica;Rhamnaceae;FLM;M;Endemique;Simple;Elliptique;Coriace;Lisse;Arbuste;Forte
-4;Brosse à dents du Sud;Grevillea rubiginosa;Proteaceae;M;M;Endemique;Simple;Oblancéolée;Coriace;Fissurée;Arbuste;Forte
-5;;Codia spatulata;Cunoniaceae;FM;M;Endemique;Simple;Obovale;Coriace;Fissurée;Arbre;
-6;Batcho ;Geissois pruinosa;Cunoniaceae;FM;M;Endemique;Composée;Palmée;Coriace;Lisse;Arbuste;
-7;Pin colonaire;Araucaria columnaris;Araucariaceae;F;;Endemique;Ecailles;Ecaille;Coriace;Ecailleuse;Arbre;Forte
-8;Bois de fer, Filao;Casuarina collina;Casuarinaceae;LMR;;Endemique;Tiges photosynthétiques;Aiguille;Coriace;Fissurée;Arbre;Très forte
-9;Chêne gomme;Arillastrum gummiferum ;Myrtaceae;FM;M;Endemique;Simple;Elliptique;Coriace;Fissurée;Arbre;Moyenne
-10;Go;Hibbertia lucens;Dilleniaceae;FMN;M;Endemique;Simple;Elliptique étroite;Coriace;Fissurée;Arbuste;
-11;Faux teck;Metrosideros laurifolia;Myrtaceae;FLM;M;Endemique;Simple;Lancéollée;Coriace;Fissurée;Arbuste;Faible
-12;;Tristaniopsis glauca;Myrtaceae;M;M;Endemique;Simple;Lancéollée;Douce;Lisse exfoliante en plaque;Arbuste;
-13;Tamanou bord de mer;Calophyllum inophyllum;Calophyllaceae;G;G;Autochtone;Simple;Elliptique;Coriace;Fissurée;Arbre;Faible
-14;Santal;Santalum austrocaledonicum;Santalaceae;FLMG;;Autochtone;Simple;Elliptique;Douce;Fissurée;Arbre;
-15;Jamelonier;Syzygium cumini;Myrtaceae;I;I;Introduite;Simple;Oblongue;Douce;Fissurée;Arbre;Faible
-16;Bourao;Hibiscus tiliaceus V;Malvaceae;GN;;Autochtone;Simple;Cordiforme;Douce;Fissurée;Arbre;Très faible
-17;Bonnet d'evêque;Barringtonia asiatica;Lecythidaceae;GN;G;Autochtone;Simple;Obovale;Douce;Lisse;Arbre;Très faible
-18;Faux mimosa;Leucaena leucocephala;Fabaceae;I;I;Introduite;Composée;Bipennée;Douce;Lisse;Arbuste;Faible
-19;;Acropogon bullatus;Malvaceae;FL;;Endemique;Simple;Cordiforme;Coriace;Lisse;Arbre;
-20;Faux manguier vert ;Cerbera manghas;Apocynaceae;FLG;G;Autochtone;Simple;Lancéollée;Douce;Lisse;Arbre;Très faible
-21;Patte de poule;Scaevola taccada;Goodeniaceae;G;G;Autochtone;Simple;Obovale;Douce;Lisse;Arbuste;Très faible
-22;Gaïac;Acacia spirorbis;Fabaceae;LMN;L;Autochtone;Simple;Lancéollée;Coriace;Fissurée;Arbre;Très forte
-23;Niaouli;Melaleuca quinquenervia;Myrtaceae;MRS;;Autochtone;Simple;Lancéollée;Coriace;Papyracée;Arbre;Forte
-24;Pin des caraibes;Pinus caribea;Pinaceae; I;I;Introduite;Aiguille;Aiguille;Coriace;Ecailleuse;Arbre;Très forte
-25;;Ficus habrophyla;Moraceae;FL;F;Autochtone;Simple;Oblongue;Coriace;Lisse;Arbre;Faible
-26;Faux chêne blanc;Elattostachys apetala;Sapindaceae;FL;F;Autochtone;Composée;Paripennée;Douce;Lisse;Arbre;Moyenne
-27;Graine blanche;Neuburgia novocaledonica;Loganiaceae;F;F;Autochtone;Simple;Obovale;Coriace;Lisse;Arbre;Très faible
-28;Acacia noir;Archidendropsis granulosa;Mimosoideae;F;F;Endemique;Composée;Bipennée;Douce;Lisse;Arbre;
-29;Arbre a sagaïes;Alstonia balansae;Apocynaceae;FLM;;Endemique;Simple;Oblongue;Coriace;Lisse;Arbre;
-30;Bois bleu;Hernandia cordigera;Hernandiaceae;F;;Endemique;Simple;Oblongue;Coriace;Lisse;Arbre;Faible
-31;Potr;Fagraea berteroana;Gentianaceae;FLGN;;Autochtone;Simple;Elliptique;Douce;Lisse;Arbre;Faible
-32;;Guioa villosa;Sapindaceae;FM;M;Endemique;Composée;Imparipennée;Coriace;Lisse;Arbuste;Forte
-33;Bourao panaché;Hibiscus tiliaceus P;Malvaceae;GN;G;Autochtone;Simple;Cordiforme;Douce;Fissurée;Arbre;Faible
-34;Bourao rouge;Hibiscus tiliaceus R;Malvaceae;GN;G;Autochtone;Simple;Cordiforme;Douce;Fissurée;Arbre;Faible
-35;Bourao grande feuille;Hibiscus tiliaceus G;Malvaceae;GN;N;Autochtone;Simple;Cordiforme;Douce;Fissurée;Arbre;Faible
-36;Arbre à cire;Tabernaemontana cerifera;Apocynaceae;FRM;F;Endemique;Simple;Lancéollée;Coriace;Fissurée;Arbre;Très faible
-37;;Myodocarpus fraxinifolius;Myodocarpaceae;FM;F;Endemique;Composée;Imparipennée;Douce;Lisse;Arbre;Faible
-38;Kaori;Agathis lanceolata;Araucariaceae;F;;Endemique;Simple;Oblongue;Coriace;Lisse exfoliante en plaque;Arbre;Forte
-39;Tamanu de Forêt;Calophyllum caledonicum;Calophyllaceae;F;F;Endemique;Simple;Elliptique étroite;Coriace;Fissurée;Arbre;
-40;Faux caféier;Diospyros fasciculosa;Ebenaceae;FL;L;Autochtone;Simple;Oblongue;Coriace;Lisse;Arbre;Très forte
-41;Bolé;Acronychia laevis;Rutaceae;LMN;L;Autochtone;Simple;Oblongue;Douce;Lisse;Arbre;Faible
-42;Croton sauvage;Codiaeum peltatum;Euphorbiaceae;FL;L;Endemique;Simple;Obovale étroitre;Douce;Lisse;Arbre;Très faible
-43;Tiaré de forêt sèche;Gardenia urvillei;Rubiaceae;LM;L;Endemique;Simple;Oblongue;Coriace;Lisse;Arbre;Faible
-44;Arbre à colle;Cordia dichotoma;Boraginaceae;LGN;L;Autochtone;Simple;Ovale;Douce;Lisse;Arbre;Très faible
-45;;Lepidocupania arcuata;Sapindaceae;FL;L;Endemique;Composée;Imparipennée;Douce;Lisse;Arbre;
-46;;Scaevola montana;Goodeniaceae;MN;;Autochtone;Simple;Elliptique;Douce;Lisse;Arbuste;
-47;;Alstonia vieillardii;Apocynaceae;FN;N;Endemique;Simple;Oblongue;Coriace;Fissurée;Arbre;
-48;Palétuvier de montagne;Crossostylis grandiflora;Rhizophoraceae;F;F;Endemique;Simple;Elliptique;Coriace;Fissurée;Arbre;Très faible
-49;Faux tamanou;Geissois racemosa;Cunoniaceae;FSN;F;Endemique;Composée;Palmée;Coriace;Fissurée;Arbre;Très faible
-50;;Glochidion billardierei;Phyllantacceae;FLN;;Endemique;Simple;Oblongue;Coriace;Fissurée;Arbre;
-51;Bancoulier;Aleurites moluccana;Euphorbiaceae;FN;;Autochtone;Simple;Lancéollée;Douce;Lisse;Arbre;Faible
-52;;Trema cannabina;Cannabaceae;N;N;Autochtone;Simple;Oblongue;Douce;Lisse;Arbre;
-53;Cerisier bleu;Elaeocarpus angustifolius;Elaeocarpaceae;FN;;Autochtone;Simple;Lancéollée;Coriace;Lisse;Arbre;Moyenne
-54;Peuplier Kanak;Erythrina variegata var. fastigiata;Fabaceae;N;N;Endemique;Composée;Trifoliolée;Douce;Fissure;Arbre;Faible
+﻿ID espece;Nom scientifique;Nom verna;Famille;Habitat;Milieu_recolte;Statut;Type feuille;Forme feuille;Texture feuille;Type ecorce;Forme croissance;Inflammabilite presume;Latex;Genre;Espèce
+1;Mangifera indica;Manguier;Anacardiaceae;I;I;Introduite;Simple;Lancéollée;Douce;Fissurée;Arbre;Faible;oui;Mangifera;indica
+29;Alstonia balansae;Arbre a sagaïes;Apocynaceae;FLM;;Endemique;Simple;Oblongue;Coriace;Lisse;Arbre;;oui;Alstonia;balansae
+47;Alstonia vieillardii;;Apocynaceae;FN;N;Endemique;Simple;Oblongue;Coriace;Fissurée;Arbre;;oui;Alstonia;vieillardii
+20;Cerbera manghas;Faux manguier vert ;Apocynaceae;FLG;G;Autochtone;Simple;Lancéollée;Douce;Lisse;Arbre;Très faible;oui;Cerbera;manghas
+58;Cerberiopsis candelabra;Candélabre;Apocynaceae;F;;Endemique;;;;;;;oui;Cerberiopsis;candelabra
+68;Rauvolfia semperflorens;;Apocynaceae;LM;;Endemique;;;;;;;oui;Rauvolfia;semperflorens
+36;Tabernaemontana cerifera;Arbre à cire;Apocynaceae;FRM;F;Endemique;Simple;Lancéollée;Coriace;Fissurée;Arbre;Très faible;oui;Tabernaemontana;cerifera
+64;Plerandra gabriellae;;Araliaceae;F;;Endemique;;;;;;;non;Plerandra;gabriellae
+38;Agathis lanceolata;Kaori;Araucariaceae;F;;Endemique;Simple;Oblongue;Coriace;Lisse exfoliante en plaque;Arbre;Forte;non;Agathis;lanceolata
+7;Araucaria columnaris;Pin colonaire;Araucariaceae;F;;Endemique;Ecailles;Ecaille;Coriace;Ecailleuse;Arbre;Forte;non;Araucaria;columnaris
+63;Deplanchea speciosa;Poindéa;Bignoniaceae;FM;;Endemique;;;;;;;non;Deplanchea;speciosa
+44;Cordia dichotoma;Arbre à colle;Boraginaceae;LGN;L;Autochtone;Simple;Ovale;Douce;Lisse;Arbre;Très faible;non;Cordia;dichotoma
+39;Calophyllum caledonicum;Tamanu de Forêt;Calophyllaceae;F;F;Endemique;Simple;Elliptique étroite;Coriace;Fissurée;Arbre;;non;Calophyllum;caledonicum
+13;Calophyllum inophyllum;Tamanou bord de mer;Calophyllaceae;G;G;Autochtone;Simple;Elliptique;Coriace;Fissurée;Arbre;Faible;non;Calophyllum;inophyllum
+52;Trema cannabina;;Cannabaceae;N;N;Autochtone;Simple;Oblongue;Douce;Lisse;Arbre;;non;Trema;cannabina
+8;Casuarina collina;Bois de fer, Filao;Casuarinaceae;LMR;;Endemique;Tiges photosynthétiques;Aiguille;Coriace;Fissurée;Arbre;Très forte;non;Casuarina;collina
+66;Garcinia neglecta;Faux houp;Clusiaceae;FLM;;Endemique;;;;;;;oui;Garcinia;neglecta
+67;Montrouziera sphaeroidea;Petit houp;Clusiaceae;M;;Endemique;;;;;;;oui;Montrouziera;sphaeroidea
+2;Terminalia catappa;Badamier;Combretaceae;N;I;Introduite;Simple;Obovale;Douce;Crevacée;Arbre;Moyenne;non;Terminalia;catappa
+5;Codia spatulata;;Cunoniaceae;FM;M;Endemique;Simple;Obovale;Coriace;Fissurée;Arbre;;non;Codia;spatulata
+6;Geissois pruinosa;Batcho ;Cunoniaceae;FM;M;Endemique;Composée;Palmée;Coriace;Lisse;Arbuste;;non;Geissois;pruinosa
+49;Geissois racemosa;Faux tamanou;Cunoniaceae;FSN;F;Endemique;Composée;Palmée;Coriace;Fissurée;Arbre;Très faible;non;Geissois;racemosa
+10;Hibbertia lucens;Go;Dilleniaceae;FMN;M;Endemique;Simple;Elliptique étroite;Coriace;Fissurée;Arbuste;;non;Hibbertia;lucens
+40;Diospyros fasciculosa;Faux caféier;Ebenaceae;FL;L;Autochtone;Simple;Oblongue;Coriace;Lisse;Arbre;Très forte;non;Diospyros;fasciculosa
+53;Elaeocarpus angustifolius;Cerisier bleu;Elaeocarpaceae;FN;;Autochtone;Simple;Lancéollée;Coriace;Lisse;Arbre;Moyenne;non;Elaeocarpus;angustifolius
+60;Dracophyllum verticillatum;;Ericaceae;M;;Endemique;;;;;;;non;Dracophyllum;verticillatum
+59;Styphelia cymbulae;;Ericaceae;FM;;Autochtone;;;;;;;non;Styphelia;cymbulae
+70;Acalypha sp;;Euphorbiaceae;I;;Introduite;;;;;;;;Acalypha;sp
+51;Aleurites moluccana;Bancoulier;Euphorbiaceae;FN;;Autochtone;Simple;Lancéollée;Douce;Lisse;Arbre;Faible;oui;Aleurites;moluccana
+42;Codiaeum peltatum;Croton sauvage;Euphorbiaceae;FL;L;Endemique;Simple;Obovale étroitre;Douce;Lisse;Arbre;Très faible;oui;Codiaeum;peltatum
+65;Macaranga alchorneoides;;Euphorbiaceae;F;;Endemique;;;;;;;oui;Macaranga;alchorneoides
+22;Acacia spirorbis;Gaïac;Fabaceae;LMN;L;Autochtone;Simple;Lancéollée;Coriace;Fissurée;Arbre;Très forte;non;Acacia;spirorbis
+28;Archidendropsis granulosa;Acacia noir;Fabaceae;F;F;Endemique;Composée;Bipennée;Douce;Lisse;Arbre;;non;Archidendropsis;granulosa
+54;Erythrina variegata var. fastigiata;Peuplier Kanak;Fabaceae;N;N;Endemique;Composée;Trifoliolée;Douce;Fissure;Arbre;Faible;non;Erythrina;variegata
+18;Leucaena leucocephala;Faux mimosa;Fabaceae;I;I;Introduite;Composée;Bipennée;Douce;Lisse;Arbuste;Faible;non;Leucaena;leucocephala
+31;Fagraea berteroana;Potr;Gentianaceae;FLGN;;Autochtone;Simple;Elliptique;Douce;Lisse;Arbre;Faible;non;Fagraea;berteroana
+62;Scaevola cylindrica;;Goodeniaceae;MN;;Autochtone;;;;;;;non;Scaevola;cylindrica
+46;Scaevola montana;;Goodeniaceae;MN;;Autochtone;Simple;Elliptique;Douce;Lisse;Arbuste;;non;Scaevola;montana
+21;Scaevola taccada;Patte de poule;Goodeniaceae;G;G;Autochtone;Simple;Obovale;Douce;Lisse;Arbuste;Très faible;non;Scaevola;taccada
+30;Hernandia cordigera;Bois bleu;Hernandiaceae;F;;Endemique;Simple;Oblongue;Coriace;Lisse;Arbre;Faible;non;Hernandia;cordigera
+17;Barringtonia asiatica;Bonnet d'evêque;Lecythidaceae;GN;G;Autochtone;Simple;Obovale;Douce;Lisse;Arbre;Très faible;non;Barringtonia;asiatica
+27;Neuburgia novocaledonica;Graine blanche;Loganiaceae;F;F;Autochtone;Simple;Obovale;Coriace;Lisse;Arbre;Très faible;non;Neuburgia;novocaledonica
+19;Acropogon bullatus;;Malvaceae;FL;;Endemique;Simple;Cordiforme;Coriace;Lisse;Arbre;;non;Acropogon;bullatus
+61;Commersonia bartramia;;Malvaceae;N;;Autochtone;;;;;;;non;Commersonia;bartramia
+35;Hibiscus tiliaceus G;Bourao grande feuille;Malvaceae;GN;N;Autochtone;Simple;Cordiforme;Douce;Fissurée;Arbre;Faible;non;Hibiscus;tiliaceus
+33;Hibiscus tiliaceus P;Bourao panaché;Malvaceae;GN;G;Autochtone;Simple;Cordiforme;Douce;Fissurée;Arbre;Faible;non;Hibiscus;tiliaceus
+34;Hibiscus tiliaceus R;Bourao rouge;Malvaceae;GN;G;Autochtone;Simple;Cordiforme;Douce;Fissurée;Arbre;Faible;non;Hibiscus;tiliaceus
+16;Hibiscus tiliaceus V;Bourao;Malvaceae;GN;;Autochtone;Simple;Cordiforme;Douce;Fissurée;Arbre;Très faible;non;Hibiscus;tiliaceus
+56;Ficus fraseri;;Moraceae;LN;;Autochtone;;;;;;Faible;oui;Ficus;fraseri
+25;Ficus habrophyla;;Moraceae;FL;F;Autochtone;Simple;Oblongue;Coriace;Lisse;Arbre;Faible;oui;Ficus;habrophyla
+37;Myodocarpus fraxinifolius;;Myodocarpaceae;FM;F;Endemique;Composée;Imparipennée;Douce;Lisse;Arbre;Faible;non;Myodocarpus;fraxinifolius
+9;Arillastrum gummiferum ;Chêne gomme;Myrtaceae;FM;M;Endemique;Simple;Elliptique;Coriace;Fissurée;Arbre;Moyenne;non;Arillastrum;gummiferum
+23;Melaleuca quinquenervia;Niaouli;Myrtaceae;MRS;;Autochtone;Simple;Lancéollée;Coriace;Papyracée;Arbre;Forte;non;Melaleuca;quinquenervia
+11;Metrosideros laurifolia;Faux teck;Myrtaceae;FLM;M;Endemique;Simple;Lancéollée;Coriace;Fissurée;Arbuste;Faible;non;Metrosideros;laurifolia
+15;Syzygium cumini;Jamelonier;Myrtaceae;I;I;Introduite;Simple;Oblongue;Douce;Fissurée;Arbre;Faible;non;Syzygium;cumini
+57;Tristaniopsis calobuxus;;Myrtaceae;M;;Endemique;;;;;;;non;Tristaniopsis;calobuxus
+12;Tristaniopsis glauca;;Myrtaceae;M;M;Endemique;Simple;Lancéollée;Douce;Lisse exfoliante en plaque;Arbuste;;non;Tristaniopsis;glauca
+50;Glochidion billardierei;;Phyllantacceae;FLN;;Endemique;Simple;Oblongue;Coriace;Fissurée;Arbre;;non;Glochidion;billardierei
+24;Pinus caribea;Pin des caraibes;Pinaceae; I;I;Introduite;Aiguille;Aiguille;Coriace;Ecailleuse;Arbre;Très forte;non;Pinus;caribea
+4;Grevillea rubiginosa;Brosse à dents du Sud;Proteaceae;M;M;Endemique;Simple;Oblancéolée;Coriace;Fissurée;Arbuste;Forte;non;Grevillea;rubiginosa
+3;Alphitonia neocaledonica;Bois savon;Rhamnaceae;FLM;M;Endemique;Simple;Elliptique;Coriace;Lisse;Arbuste;Forte;non;Alphitonia;neocaledonica
+48;Crossostylis grandiflora;Palétuvier de montagne;Rhizophoraceae;F;F;Endemique;Simple;Elliptique;Coriace;Fissurée;Arbre;Très faible;non;Crossostylis;grandiflora
+43;Gardenia urvillei;Tiaré de forêt sèche;Rubiaceae;LM;L;Endemique;Simple;Oblongue;Coriace;Lisse;Arbre;Faible;non;Gardenia;urvillei
+69;Morinda citrifolia;Noni;Rubiaceae;FLMN;;Autochtone;;;;;;;non;Morinda;citrifolia
+41;Acronychia laevis;Bolé;Rutaceae;LMN;L;Autochtone;Simple;Oblongue;Douce;Lisse;Arbre;Faible;non;Acronychia;laevis
+14;Santalum austrocaledonicum;Santal;Santalaceae;FLMG;;Autochtone;Simple;Elliptique;Douce;Fissurée;Arbre;;non;Santalum;austrocaledonicum
+26;Elattostachys apetala;Faux chêne blanc;Sapindaceae;FL;F;Autochtone;Composée;Paripennée;Douce;Lisse;Arbre;Moyenne;non;Elattostachys;apetala
+32;Guioa villosa;;Sapindaceae;FM;M;Endemique;Composée;Imparipennée;Coriace;Lisse;Arbuste;Forte;non;Guioa;villosa
+45;Lepidocupania arcuata;;Sapindaceae;FL;L;Endemique;Composée;Imparipennée;Douce;Lisse;Arbre;;non;Lepidocupania;arcuata
+55;Wikstroemia indica ;Sainbois;Thymelaeaceae;FLM;;Autochtone;;;;;;Faible;non;Wikstroemia;indica 

@@ -49,7 +49,7 @@ BDD_leaf_calcule<-data.frame(BDD_leaf,LMC_t0,LMC_t24,PEF,LDMC,SLA,LT)
 head(BDD_leaf_calcule) #pour voir si les colonnes sont bien présentes
 
 ###### Export de la BDD_Leaf_F CSV
-write.csv2(BDD_leaf_F,"Data/BDD_leaf_calcule.csv")
+write.csv2(BDD_leaf_calcule,"Data/BDD_leaf_calcule.csv")
 
 
 
@@ -124,6 +124,7 @@ SD<-round(SD,2)
 SD
 
 #calcul de Burning Time (BT) (s) temps de combustion
+BDD_infla$temps_total <- as.numeric(BDD_infla$temps_total)
 BT<-(BDD_infla$temps_total - (120 + BDD_infla$DI))
 BT<-round(BT)
 BT
