@@ -219,6 +219,11 @@ for (id in var_a_supprimer) {lignes_a_supprimer <- c(lignes_a_supprimer, which(B
 BDD_finale_publi <- BDD_finale_publi[-lignes_a_supprimer, ]
 dim(BDD_finale_publi)
 
+# Nom espèce Bourao V changement 
+BDD_finale_publi$Nom_scientifique[
+  BDD_finale_publi$Nom_scientifique == "Hibiscus tiliaceus V"
+] <- "Hibiscus tiliaceus"
+
 
 
 ### on garde que les variables intéréssantes pour l'analyse
