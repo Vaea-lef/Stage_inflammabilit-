@@ -50,7 +50,7 @@
 56;Ficus fraseri;;Moraceae;LN;;Autochtone;;;;;;Faible;oui;Ficus;fraseri
 25;Ficus habrophyla;;Moraceae;FL;F;Autochtone;Simple;Oblongue;Coriace;Lisse;Arbre;Faible;oui;Ficus;habrophyla
 37;Myodocarpus fraxinifolius;;Myodocarpaceae;FM;F;Endemique;Composée;Imparipennée;Douce;Lisse;Arbre;Faible;non;Myodocarpus;fraxinifolius
-9;Arillastrum gummiferum ;Chêne gomme;Myrtaceae;FM;M;Endemique;Simple;Elliptique;Coriace;Fissurée;Arbre;Moyenne;non;Arillastrum;gummiferum
+9;Arillastrum gummiferum;Chêne gomme;Myrtaceae;FM;M;Endemique;Simple;Elliptique;Coriace;Fissurée;Arbre;Moyenne;non;Arillastrum;gummiferum
 23;Melaleuca quinquenervia;Niaouli;Myrtaceae;MRS;;Autochtone;Simple;Lancéollée;Coriace;Papyracée;Arbre;Forte;non;Melaleuca;quinquenervia
 11;Metrosideros laurifolia;Faux teck;Myrtaceae;FLM;M;Endemique;Simple;Lancéollée;Coriace;Fissurée;Arbuste;Faible;non;Metrosideros;laurifolia
 15;Syzygium cumini;Jamelonier;Myrtaceae;I;I;Introduite;Simple;Oblongue;Douce;Fissurée;Arbre;Faible;non;Syzygium;cumini
@@ -68,4 +68,4 @@
 26;Elattostachys apetala;Faux chêne blanc;Sapindaceae;FL;F;Autochtone;Composée;Paripennée;Douce;Lisse;Arbre;Moyenne;non;Elattostachys;apetala
 32;Guioa villosa;;Sapindaceae;FM;M;Endemique;Composée;Imparipennée;Coriace;Lisse;Arbuste;Forte;non;Guioa;villosa
 45;Lepidocupania arcuata;;Sapindaceae;FL;L;Endemique;Composée;Imparipennée;Douce;Lisse;Arbre;;non;Lepidocupania;arcuata
-55;Wikstroemia indica ;Sainbois;Thymelaeaceae;FLM;;Autochtone;;;;;;Faible;non;Wikstroemia;indica 
+55;Wikstroemia indica;Sainbois;Thymelaeaceae;FLM;;Autochtone;;;;;;Faible;non;Wikstroemia;indica 

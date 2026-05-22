@@ -8,6 +8,11 @@ library (corrplot)
 library(lmerTest)
 library(lme4)
 library(MuMIn)
+library(ape)
+library(nlme)
+library(caper)
+library(phytools)
+library(geiger)
 
 
 
@@ -16,30 +21,88 @@ library(MuMIn)
 setwd("C:/IRD/Stage_inflammabilit-") #définition du répertoire de travail
 
 ##  importation BDD_ana_ech en format CSV
-BDD_ech<-read.csv2("Data/BDD_moy_ech.csv", header = TRUE) #importation de l
-names(BDD_ech)[which(names(BDD_ech) == "Nb_ramifications")] <- "Nb_rami"
+BDD_moy_ech<-read.csv2("Data/Publi/BDD_moy_ech_publi.csv", header = TRUE) #importation de l
+names(BDD_moy_ech)[which(names(BDD_moy_ech) == "Nb_ramifications")] <- "Nb_rami"
 
-BDD_echMT<-read.csv2("Data/BDD_moy_ech1.csv", header = TRUE) #importation de l
-names(BDD_echMT)[which(names(BDD_echMT) == "Nb_ramifications")] <- "Nb_rami"
+BDD_moy_echMT<-read.csv2("Data/Publi/BDD_moy_echMT.csv", header = TRUE) #importation de l
+names(BDD_moy_echMT)[which(names(BDD_moy_echMT) == "Nb_ramifications")] <- "Nb_rami"
 
-BDD_ech3<-read.csv2("Data/BDD_moy_ech2.csv", header = TRUE) #importation de l
-names(BDD_ech3)[which(names(BDD_ech3) == "Nb_ramifications")] <- "Nb_rami"
+BDD_moy_ech3<-read.csv2("Data/Publi/BDD_moy_ech3.csv", header = TRUE) #importation de l
+names(BDD_moy_ech3)[which(names(BDD_moy_ech3) == "Nb_ramifications")] <- "Nb_rami"
 
 ##  importation BDD_sd_esp en format CSV
-BDD_sd_esp<-read.csv2("Data/BDD_sd_esp.csv", header = TRUE)
+BDD_sd_esp<-read.csv2("Data/Publi/BDD_sd_esp.csv", header = TRUE)
 
 
 ##  importation BDD_moy_esp en format CSV
-BDD_esp<-read.csv2("Data/BDD_moy_esp.csv", header = TRUE) #importation de la base
-names(BDD_esp)[which(names(BDD_esp) == "Nb_ramifications")] <- "Nb_rami"
+BDD_moy_esp<-read.csv2("Data/Publi/BDD_moy_esp.csv", header = TRUE) #importation de la base
+names(BDD_moy_esp)[which(names(BDD_moy_esp) == "Nb_ramifications")] <- "Nb_rami"
 
 ##  importation BDD_moy_esp spéciale MT en format CSV
-BDD_esp_netMT<-read.csv2("Data/BDD_moy_esp1.csv", header = TRUE) #importation de la base
-names(BDD_esp_netMT)[which(names(BDD_esp_netMT) == "Nb_ramifications")] <- "Nb_rami"
+BDD_moy_espMT<-read.csv2("Data/Publi/BDD_moy_espMT.csv", header = TRUE) #importation de la base
+names(BDD_moy_espMT)[which(names(BDD_moy_espMT) == "Nb_ramifications")] <- "Nb_rami"
 
 ##  importation BDD_moy_esp spéciale BT, BB, DI en format CSV
-BDD_esp_net3<-read.csv2("Data/BDD_moy_esp2.csv", header = TRUE) #importation de la base
-names(BDD_esp_net3)[which(names(BDD_esp_net3) == "Nb_ramifications")] <- "Nb_rami"
+BDD_moy_esp3<-read.csv2("Data/Publi/BDD_moy_esp3.csv", header = TRUE) #importation de la base
+names(BDD_moy_esp3)[which(names(BDD_moy_esp3) == "Nb_ramifications")] <- "Nb_rami"
+
+
+
+
+############# ARBRE PHYLO #################
+
+# Charger le fichier de l'arbre
+tree <- read.tree("arbre.tree")
+
+# Extraire Genre et Espece depuis les tip labels en coupant aux underscore
+tip_parts <- strsplit(tree$tip.label, "_")
+#Pour chaque nom coupé, on prend le 3ème morceau (genre) et le 4ème (espèce) et on les recolle avec un espace
+tree$tip.label <- sapply(tip_parts, function(x) paste(x[3], x[4], sep = " "))
+
+# Vérifier
+head(tree$tip.label)
+
+rownames(BDD_moy_esp) <- BDD_moy_esp$Nom_scientifique
+
+check <- name.check(tree, BDD_moy_esp)
+check$data_not_tree
+
+
+# Trouver les lignes dont le Nom_scientifique est dans check$data_not_tree
+lignes <- c()
+for (i in 1:nrow(BDD_moy_esp)) {
+  if (length(which(check$data_not_tree == BDD_moy_esp$Nom_scientifique[i])) > 0) {
+    lignes <- c(lignes, i)
+  }
+}
+
+# Extraire les genres de ces lignes
+genres_manquants <- unique(BDD_moy_esp$Genre[lignes])
+genres_manquants
+
+# Créer genres_arbre
+genres_arbre <- unique(sapply(strsplit(tree$tip.label, " "), function(x) x[1]))
+
+# Vérifier
+head(genres_arbre)
+
+# Genres qui ont au moins un représentant dans l'arbre
+presents <- c()
+for (g in genres_manquants) {
+  if (length(which(genres_arbre == g)) > 0) {
+    presents <- c(presents, g)
+  }
+}
+presents
+
+# Genres totalement absents de l'arbre
+absents <- c()
+for (g in genres_manquants) {
+  if (length(which(genres_arbre == g)) == 0) {
+    absents <- c(absents, g)
+  }
+}
+absents
 
 
 
