@@ -13,7 +13,8 @@ library(nlme)
 library(caper)
 library(phytools)
 library(geiger)
-
+library(rotl)
+library(dplyr)
 
 
 ################# IMPORTATION ET CHARGEMENT PACKAGE ###########################
@@ -46,38 +47,57 @@ names(BDD_moy_espMT)[which(names(BDD_moy_espMT) == "Nb_ramifications")] <- "Nb_r
 BDD_moy_esp3<-read.csv2("Data/Publi/BDD_moy_esp3.csv", header = TRUE) #importation de la base
 names(BDD_moy_esp3)[which(names(BDD_moy_esp3) == "Nb_ramifications")] <- "Nb_rami"
 
+head(BDD_moy_esp)
+BDD_moy_esp$BD_mean <- BDD_moy_esp$BD           # copier la colonne originale
+BDD_moy_esp$BD_mean[is.na(BDD_moy_esp$BD_mean)] <- mean(BDD_moy_esp$BD, na.rm = TRUE)
+head(BDD_moy_esp)
 
 
-
+###########################################
 ############# ARBRE PHYLO #################
+###########################################
+
 
 # Charger le fichier de l'arbre
 tree <- read.tree("arbre.tree")
 
-# Extraire Genre et Espece depuis les tip labels en coupant aux underscore
-tip_parts <- strsplit(tree$tip.label, "_")
-#Pour chaque nom coupé, on prend le 3ème morceau (genre) et le 4ème (espèce) et on les recolle avec un espace
-tree$tip.label <- sapply(tip_parts, function(x) paste(x[3], x[4], sep = " "))
+# 1. Créer les nouveaux noms SANS encore les assigner à l'arbre
+nouveaux_noms <- sapply(strsplit(tree$tip.label, "_"), function(x) paste(x[3], x[4], sep = " "))
 
-# Vérifier
+# 2. Identifier les tips à supprimer (garder le premier, supprimer les suivants)
+tips_a_supprimer <- tree$tip.label[duplicated(nouveaux_noms)]
+
+# 3. Supprimer les doublons de l'arbre
+tree <- drop.tip(tree, tips_a_supprimer)
+
+# 4. Maintenant renommer proprement
+tree$tip.label <- sapply(strsplit(tree$tip.label, "_"), function(x) paste(x[3], x[4], sep = " "))
+
+# 5. Vérifier
+sum(duplicated(tree$tip.label))  # doit être 0
+length(tree$tip.label)           # nombre de tips restants
 head(tree$tip.label)
 
-rownames(BDD_moy_esp) <- BDD_moy_esp$Nom_scientifique
+# Remettre les rownames
+BDD_moy_esp_phylo <- BDD_moy_esp
+rownames(BDD_moy_esp_phylo) <- BDD_moy_esp_phylo$Nom_scientifique
 
-check <- name.check(tree, BDD_moy_esp)
-check$data_not_tree
+# Vérifier la concordance arbre <-> BDD
+check <- name.check(tree, BDD_moy_esp_phylo)
 
+length(check$tree_not_data)  # tips dans l'arbre mais pas dans ta BDD
+length(check$data_not_tree)  # espèces dans ta BDD mais pas dans l'arbre
 
 # Trouver les lignes dont le Nom_scientifique est dans check$data_not_tree
 lignes <- c()
-for (i in 1:nrow(BDD_moy_esp)) {
-  if (length(which(check$data_not_tree == BDD_moy_esp$Nom_scientifique[i])) > 0) {
+for (i in 1:nrow(BDD_moy_esp_phylo)) {
+  if (length(which(check$data_not_tree == BDD_moy_esp_phylo$Nom_scientifique[i])) > 0) {
     lignes <- c(lignes, i)
   }
 }
 
 # Extraire les genres de ces lignes
-genres_manquants <- unique(BDD_moy_esp$Genre[lignes])
+genres_manquants <- unique(BDD_moy_esp_phylo$Genre[lignes])
 genres_manquants
 
 # Créer genres_arbre
@@ -105,21 +125,98 @@ for (g in genres_manquants) {
 absents
 
 
+BDD_moy_esp_phylo <- BDD_moy_esp[BDD_moy_esp$Genre != "Agathis" & BDD_moy_esp$Genre != "Archidendropsis", ]
+nrow(BDD_moy_esp)           # doit toujours être 67
+nrow(BDD_moy_esp_phylo)  # doit être 65
+
+rownames(BDD_moy_esp_phylo) <- BDD_moy_esp_phylo$Nom_scientifique
+check <- name.check(tree, BDD_moy_esp_phylo)
+length(check$data_not_tree)  # doit être 49
 
 
 
+missing_species <- check$data_not_tree
+
+for(sp in missing_species){
+  
+  genus <- BDD_moy_esp_phylo$Genre[BDD_moy_esp_phylo$Nom_scientifique == sp]
+  
+  if(length(genus) == 1 && !is.na(genus)){
+    
+    genus_tips <- tree$tip.label[grepl(paste0("^", genus, " "), tree$tip.label)]
+    
+    # CAS 1 : plusieurs espèces du genre → on greffe au MRCA
+    if(length(genus_tips) >= 2){
+      node <- getMRCA(tree, genus_tips)
+      tree <- bind.tip(tree, sp, where = node, position = 0)
+    }
+    
+    # CAS 2 : une seule espèce du genre → on greffe dessus
+    else if(length(genus_tips) == 1){
+      ref <- genus_tips[1]
+      tree <- bind.tip(tree, tip.label = sp, where = which(tree$tip.label == ref), position = 0)
+      message(paste("Attaché à espèce unique du genre :", genus))
+    }
+    
+    # CAS 3 : genre absent (ne devrait plus arriver)
+    else {
+      message(paste("Genre absent de l'arbre :", genus))
+    }
+  }
+}
+
+# Vérifier
+check2 <- name.check(tree, BDD_moy_esp_phylo)
+length(check2$data_not_tree)  # doit être 0
+
+# Résoudre les polytomies créées par le greffage
+tree <- multi2di(tree)
+is.binary(tree)  # doit être TRUE
+
+# Élaguer l'arbre pour ne garder que tes 65 espèces
+tree_final <- keep.tip(tree, BDD_moy_esp_phylo$Nom_scientifique)
+length(tree_final$tip.label)  # doit être 65
+
+
+#Suppression des 102 doublons dans l'arbre source
+#Renommage des tip labels en Genre espece
+#Exclusion des 2 espèces sans genre dans l'arbre (Agathis, Archidendropsis)
+#Greffage des 49 espèces manquantes
+#Résolution des polytomies
+#Élagage final à 65 espèces
 
 
 
+#################SIGNAL PHYLO###################################
+library(phytools)
+tree_final <- compute.brlen(tree_final, method = "Grafen") #### pour redonner longueur au branches de l'arbre
+is.ultrametric(tree_final)  # doit être TRUE
 
+variables_toutes <- c("DI_test", "BB_test", "BT", "MT", "FI", 
+                      "BD_mean", "Nb_rami", "TD", "Gmin", "LDMC", "SLA", "LMC_t24")
 
+resultats_tous <- data.frame(
+  variable = variables_toutes,
+  lambda = NA,
+  lambda_p = NA,
+  K = NA,
+  K_p = NA
+)
 
+for(i in 1:length(variables_toutes)){
+  
+  trait <- setNames(BDD_moy_esp_phylo[[variables_toutes[i]]], BDD_moy_esp_phylo$Nom_scientifique)
+  
+  res_lambda <- phylosig(tree_final, trait, method = "lambda", test = TRUE)
+  resultats_tous$lambda[i] <- res_lambda$lambda
+  resultats_tous$lambda_p[i] <- res_lambda$P
+  
+  res_K <- phylosig(tree_final, trait, method = "K", test = TRUE)
+  resultats_tous$K[i] <- res_K$K
+  resultats_tous$K_p[i] <- res_K$P
+}
 
-
-
-
-
-
+resultats_tous
 
 
 
@@ -133,9 +230,9 @@ absents
 
 ################## DISTRIBUTION DES DONNEES #####################
 #Infla
-hist(BDD_esp_net3$DI_test,xlab="DI",main="DI distribution",xlim=c(0,10),breaks=seq(0,10,1)) # asymétrique droite
-hist(BDD_esp_net3$BT_test,xlab="BT",main="BT distribution",breaks=seq(0,120,10)) # asymétrique droite
-hist(BDD_esp_net3$BB_test,,xlab="BB",main="BB distribution") # normale proportion
+hist(BDD_moy_esp_net3$DI_test,xlab="DI",main="DI distribution",xlim=c(0,10),breaks=seq(0,10,1)) # asymétrique droite
+hist(BDD_moy_esp_net3$BT_test,xlab="BT",main="BT distribution",breaks=seq(0,120,10)) # asymétrique droite
+hist(BDD_moy_esp_net3$BB_test,,xlab="BB",main="BB distribution") # normale proportion
 hist(BDD_echMT$MT,xlab="MT",main="MT distribution",breaks=seq(0,1000,100))      # normale 
 
 #Infla ech
@@ -146,19 +243,19 @@ hist(BDD_echMT$MT,xlab="MT",main="MT distribution")
 
 
 #traits
-hist(BDD_esp$Nb_rami)  
-hist(BDD_esp$SD)       
-hist(BDD_esp$TMC_t0)         
-hist(BDD_esp$TMC_t24)  
-hist(BDD_esp$TDMC)         
-hist(BDD_esp$TD)            
-hist(BDD_esp$TDIA)           
-hist(BDD_esp$LMC_t0)         
-hist(BDD_esp$LMC_t24)  
-hist(BDD_esp$LDMC)          
-hist(BDD_esp$Surface_F) 
-hist(BDD_esp$SLA)            
-hist(BDD_esp$LT)        
+hist(BDD_moy_esp$Nb_rami)  
+hist(BDD_moy_esp$SD)       
+hist(BDD_moy_esp$TMC_t0)         
+hist(BDD_moy_esp$TMC_t24)  
+hist(BDD_moy_esp$TDMC)         
+hist(BDD_moy_esp$TD)            
+hist(BDD_moy_esp$TDIA)           
+hist(BDD_moy_esp$LMC_t0)         
+hist(BDD_moy_esp$LMC_t24)  
+hist(BDD_moy_esp$LDMC)          
+hist(BDD_moy_esp$Surface_F) 
+hist(BDD_moy_esp$SLA)            
+hist(BDD_moy_esp$LT)        
 
 
 
@@ -167,7 +264,7 @@ hist(BDD_esp$LT)
 #################### ACP TRAITS (pour sélection)############################
 
 # Sélection des colonnes des traits fonctionnels
-colonnes_traits <- na.omit(BDD_esp[, setdiff(17:31, c(23, 27))])
+colonnes_traits <- na.omit(BDD_moy_esp[, setdiff(17:31, c(23, 27))])
 
 #strandardiser les données
 colonnes_traits_cr <- scale(log(colonnes_traits)+1)
@@ -219,14 +316,14 @@ traits_non_corrélés
 ################################################################################
 
 #standardisation des données 
-BDD_esp$SD_cr<-as.numeric(scale(BDD_esp$SD))
-BDD_esp$TD_cr<-as.numeric(scale(BDD_esp$TD))
-BDD_esp$LA_cr<-as.numeric(scale(BDD_esp$Surface_F))
-BDD_esp$LDMC_cr<-as.numeric(scale(BDD_esp$LDMC))
-BDD_esp$LMC_t24_cr<-as.numeric(scale(BDD_esp$LMC_t24))
-BDD_esp$SLA_cr<-as.numeric(scale(BDD_esp$SLA))
-BDD_esp$Nb_rami_cr<-as.numeric(scale(BDD_esp$Nb_rami))
-BDD_esp$Gmin_cr<-as.numeric(scale(BDD_esp$Gmin))
+BDD_moy_esp$SD_cr<-as.numeric(scale(BDD_moy_esp$SD))
+BDD_moy_esp$TD_cr<-as.numeric(scale(BDD_moy_esp$TD))
+BDD_moy_esp$LA_cr<-as.numeric(scale(BDD_moy_esp$Surface_F))
+BDD_moy_esp$LDMC_cr<-as.numeric(scale(BDD_moy_esp$LDMC))
+BDD_moy_esp$LMC_t24_cr<-as.numeric(scale(BDD_moy_esp$LMC_t24))
+BDD_moy_esp$SLA_cr<-as.numeric(scale(BDD_moy_esp$SLA))
+BDD_moy_esp$Nb_rami_cr<-as.numeric(scale(BDD_moy_esp$Nb_rami))
+BDD_moy_esp$Gmin_cr<-as.numeric(scale(BDD_moy_esp$Gmin))
 
 
 ############### MODELES #############################
@@ -236,17 +333,17 @@ BDD_esp$Gmin_cr<-as.numeric(scale(BDD_esp$Gmin))
 essais_par_espece <- table(BDD_ech$Nom_scientifique)
 essais_par_espece
 
-# Création d'une nouvelle colonne Nb_essais dans BDD_esp en s'appuyant sur le nom scientifique
-BDD_esp$Nb_essais <- essais_par_espece[BDD_esp$Nom_scientifique]
+# Création d'une nouvelle colonne Nb_essais dans BDD_moy_esp en s'appuyant sur le nom scientifique
+BDD_moy_esp$Nb_essais <- essais_par_espece[BDD_moy_esp$Nom_scientifique]
 
 # Vérification
-head(BDD_esp)
+head(BDD_moy_esp)
 
 #modèle
-mFI3<-glm(cbind(Nb_FI,Nb_essais-Nb_FI)~SD_cr+TD_cr+SLA_cr+Nb_rami_cr+LDMC_cr+Gmin_cr,data=BDD_esp,family="binomial")
+mFI3<-glm(cbind(Nb_FI,Nb_essais-Nb_FI)~SD_cr+TD_cr+SLA_cr+Nb_rami_cr+LDMC_cr+Gmin_cr,data=BDD_moy_esp,family="binomial")
 summary(mFI3)
 
-mFI4<-glm(cbind(Nb_FI,Nb_essais-Nb_FI)~SD_cr+TD_cr+SLA_cr+Nb_rami_cr+LMC_t24_cr,data=BDD_esp,family="binomial")
+mFI4<-glm(cbind(Nb_FI,Nb_essais-Nb_FI)~SD_cr+TD_cr+SLA_cr+Nb_rami_cr+LMC_t24_cr,data=BDD_moy_esp,family="binomial")
 summary(mFI4)
 
 AIC(mFI3,mFI4)
@@ -335,21 +432,21 @@ text(estimates2, y_pos2 -0.24,
 
 ###################### prédicion ############### mettre LMC_t24 ou LDMC
 # Modèle GLM binomial (mFI3 ou mFI4)
-moy <- mean(BDD_esp$LMC_t24, na.rm = TRUE)
+moy <- mean(BDD_moy_esp$LMC_t24, na.rm = TRUE)
 moy
-ecart <- sd(BDD_esp$LMC_t24, na.rm = TRUE)
+ecart <- sd(BDD_moy_esp$LMC_t24, na.rm = TRUE)
 ecart
 
 # Valeurs de LMC_t24
-foo <- seq(min(BDD_esp$LMC_t24_cr), max(BDD_esp$LMC_t24_cr),length.out = 100)
+foo <- seq(min(BDD_moy_esp$LMC_t24_cr), max(BDD_moy_esp$LMC_t24_cr),length.out = 100)
 
 # on fait varier LMDC et on fixe les autres variables
 pred_data1 <- data.frame(
   LMC_t24_cr = foo,
-  SD_cr = rep(mean(BDD_esp$SD_cr,na.rm = TRUE), length(foo)),
-  TD_cr = rep(mean(BDD_esp$TD_cr), length(foo)),
-  Nb_rami_cr = rep(mean(BDD_esp$Nb_rami_cr), length(foo)),
-  SLA_cr = rep(mean(BDD_esp$SLA_cr), length(foo))
+  SD_cr = rep(mean(BDD_moy_esp$SD_cr,na.rm = TRUE), length(foo)),
+  TD_cr = rep(mean(BDD_moy_esp$TD_cr), length(foo)),
+  Nb_rami_cr = rep(mean(BDD_moy_esp$Nb_rami_cr), length(foo)),
+  SLA_cr = rep(mean(BDD_moy_esp$SLA_cr), length(foo))
 )
 
 
@@ -360,7 +457,7 @@ pred_data1$LMC_t24_cr[(pred1$fit+(1.96*pred1$se.fit))<0.5]*ecart+moy
 pred_data1$LMC_t24_cr[(pred1$fit-(1.96*pred1$se.fit))<0.5]*ecart+moy
 
 # Plot des points observés
-plot(BDD_esp$LMC_t24, BDD_esp$Nb_FI / BDD_esp$Nb_essais, 
+plot(BDD_moy_esp$LMC_t24, BDD_moy_esp$Nb_FI / BDD_moy_esp$Nb_essais, 
      xlab = "LMC_t24 (%)", ylab = "Fréquence d'ignition",ylim = c(0,1), 
      main = "Effet de LMC_t24 sur la fréquence d'ignition")
 
@@ -519,34 +616,34 @@ points(M_S1$x,M_S2$x,pch=21,bg=COL,cex=1.5)
 
 
 #ajout colonne groupe dans BDD
-BDD_esp$groupe<-GR
+BDD_moy_esp$groupe<-GR
 
 
 # Reclassement de la variable groupe 
-BDD_esp$groupe <- factor(BDD_esp$groupe, levels = c(6,2,4, 3, 1,5))
-write.csv2(BDD_esp,"Data/BDD_esp_groupe.csv")
+BDD_moy_esp$groupe <- factor(BDD_moy_esp$groupe, levels = c(6,2,4, 3, 1,5))
+write.csv2(BDD_moy_esp,"Data/BDD_moy_esp_groupe.csv")
 
 # boxplot MT
-boxplot(MT ~ groupe, data = BDD_esp,
+boxplot(MT ~ groupe, data = BDD_moy_esp,
         main = "Distribution de MT par groupe",
         xlab = "Groupe",
         ylab = "MT (°C)",col=c("#025E00","#6DC700","#CFF200","#FFE100","#FF8900","#FF2A00"))
 
 # boxplot BT
-boxplot(BT_test ~ groupe, data = BDD_esp,
+boxplot(BT_test ~ groupe, data = BDD_moy_esp,
         main = "Distribution de BT par groupe",
         xlab = "Groupe",
         ylab = "BT (s)",col=c("#025E00","#6DC700","#CFF200","#FFE100","#FF8900","#FF2A00"))
 
 
 # boxplot BB
-boxplot(BB_test ~ groupe, data = BDD_esp,
+boxplot(BB_test ~ groupe, data = BDD_moy_esp,
         main = "Distribution de BB par groupe",
         xlab = "Groupe",
         ylab = "BB (%)",col=c("#025E00","#6DC700","#CFF200","#FFE100","#FF8900","#FF2A00"))
 
 # boxplot DI
-boxplot(DI_test ~ groupe, data = BDD_esp,
+boxplot(DI_test ~ groupe, data = BDD_moy_esp,
         main = "Distribution de DI par groupe",
         xlab = "Groupe",
         ylab = "DI (s)",col=c("#025E00","#6DC700","#CFF200","#FFE100","#FF8900","#FF2A00"))
@@ -560,7 +657,7 @@ boxplot(DI_test ~ groupe, data = BDD_esp,
 
 
 
-#Calcul de la moyenne du score pour ajout dans BDD_esp
+#Calcul de la moyenne du score pour ajout dans BDD_moy_esp
 #création de table avec moyenne et sd pour chaque variable en fonction du nom de l'espèce
 tem3<-BDD_ech[,5:34] ###sélection des colonnes comprenant les variables pour les intégrer dans la boucle
 tem3
@@ -2038,23 +2135,23 @@ lines((foo*ecart + moy), pred1$fit - 1.96 * pred1$se.fit, col = "blue", lty = 3)
 ######################### ANALYSE GMIN #########################################
 ###################################################################################
 
-hist(BDD_esp$LMC_t24)
-hist(BDD_esp$LMC_t0)
-hist(BDD_esp$Gmin)
-BDD_esp$ratio <- BDD_esp$LMC_t24 / BDD_esp$LMC_t0
-hist(BDD_esp$ratio)
-BDD_esp$logLMC24<-log(BDD_esp$LMC_t24)
-BDD_esp$logLMC0<-log(BDD_esp$LMC_t0)
+hist(BDD_moy_esp$LMC_t24)
+hist(BDD_moy_esp$LMC_t0)
+hist(BDD_moy_esp$Gmin)
+BDD_moy_esp$ratio <- BDD_moy_esp$LMC_t24 / BDD_moy_esp$LMC_t0
+hist(BDD_moy_esp$ratio)
+BDD_moy_esp$logLMC24<-log(BDD_moy_esp$LMC_t24)
+BDD_moy_esp$logLMC0<-log(BDD_moy_esp$LMC_t0)
 
-BDD_esp$LMC_t0_cr<-as.numeric(scale(BDD_esp$LMC_t0))
-BDD_esp$Gmin_cr<-as.numeric(scale(BDD_esp$Gmin))
+BDD_moy_esp$LMC_t0_cr<-as.numeric(scale(BDD_moy_esp$LMC_t0))
+BDD_moy_esp$Gmin_cr<-as.numeric(scale(BDD_moy_esp$Gmin))
 
 
-m_gmin2<-glm(logLMC24~logLMC0+Gmin_cr,family=gaussian,data=BDD_esp)
+m_gmin2<-glm(logLMC24~logLMC0+Gmin_cr,family=gaussian,data=BDD_moy_esp)
 summary(m_gmin2)
-m_gmin2<-glm(LMC_t24~LMC_t0_cr+Gmin_cr,family=Gamma(link = "log"),data=BDD_esp)
+m_gmin2<-glm(LMC_t24~LMC_t0_cr+Gmin_cr,family=Gamma(link = "log"),data=BDD_moy_esp)
 summary(m_gmin2)
-m_gmin3<-glm(ratio~LMC_t0_cr+Gmin_cr,family=gaussian,data=BDD_esp)
+m_gmin3<-glm(ratio~LMC_t0_cr+Gmin_cr,family=gaussian,data=BDD_moy_esp)
 summary(m_gmin3)
 
 AIC(m_gmin2,m_gmin3)
@@ -2065,26 +2162,26 @@ hist
 
 ################# Prédiction ########################
 # LMC_t0
-moy <- mean(BDD_esp$LMC_t0, na.rm = TRUE)
-ecart <- sd(BDD_esp$LMC_t0, na.rm = TRUE)
+moy <- mean(BDD_moy_esp$LMC_t0, na.rm = TRUE)
+ecart <- sd(BDD_moy_esp$LMC_t0, na.rm = TRUE)
 
 # Valeurs de LMC_t0
-foo <- seq(min(BDD_esp$LMC_t0_cr), max(BDD_esp$LMC_t0_cr),length.out = 100)
+foo <- seq(min(BDD_moy_esp$LMC_t0_cr), max(BDD_moy_esp$LMC_t0_cr),length.out = 100)
 
 # on fait varier LMDC et on fixe les autres variables
 pred_data1 <- data.frame(
   LMC_t0_cr = foo,
-  Gmin_cr = rep(mean(BDD_esp$Gmin_cr,na.rm = TRUE), length(foo))
+  Gmin_cr = rep(mean(BDD_moy_esp$Gmin_cr,na.rm = TRUE), length(foo))
 )
 
 pred_data2 <- data.frame(
   LMC_t0_cr = foo,
-  Gmin_cr = rep(min(BDD_esp$Gmin_cr,na.rm = TRUE), length(foo))
+  Gmin_cr = rep(min(BDD_moy_esp$Gmin_cr,na.rm = TRUE), length(foo))
 )
 
 pred_data3 <- data.frame(
   LMC_t0_cr = foo,
-  Gmin_cr = rep(max(BDD_esp$Gmin_cr,na.rm = TRUE), length(foo))
+  Gmin_cr = rep(max(BDD_moy_esp$Gmin_cr,na.rm = TRUE), length(foo))
 )
 
 
@@ -2097,7 +2194,7 @@ pred3 <- predict(m_gmin3, type = "response", newdata = pred_data3, se.fit = TRUE
 
 
 # Plot des points observés
-plot(BDD_esp$LMC_t0, BDD_esp$LMC_t24, 
+plot(BDD_moy_esp$LMC_t0, BDD_moy_esp$LMC_t24, 
      xlab = "LMC_t0 (%)", ylab = "LMC_t24 (%)", 
      main = "Effet de LMC_t0 sur LMC_t24 selon gmin ",ylim=c(0,700))
 
@@ -2114,17 +2211,17 @@ polygon(x = c(-50, -50, 850),
 # Ajouter la ligne y = x
 abline(a = 0, b = 1)
 
-esp_a_annoter <- BDD_esp$Nom_scientifique == "Scaevola taccada" | 
-  BDD_esp$Nom_scientifique == "Scaevola montana" |
-  BDD_esp$Nom_scientifique== "Barringtonia asiatica" |
-  BDD_esp$Nom_scientifique== "Hibiscus tiliaceus R" 
+esp_a_annoter <- BDD_moy_esp$Nom_scientifique == "Scaevola taccada" | 
+  BDD_moy_esp$Nom_scientifique == "Scaevola montana" |
+  BDD_moy_esp$Nom_scientifique== "Barringtonia asiatica" |
+  BDD_moy_esp$Nom_scientifique== "Hibiscus tiliaceus R" 
 
-points (BDD_esp$LMC_t0[esp_a_annoter],
-        BDD_esp$LMC_t24[esp_a_annoter],pch=21,bg = rgb(1,0,0),cex=1.2
+points (BDD_moy_esp$LMC_t0[esp_a_annoter],
+        BDD_moy_esp$LMC_t24[esp_a_annoter],pch=21,bg = rgb(1,0,0),cex=1.2
 )
 
-text(BDD_esp$LMC_t0[esp_a_annoter] -10 ,
-     BDD_esp$LMC_t24[esp_a_annoter] + 25,
+text(BDD_moy_esp$LMC_t0[esp_a_annoter] -10 ,
+     BDD_moy_esp$LMC_t24[esp_a_annoter] + 25,
      labels = c("B. asiatica","H. tiliaceus R","S. montana","S. taccada"),
      cex = 1)
 
@@ -2142,7 +2239,7 @@ pred3 <- predict(m_gmin2, type = "response", newdata = pred_data3, se.fit = TRUE
 
 # Créer le graphique
 par(mar = c(5,5,5,5))
-plot(BDD_esp$LMC_t0, BDD_esp$LMC_t24, 
+plot(BDD_moy_esp$LMC_t0, BDD_moy_esp$LMC_t24, 
      xlab = "LMC_t0 (%)", ylab = "LMC_t24 (%)", 
      main = "Effet de LMC_t0 sur LMC_t24 selon gmin",
      xlim = c(100,800), ylim = c(0,800))
@@ -2161,18 +2258,18 @@ polygon(x = c(-50, -50, 850),
 # Ajouter la ligne y = x
 abline(a = 0, b = 1)
 
-esp_a_annoter <- BDD_esp$Nom_scientifique == "Scaevola taccada" | 
-  BDD_esp$Nom_scientifique == "Scaevola montana" |
-  BDD_esp$Nom_scientifique== "Barringtonia asiatica"  |
-  BDD_esp$Nom_scientifique== "Morinda citrifolia" |
-  BDD_esp$Nom_scientifique== "Acalypha sp" 
+esp_a_annoter <- BDD_moy_esp$Nom_scientifique == "Scaevola taccada" | 
+  BDD_moy_esp$Nom_scientifique == "Scaevola montana" |
+  BDD_moy_esp$Nom_scientifique== "Barringtonia asiatica"  |
+  BDD_moy_esp$Nom_scientifique== "Morinda citrifolia" |
+  BDD_moy_esp$Nom_scientifique== "Acalypha sp" 
 
-points (BDD_esp$LMC_t0[esp_a_annoter],
-        BDD_esp$LMC_t24[esp_a_annoter],pch=21,bg = rgb(1,0,0),cex=1.2
+points (BDD_moy_esp$LMC_t0[esp_a_annoter],
+        BDD_moy_esp$LMC_t24[esp_a_annoter],pch=21,bg = rgb(1,0,0),cex=1.2
 )
 
-text(BDD_esp$LMC_t0[esp_a_annoter] -10 ,
-     BDD_esp$LMC_t24[esp_a_annoter] + 25,
+text(BDD_moy_esp$LMC_t0[esp_a_annoter] -10 ,
+     BDD_moy_esp$LMC_t24[esp_a_annoter] + 25,
      labels = c("B. asiatica","S. montana","S. taccada","M. citrifolia", "Acalypha"),
      cex = 1)
 
@@ -2185,7 +2282,7 @@ text(BDD_esp$LMC_t0[esp_a_annoter] -10 ,
 
 
 # ZOOM
-plot(BDD_esp$LMC_t0, BDD_esp$LMC_t24, 
+plot(BDD_moy_esp$LMC_t0, BDD_moy_esp$LMC_t24, 
      xlab = "LMC_t0 (%)", ylab = "LMC_t24 (%)", 
      main = "Effet de LMC_t0 sur LMC_t24 selon gmin",
      xlim = c(70,410), ylim = c(0,400))
@@ -2205,22 +2302,22 @@ polygon(x = c(-50, -50, 850),
 # Ajouter la ligne y = x
 abline(a = 0, b = 1)
 
-esp_a_annoter <- BDD_esp$Nom_scientifique == "Scaevola montana" | 
-  BDD_esp$Nom_scientifique == "Hibiscus tiliaceus R" |
-  BDD_esp$Nom_scientifique== "Acropogon bullatus" | 
-  BDD_esp$Nom_scientifique== "Barringtonia asiatica" | 
-  BDD_esp$Nom_scientifique== "Alphitonia neocaledonica" |
-  BDD_esp$Nom_scientifique== "Leucaena leucocephala" |
-  BDD_esp$Nom_scientifique== "Morinda citrifolia" |
-  BDD_esp$Nom_scientifique== "Cerbera manghas" |
-  BDD_esp$Nom_scientifique== "Acalypha sp"
+esp_a_annoter <- BDD_moy_esp$Nom_scientifique == "Scaevola montana" | 
+  BDD_moy_esp$Nom_scientifique == "Hibiscus tiliaceus R" |
+  BDD_moy_esp$Nom_scientifique== "Acropogon bullatus" | 
+  BDD_moy_esp$Nom_scientifique== "Barringtonia asiatica" | 
+  BDD_moy_esp$Nom_scientifique== "Alphitonia neocaledonica" |
+  BDD_moy_esp$Nom_scientifique== "Leucaena leucocephala" |
+  BDD_moy_esp$Nom_scientifique== "Morinda citrifolia" |
+  BDD_moy_esp$Nom_scientifique== "Cerbera manghas" |
+  BDD_moy_esp$Nom_scientifique== "Acalypha sp"
 
-points (BDD_esp$LMC_t0[esp_a_annoter],
-        BDD_esp$LMC_t24[esp_a_annoter],pch=21,bg = rgb(1,0,0),cex=1.2
+points (BDD_moy_esp$LMC_t0[esp_a_annoter],
+        BDD_moy_esp$LMC_t24[esp_a_annoter],pch=21,bg = rgb(1,0,0),cex=1.2
 )
 
-text(BDD_esp$LMC_t0[esp_a_annoter] + 2,
-     BDD_esp$LMC_t24[esp_a_annoter] + 15,
+text(BDD_moy_esp$LMC_t0[esp_a_annoter] + 2,
+     BDD_moy_esp$LMC_t24[esp_a_annoter] + 15,
      labels = c("A. sp","A. bullatus","A. neocaledonica","B. asiatica","C. manghas","H. tiliaceus R","L. leucocephala","M. citrifolia","S. montana"),
      cex = 1)
 
@@ -2258,40 +2355,40 @@ SD_L1<-aggregate(BDD_ech$Gmin,by=list(BDD_ech$Nom_scientifique),sd)
 
 
 # Création du scatterplot
-plot(BDD_esp$LMC_t0 ~ BDD_esp$Gmin, type="n",
+plot(BDD_moy_esp$LMC_t0 ~ BDD_moy_esp$Gmin, type="n",
      xlab = "Gmin", 
      ylab = "LMC_t0 (%)", 
      main = "Relation entre Gmin et LMC_t0",ylim=c(0,450),xlim=c(0,100))
 
-esp_a_annoter <- BDD_esp$Nom_scientifique == "Scaevola montana" | 
-  BDD_esp$Nom_scientifique == "Hibiscus tiliaceus R" |
-  BDD_esp$Nom_scientifique== "Acropogon bullatus" |
-  BDD_esp$Nom_scientifique== "Leucaena leucocephala" | 
-  BDD_esp$Nom_scientifique== "Cerbera manghas" | 
-  BDD_esp$Nom_scientifique== "Diospyros fasciculosa" |
-  BDD_esp$Nom_scientifique== "Calophylum caledonicum" |
-  BDD_esp$Nom_scientifique== "Alphitonia neocaledonica" |
+esp_a_annoter <- BDD_moy_esp$Nom_scientifique == "Scaevola montana" | 
+  BDD_moy_esp$Nom_scientifique == "Hibiscus tiliaceus R" |
+  BDD_moy_esp$Nom_scientifique== "Acropogon bullatus" |
+  BDD_moy_esp$Nom_scientifique== "Leucaena leucocephala" | 
+  BDD_moy_esp$Nom_scientifique== "Cerbera manghas" | 
+  BDD_moy_esp$Nom_scientifique== "Diospyros fasciculosa" |
+  BDD_moy_esp$Nom_scientifique== "Calophylum caledonicum" |
+  BDD_moy_esp$Nom_scientifique== "Alphitonia neocaledonica" |
   
-  segments(x0=BDD_esp$Gmin[esp_a_annoter],x1=BDD_esp$Gmin[esp_a_annoter],y0=BDD_esp$LMC_t0[esp_a_annoter]-SD_L2$x[esp_a_annoter],y1=BDD_esp$LMC_t0[esp_a_annoter]+SD_L2$x[esp_a_annoter])
-segments(x0=BDD_esp$Gmin[esp_a_annoter]-SD_L1$x[esp_a_annoter],x1=BDD_esp$Gmin[esp_a_annoter]+SD_L1$x[esp_a_annoter],y0=BDD_esp$LMC_t0[esp_a_annoter],y1=BDD_esp$LMC_t0[esp_a_annoter])
+  segments(x0=BDD_moy_esp$Gmin[esp_a_annoter],x1=BDD_moy_esp$Gmin[esp_a_annoter],y0=BDD_moy_esp$LMC_t0[esp_a_annoter]-SD_L2$x[esp_a_annoter],y1=BDD_moy_esp$LMC_t0[esp_a_annoter]+SD_L2$x[esp_a_annoter])
+segments(x0=BDD_moy_esp$Gmin[esp_a_annoter]-SD_L1$x[esp_a_annoter],x1=BDD_moy_esp$Gmin[esp_a_annoter]+SD_L1$x[esp_a_annoter],y0=BDD_moy_esp$LMC_t0[esp_a_annoter],y1=BDD_moy_esp$LMC_t0[esp_a_annoter])
 points(M_L1$x,M_L2$x,pch=19,cex=0.8)
-points (BDD_esp$Gmin[esp_a_annoter],
-        BDD_esp$LMC_t0[esp_a_annoter],pch=21,bg = rgb(1,0,0),cex=1.2
+points (BDD_moy_esp$Gmin[esp_a_annoter],
+        BDD_moy_esp$LMC_t0[esp_a_annoter],pch=21,bg = rgb(1,0,0),cex=1.2
 )
 
 
-text(BDD_esp$Gmin[esp_a_annoter],
-     BDD_esp$LMC_t0[esp_a_annoter],
-     labels = BDD_esp$Nom_scientifique[esp_a_annoter],
+text(BDD_moy_esp$Gmin[esp_a_annoter],
+     BDD_moy_esp$LMC_t0[esp_a_annoter],
+     labels = BDD_moy_esp$Nom_scientifique[esp_a_annoter],
      pos = 4, offset = 0.5, cex = 0.8)
 
-points (BDD_esp$Gmin[esp_a_annoter],
-        BDD_esp$LMC_t0[esp_a_annoter],pch=21,bg = rgb(1,0,0)
+points (BDD_moy_esp$Gmin[esp_a_annoter],
+        BDD_moy_esp$LMC_t0[esp_a_annoter],pch=21,bg = rgb(1,0,0)
 )
 
-plot(BDD_esp$LMC_t0,BDD_esp$LMC_t24 ,xlim=c(0,300),ylim=c(0,300))
-text(BDD_esp$LMC_t0,BDD_esp$LMC_t24,
-     labels = BDD_esp$Nom_scientifique,cex=1,pos=2)
+plot(BDD_moy_esp$LMC_t0,BDD_moy_esp$LMC_t24 ,xlim=c(0,300),ylim=c(0,300))
+text(BDD_moy_esp$LMC_t0,BDD_moy_esp$LMC_t24,
+     labels = BDD_moy_esp$Nom_scientifique,cex=1,pos=2)
 
 
 
@@ -2341,42 +2438,42 @@ text(BDD_esp$LMC_t0,BDD_esp$LMC_t24,
 
 
 ##### TEST LMC_t24 ###########
-hist(BDD_esp$LMC_t24)
+hist(BDD_moy_esp$LMC_t24)
 
-BDD_esp$LDMC_cr<-as.numeric(scale(BDD_esp$LDMC))
-BDD_esp$Gmin_cr<-as.numeric(scale(BDD_esp$Gmin))
-BDD_esp_netMT$LDMC_cr<-as.numeric(scale(BDD_esp_netMT$LDMC))
-BDD_esp_netMT$Gmin_cr<-as.numeric(scale(BDD_esp_netMT$Gmin))
-BDD_esp_net3$LDMC_cr<-as.numeric(scale(BDD_esp_net3$LDMC))
-BDD_esp_net3$Gmin_cr<-as.numeric(scale(BDD_esp_net3$Gmin))
+BDD_moy_esp$LDMC_cr<-as.numeric(scale(BDD_moy_esp$LDMC))
+BDD_moy_esp$Gmin_cr<-as.numeric(scale(BDD_moy_esp$Gmin))
+BDD_moy_esp_netMT$LDMC_cr<-as.numeric(scale(BDD_moy_esp_netMT$LDMC))
+BDD_moy_esp_netMT$Gmin_cr<-as.numeric(scale(BDD_moy_esp_netMT$Gmin))
+BDD_moy_esp_net3$LDMC_cr<-as.numeric(scale(BDD_moy_esp_net3$LDMC))
+BDD_moy_esp_net3$Gmin_cr<-as.numeric(scale(BDD_moy_esp_net3$Gmin))
 
 #modèles
-m<-glm(BDD_esp$LMC_t24~LDMC_cr+Gmin_cr,data=BDD_esp,family=Gamma(link="log"))
+m<-glm(BDD_moy_esp$LMC_t24~LDMC_cr+Gmin_cr,data=BDD_moy_esp,family=Gamma(link="log"))
 summary(m)
 
 
 ################# Prédiction ########################
 # LDMC
-moy <- mean(BDD_esp$LDMC, na.rm = TRUE)
-ecart <- sd(BDD_esp$LDMC, na.rm = TRUE)
+moy <- mean(BDD_moy_esp$LDMC, na.rm = TRUE)
+ecart <- sd(BDD_moy_esp$LDMC, na.rm = TRUE)
 
 # Valeurs de LDMC
-foo <- seq(min(BDD_esp$LDMC_cr), max(BDD_esp$LDMC_cr),length.out = 100)
+foo <- seq(min(BDD_moy_esp$LDMC_cr), max(BDD_moy_esp$LDMC_cr),length.out = 100)
 
 # on fait varier Gmin et on fixe LDMC
 pred_data1 <- data.frame(
   LDMC_cr = foo,
-  Gmin_cr = rep(mean(BDD_esp$Gmin_cr,na.rm = TRUE), length(foo))
+  Gmin_cr = rep(mean(BDD_moy_esp$Gmin_cr,na.rm = TRUE), length(foo))
 )
 
 pred_data2 <- data.frame(
   LDMC_cr = foo,
-  Gmin_cr = rep(min(BDD_esp$Gmin_cr,na.rm = TRUE), length(foo))
+  Gmin_cr = rep(min(BDD_moy_esp$Gmin_cr,na.rm = TRUE), length(foo))
 )
 
 pred_data3 <- data.frame(
   LDMC_cr = foo,
-  Gmin_cr = rep(max(BDD_esp$Gmin_cr,na.rm = TRUE), length(foo))
+  Gmin_cr = rep(max(BDD_moy_esp$Gmin_cr,na.rm = TRUE), length(foo))
 )
 
 
@@ -2389,7 +2486,7 @@ pred3 <- predict(m, type = "response", newdata = pred_data3, se.fit = TRUE, re.f
 
 
 # Plot des points observés
-plot(BDD_esp$LDMC, BDD_esp$LMC_t24, 
+plot(BDD_moy_esp$LDMC, BDD_moy_esp$LMC_t24, 
      xlab = "LDMC (mg/g)", ylab = "LMC_t24 (%)", 
      main = "Effet de LDMC sur LMC_t24 selon gmin ",ylim=c(0,700))
 
@@ -2416,33 +2513,33 @@ lines(foo_original, pred3$fit, col = "#BD0000", lwd = 2)  # Gmin max
 ############################ MODELES échelle esp ###############################
 
 #standardisation des données 
-BDD_esp_net$SD_cr<-as.numeric(scale(BDD_esp_net$SD))
-BDD_esp_net$TD_cr<-as.numeric(scale(BDD_esp_net$TD))
-BDD_esp_net$LA_cr<-as.numeric(scale(BDD_esp_net$Surface_F))
-BDD_esp_net$LDMC_cr<-as.numeric(scale(BDD_esp_net$LDMC))
-BDD_esp_net$LMC_t24_cr<-as.numeric(scale(BDD_esp_net$LMC_t24))
-BDD_esp_net$Gmin_cr<-as.numeric(scale(BDD_esp_net$Gmin))
-BDD_esp_net$SLA_cr<-as.numeric(scale(BDD_esp_net$SLA))
-BDD_esp_net$Nb_rami_cr<-as.numeric(scale(BDD_esp_net$Nb_rami))
+BDD_moy_esp_net$SD_cr<-as.numeric(scale(BDD_moy_esp_net$SD))
+BDD_moy_esp_net$TD_cr<-as.numeric(scale(BDD_moy_esp_net$TD))
+BDD_moy_esp_net$LA_cr<-as.numeric(scale(BDD_moy_esp_net$Surface_F))
+BDD_moy_esp_net$LDMC_cr<-as.numeric(scale(BDD_moy_esp_net$LDMC))
+BDD_moy_esp_net$LMC_t24_cr<-as.numeric(scale(BDD_moy_esp_net$LMC_t24))
+BDD_moy_esp_net$Gmin_cr<-as.numeric(scale(BDD_moy_esp_net$Gmin))
+BDD_moy_esp_net$SLA_cr<-as.numeric(scale(BDD_moy_esp_net$SLA))
+BDD_moy_esp_net$Nb_rami_cr<-as.numeric(scale(BDD_moy_esp_net$Nb_rami))
 
 
-BDD_esp_netMT$SD_cr<-as.numeric(scale(BDD_esp_netMT$SD))
-BDD_esp_netMT$TD_cr<-as.numeric(scale(BDD_esp_netMT$TD))
-BDD_esp_netMT$LA_cr<-as.numeric(scale(BDD_esp_netMT$Surface_F))
-BDD_esp_netMT$LDMC_cr<-as.numeric(scale(BDD_esp_netMT$LDMC))
-BDD_esp_netMT$LMC_t24_cr<-as.numeric(scale(BDD_esp_netMT$LMC_t24))
-BDD_esp_netMT$Gmin_cr<-as.numeric(scale(BDD_esp_netMT$Gmin))
-BDD_esp_netMT$SLA_cr<-as.numeric(scale(BDD_esp_netMT$SLA))
-BDD_esp_netMT$Nb_rami_cr<-as.numeric(scale(BDD_esp_netMT$Nb_rami))
+BDD_moy_esp_netMT$SD_cr<-as.numeric(scale(BDD_moy_esp_netMT$SD))
+BDD_moy_esp_netMT$TD_cr<-as.numeric(scale(BDD_moy_esp_netMT$TD))
+BDD_moy_esp_netMT$LA_cr<-as.numeric(scale(BDD_moy_esp_netMT$Surface_F))
+BDD_moy_esp_netMT$LDMC_cr<-as.numeric(scale(BDD_moy_esp_netMT$LDMC))
+BDD_moy_esp_netMT$LMC_t24_cr<-as.numeric(scale(BDD_moy_esp_netMT$LMC_t24))
+BDD_moy_esp_netMT$Gmin_cr<-as.numeric(scale(BDD_moy_esp_netMT$Gmin))
+BDD_moy_esp_netMT$SLA_cr<-as.numeric(scale(BDD_moy_esp_netMT$SLA))
+BDD_moy_esp_netMT$Nb_rami_cr<-as.numeric(scale(BDD_moy_esp_netMT$Nb_rami))
 
-BDD_esp_net3$SD_cr<-as.numeric(scale(BDD_esp_net3$SD))
-BDD_esp_net3$TD_cr<-as.numeric(scale(BDD_esp_net3$TD))
-BDD_esp_net3$LA_cr<-as.numeric(scale(BDD_esp_net3$Surface_F))
-BDD_esp_net3$LDMC_cr<-as.numeric(scale(BDD_esp_net3$LDMC))
-BDD_esp_net3$LMC_t24_cr<-as.numeric(scale(BDD_esp_net3$LMC_t24))
-BDD_esp_net3$Gmin_cr<-as.numeric(scale(BDD_esp_net3$Gmin))
-BDD_esp_net3$SLA_cr<-as.numeric(scale(BDD_esp_net3$SLA))
-BDD_esp_net3$Nb_rami_cr<-as.numeric(scale(BDD_esp_net3$Nb_rami))
+BDD_moy_esp_net3$SD_cr<-as.numeric(scale(BDD_moy_esp_net3$SD))
+BDD_moy_esp_net3$TD_cr<-as.numeric(scale(BDD_moy_esp_net3$TD))
+BDD_moy_esp_net3$LA_cr<-as.numeric(scale(BDD_moy_esp_net3$Surface_F))
+BDD_moy_esp_net3$LDMC_cr<-as.numeric(scale(BDD_moy_esp_net3$LDMC))
+BDD_moy_esp_net3$LMC_t24_cr<-as.numeric(scale(BDD_moy_esp_net3$LMC_t24))
+BDD_moy_esp_net3$Gmin_cr<-as.numeric(scale(BDD_moy_esp_net3$Gmin))
+BDD_moy_esp_net3$SLA_cr<-as.numeric(scale(BDD_moy_esp_net3$SLA))
+BDD_moy_esp_net3$Nb_rami_cr<-as.numeric(scale(BDD_moy_esp_net3$Nb_rami))
 
 BDD_moy_score$SD_cr<-as.numeric(scale(BDD_moy_score$SD))
 BDD_moy_score$TD_cr<-as.numeric(scale(BDD_moy_score$TD))
@@ -2460,27 +2557,27 @@ BDD_moy_score$Nb_rami_cr<-as.numeric(scale(BDD_moy_score$Nb_rami))
 #######################################################
 
 #modèles
-MT1 <- glm (BDD_esp_netMT$MT ~ SD_cr+TD_cr+SLA_cr+Nb_rami_cr+LDMC_cr*Gmin_cr, data = BDD_esp_netMT)
+MT1 <- glm (BDD_moy_esp_netMT$MT ~ SD_cr+TD_cr+SLA_cr+Nb_rami_cr+LDMC_cr*Gmin_cr, data = BDD_moy_esp_netMT)
 summary(MT1)
 
 
 ###################### prédicion ############### 
 
 ############  LDMC
-moy <- mean(BDD_esp_netMT$LDMC, na.rm = TRUE)
-ecart <- sd(BDD_esp_netMT$LDMC, na.rm = TRUE)
+moy <- mean(BDD_moy_esp_netMT$LDMC, na.rm = TRUE)
+ecart <- sd(BDD_moy_esp_netMT$LDMC, na.rm = TRUE)
 
 # Valeurs de LDMC
-foo <- seq(min(BDD_esp_netMT$LDMC_cr), max(BDD_esp_netMT$LDMC_cr),length.out = 100)
+foo <- seq(min(BDD_moy_esp_netMT$LDMC_cr), max(BDD_moy_esp_netMT$LDMC_cr),length.out = 100)
 
 ############## on fait varier LMDC
 pred_data1 <- data.frame(
   LDMC_cr = foo,
-  SD_cr = rep(mean(BDD_esp_netMT$SD_cr,na.rm = TRUE), length(foo)),
-  TD_cr = rep(mean(BDD_esp_netMT$TD_cr), length(foo)),
-  Nb_rami_cr = rep(mean(BDD_esp_netMT$Nb_rami_cr), length(foo)),
-  Gmin_cr = rep(mean(BDD_esp_netMT$Gmin_cr), length(foo)),
-  SLA_cr = rep(mean(BDD_esp_netMT$SLA_cr), length(foo))
+  SD_cr = rep(mean(BDD_moy_esp_netMT$SD_cr,na.rm = TRUE), length(foo)),
+  TD_cr = rep(mean(BDD_moy_esp_netMT$TD_cr), length(foo)),
+  Nb_rami_cr = rep(mean(BDD_moy_esp_netMT$Nb_rami_cr), length(foo)),
+  Gmin_cr = rep(mean(BDD_moy_esp_netMT$Gmin_cr), length(foo)),
+  SLA_cr = rep(mean(BDD_moy_esp_netMT$SLA_cr), length(foo))
 )
 
 
@@ -2489,7 +2586,7 @@ pred1 <- predict(MT1, type = "response", newdata = pred_data1, se.fit = TRUE, re
 
 # Plot des points observés
 par(mar=c(4,5,4,4))
-plot(BDD_esp_netMT$LDMC, BDD_esp_netMT$MT,type="n", 
+plot(BDD_moy_esp_netMT$LDMC, BDD_moy_esp_netMT$MT,type="n", 
      xlab = "LDMC (mg/g)", ylab = "Température maximum (°C)", 
      main = "Effet de LDMC sur MT",ylim=c(500,850),xlim=c(175,550))
 
@@ -2512,10 +2609,10 @@ lines((foo*ecart + moy), pred1$fit - 1.96 * pred1$se.fit, col = "blue", lty = 3)
 ##################################
 
 #modèles
-BDD_esp_net3$BB_prop <- BDD_esp_net3$BB_test/100
+BDD_moy_esp_net3$BB_prop <- BDD_moy_esp_net3$BB_test/100
 
 
-BB0 <- glm(BB_prop ~ SD_cr+TD_cr+SLA_cr+Nb_rami_cr+LDMC_cr*Gmin_cr, data = BDD_esp_net3)    #### meilleur modèle 
+BB0 <- glm(BB_prop ~ SD_cr+TD_cr+SLA_cr+Nb_rami_cr+LDMC_cr*Gmin_cr, data = BDD_moy_esp_net3)    #### meilleur modèle 
 summary(BB0)
 r.squaredGLMM(BB0)
 
@@ -2523,28 +2620,28 @@ r.squaredGLMM(BB0)
 
 ################# Prédiction ########################
 # LDMC
-moy <- mean(BDD_esp_net3$LDMC, na.rm = TRUE)
-ecart <- sd(BDD_esp_net3$LDMC, na.rm = TRUE)
+moy <- mean(BDD_moy_esp_net3$LDMC, na.rm = TRUE)
+ecart <- sd(BDD_moy_esp_net3$LDMC, na.rm = TRUE)
 
 # Valeurs de LDMC
-foo <- seq(min(BDD_esp_net3$LDMC_cr), max(BDD_esp_net3$LDMC_cr),length.out = 100)
+foo <- seq(min(BDD_moy_esp_net3$LDMC_cr), max(BDD_moy_esp_net3$LDMC_cr),length.out = 100)
 
 # on fait varier LMDC 
 par(mar=c(4,5,4,4))
 
 pred_data1 <- data.frame(
   LDMC_cr = foo,
-  SD_cr = rep(mean(BDD_esp_net3$SD_cr,na.rm = TRUE), length(foo)),
-  TD_cr = rep(mean(BDD_esp_net3$TD_cr), length(foo)),
-  Nb_rami_cr = rep(mean(BDD_esp_net3$Nb_rami_cr), length(foo)),
-  SLA_cr = rep(mean(BDD_esp_net3$SLA_cr), length(foo))
+  SD_cr = rep(mean(BDD_moy_esp_net3$SD_cr,na.rm = TRUE), length(foo)),
+  TD_cr = rep(mean(BDD_moy_esp_net3$TD_cr), length(foo)),
+  Nb_rami_cr = rep(mean(BDD_moy_esp_net3$Nb_rami_cr), length(foo)),
+  SLA_cr = rep(mean(BDD_moy_esp_net3$SLA_cr), length(foo))
 )
 
 # Prédictions
 pred1 <- predict(BB1, type = "response", newdata = pred_data1, se.fit = TRUE, re.form = NA)
 
 # Plot des points observés
-plot(BDD_esp_net3$LDMC, BDD_esp_net3$BB_prop,type="n", 
+plot(BDD_moy_esp_net3$LDMC, BDD_moy_esp_net3$BB_prop,type="n", 
      xlab = "LDMC", ylab = "Biomasse brûlée (%)", 
      main = "Effet de LDMC sur BB ",ylim=c(0,1),xlim=c(175,550))
 
@@ -2567,26 +2664,26 @@ lines((foo*ecart + moy), pred1$fit - 1.96 * pred1$se.fit, col = "blue", lty = 3)
 ######################################
 
 #modèles
-BT0 <- glm(BT_test ~ SD_cr+TD_cr+SLA_cr+Nb_rami_cr+LDMC_cr*Gmin_cr , family=Gamma(link="log"), data = BDD_esp_net3)  #meilleur modèle
+BT0 <- glm(BT_test ~ SD_cr+TD_cr+SLA_cr+Nb_rami_cr+LDMC_cr*Gmin_cr , family=Gamma(link="log"), data = BDD_moy_esp_net3)  #meilleur modèle
 summary(BT0)
 
 
 
 ################# Prédiction ########################
 # LDMC
-moy <- mean(BDD_esp_net3$LDMC, na.rm = TRUE)
-ecart <- sd(BDD_esp_net3$LDMC, na.rm = TRUE)
+moy <- mean(BDD_moy_esp_net3$LDMC, na.rm = TRUE)
+ecart <- sd(BDD_moy_esp_net3$LDMC, na.rm = TRUE)
 
 # Valeurs de LDMC
-foo <- seq(min(BDD_esp_net3$LDMC_cr), max(BDD_esp_net3$LDMC_cr),length.out = 100)
+foo <- seq(min(BDD_moy_esp_net3$LDMC_cr), max(BDD_moy_esp_net3$LDMC_cr),length.out = 100)
 
 # on fait varier LMDC 
 pred_data1 <- data.frame(
   LDMC_cr = foo,
-  SD_cr = rep(mean(BDD_esp_net3$SD_cr,na.rm = TRUE), length(foo)),
-  TD_cr = rep(mean(BDD_esp_net3$TD_cr), length(foo)),
-  Nb_rami_cr = rep(mean(BDD_esp_net3$Nb_rami_cr), length(foo)),
-  SLA_cr = rep(mean(BDD_esp_net3$SLA_cr), length(foo))
+  SD_cr = rep(mean(BDD_moy_esp_net3$SD_cr,na.rm = TRUE), length(foo)),
+  TD_cr = rep(mean(BDD_moy_esp_net3$TD_cr), length(foo)),
+  Nb_rami_cr = rep(mean(BDD_moy_esp_net3$Nb_rami_cr), length(foo)),
+  SLA_cr = rep(mean(BDD_moy_esp_net3$SLA_cr), length(foo))
 )
 
 # Prédictions
@@ -2594,7 +2691,7 @@ pred1 <- predict(m_BT1, type = "response", newdata = pred_data1, se.fit = TRUE, 
 pred1
 
 # Plot des points observés
-plot(BDD_esp_net3$LDMC, BDD_esp_net3$BT_test,type="n", 
+plot(BDD_moy_esp_net3$LDMC, BDD_moy_esp_net3$BT_test,type="n", 
      xlab = "LDMC", ylab = "Temps de combustion (s)", 
      main = "Effet de LDMC sur BT ",ylim=c(0,80),xlim=c(175,550))
 
@@ -2616,33 +2713,33 @@ range(pred1$fit + 1.96 * pred1$se.fit - (pred1$fit - 1.96 * pred1$se.fit))
 
 #modèles
 
-DI0 <- glm(DI_test ~ SD_cr+TD_cr+SLA_cr+Nb_rami_cr+LDMC_cr+Gmin_cr , family=Gamma(link="log"), data = BDD_esp_net3)  #meilleur modèle
+DI0 <- glm(DI_test ~ SD_cr+TD_cr+SLA_cr+Nb_rami_cr+LDMC_cr+Gmin_cr , family=Gamma(link="log"), data = BDD_moy_esp_net3)  #meilleur modèle
 summary(DI0)
 
 
 
 ################# Prédiction ########################
 # LDMC
-moy <- mean(BDD_esp_net3$LDMC, na.rm = TRUE)
-ecart <- sd(BDD_esp_net3$LDMC, na.rm = TRUE)
+moy <- mean(BDD_moy_esp_net3$LDMC, na.rm = TRUE)
+ecart <- sd(BDD_moy_esp_net3$LDMC, na.rm = TRUE)
 
 # Valeurs de LDMC
-foo <- seq(min(BDD_esp_net3$LDMC_cr), max(BDD_esp_net3$LDMC_cr),length.out = 100)
+foo <- seq(min(BDD_moy_esp_net3$LDMC_cr), max(BDD_moy_esp_net3$LDMC_cr),length.out = 100)
 
 # on fait varier LMDC 
 pred_data1 <- data.frame(
   LDMC_cr = foo,
-  SD_cr = rep(mean(BDD_esp_net3$SD_cr,na.rm = TRUE), length(foo)),
-  TD_cr = rep(mean(BDD_esp_net3$TD_cr), length(foo)),
-  Nb_rami_cr = rep(mean(BDD_esp_net3$Nb_rami_cr), length(foo)),
-  SLA_cr = rep(mean(BDD_esp_net3$SLA_cr), length(foo))
+  SD_cr = rep(mean(BDD_moy_esp_net3$SD_cr,na.rm = TRUE), length(foo)),
+  TD_cr = rep(mean(BDD_moy_esp_net3$TD_cr), length(foo)),
+  Nb_rami_cr = rep(mean(BDD_moy_esp_net3$Nb_rami_cr), length(foo)),
+  SLA_cr = rep(mean(BDD_moy_esp_net3$SLA_cr), length(foo))
 )
 
 # Prédictions
 pred1 <- predict(m_DI1, type = "response", newdata = pred_data1, se.fit = TRUE, re.form = NA)
 
 # Plot des points observés
-plot(BDD_esp_net3$LDMC, BDD_esp_net3$DI_test,type="n", 
+plot(BDD_moy_esp_net3$LDMC, BDD_moy_esp_net3$DI_test,type="n", 
      xlab = "LDMC", ylab = "Délai d'ignition (s)", 
      main = "Effet de LDMC sur DI ",ylim=c(0.5,2),xlim=c(175,550))
 
