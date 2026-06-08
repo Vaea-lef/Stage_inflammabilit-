@@ -1,7 +1,14 @@
-#### ANALYSE DE DONNEE STAGE INFLAMMABILITE ####
+#### ANALYSE DE DONNEE PUBLICATION TRAITS ####
 
 
-#packages
+
+
+
+################# IMPORTATION ET CHARGEMENT PACKAGE ###########################
+
+
+####PACKAGE
+
 library(FactoMineR)
 library(factoextra)
 library (corrplot)
@@ -17,7 +24,7 @@ library(rotl)
 library(dplyr)
 
 
-################# IMPORTATION ET CHARGEMENT PACKAGE ###########################
+#### IMPORT BDD
 
 setwd("C:/IRD/Stage_inflammabilit-") #définition du répertoire de travail
 
@@ -34,7 +41,6 @@ names(BDD_moy_ech3)[which(names(BDD_moy_ech3) == "Nb_ramifications")] <- "Nb_ram
 ##  importation BDD_sd_esp en format CSV
 BDD_sd_esp<-read.csv2("Data/Publi/BDD_sd_esp.csv", header = TRUE)
 
-
 ##  importation BDD_moy_esp en format CSV
 BDD_moy_esp<-read.csv2("Data/Publi/BDD_moy_esp.csv", header = TRUE) #importation de la base
 names(BDD_moy_esp)[which(names(BDD_moy_esp) == "Nb_ramifications")] <- "Nb_rami"
@@ -47,7 +53,8 @@ names(BDD_moy_espMT)[which(names(BDD_moy_espMT) == "Nb_ramifications")] <- "Nb_r
 BDD_moy_esp3<-read.csv2("Data/Publi/BDD_moy_esp3.csv", header = TRUE) #importation de la base
 names(BDD_moy_esp3)[which(names(BDD_moy_esp3) == "Nb_ramifications")] <- "Nb_rami"
 
-###### FI ########
+##calcul FI
+
 # Comptage du nombre d'essais par espèce dans BDD_moy_ech
 essais_par_espece <- table(BDD_moy_ech$Nom_scientifique)
 essais_par_espece
@@ -63,7 +70,6 @@ head(BDD_moy_esp)
 BDD_moy_esp$BD_mean <- BDD_moy_esp$BD           # copier la colonne originale
 BDD_moy_esp$BD_mean[is.na(BDD_moy_esp$BD_mean)] <- mean(BDD_moy_esp$BD, na.rm = TRUE)
 head(BDD_moy_esp)
-
 
 
 head(BDD_moy_ech)
@@ -85,7 +91,7 @@ head(BDD_moy_ech)
 
 
 ############################################################################
-#################### ACP TRAITS (pour sélection)############################
+#################### ACP TRAITS (pour sélection des traits modèle)############################
 ############################################################################
 
 
@@ -103,9 +109,6 @@ summary(res.pca)
 
 # Graphique des contributions des variables aux composantes principales
 fviz_pca_var(res.pca, col.var = "contrib", gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"), repel = TRUE)
-
-# Graphique combiné des variables et des individus
-fviz_pca_biplot(res.pca, col.var = "contrib", gradient.cols =c("#00AFBB", "#E7B800", "#FC4E07"),repel = TRUE)
 
 # Afficher l'ébouli
 fviz_screeplot(res.pca, addlabels = TRUE, ylim = c(0, 50), main="Graphique de l'ébouli")
@@ -200,7 +203,7 @@ COL[GR==4]<-"#CFF200"
 COL[GR==3]<-"#FFE100"
 COL[GR==2]<-"#6DC700"
 COL[GR==1]<-"#FF8900"
-COL[GR==6]<-"#025E00"
+
 
 col=rgb()
 
@@ -421,22 +424,22 @@ points(BDD_moy_score$score[o], 1:length(BDD_moy_score$Nom_scientifique),
 ###########################################
 
 
-# Charger le fichier de l'arbre
+# Chargement du fichier de l'arbre paftol
 tree <- read.tree("arbre.tree")
 
-# 1. Créer les nouveaux noms SANS encore les assigner à l'arbre
+# 1. création de nouveaux noms SANS encore les assigner à l'arbre
 nouveaux_noms <- sapply(strsplit(tree$tip.label, "_"), function(x) paste(x[3], x[4], sep = " "))
 
-# 2. Identifier les tips en doublons à supprimer (garder le premier, supprimer les suivants)
+# 2. identification des tips en doublons à supprimer (garder le premier, supprimer les suivants)
 tips_a_supprimer <- tree$tip.label[duplicated(nouveaux_noms)]
 
-# 3. Supprimer les doublons de l'arbre
+# 3. supression des doublons de l'arbre
 tree <- drop.tip(tree, tips_a_supprimer)
 
-# 4. Maintenant renommer proprement
+# 4. renome les noms
 tree$tip.label <- sapply(strsplit(tree$tip.label, "_"), function(x) paste(x[3], x[4], sep = " "))
 
-# 5. Vérifier
+# 5. Vérification
 sum(duplicated(tree$tip.label))  # doit être 0
 length(tree$tip.label)           # nombre de tips restants
 head(tree$tip.label)
@@ -448,10 +451,9 @@ rownames(BDD_moy_esp_phylo) <- BDD_moy_esp_phylo$Nom_scientifique
 # Vérifier la concordance arbre <-> BDD
 check <- name.check(tree, BDD_moy_esp_phylo)
 
-length(check$tree_not_data)  # tips dans l'arbre mais pas dans ta BDD
-length(check$data_not_tree)  # espèces dans ta BDD mais pas dans l'arbre
+length(check$data_not_tree)  # espèces dans BDD mais pas dans l'arbre
 
-# Trouver les lignes dont le Nom_scientifique est dans check$data_not_tree
+# Trouver lignes dont  Nom_scientifique est dans check$data_not_tree
 lignes <- c()
 for (i in 1:nrow(BDD_moy_esp_phylo)) {
   if (length(which(check$data_not_tree == BDD_moy_esp_phylo$Nom_scientifique[i])) > 0) {
