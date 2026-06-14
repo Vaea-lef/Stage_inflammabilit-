@@ -194,7 +194,7 @@ par(mar = c(5,5,5,5))  # marges
 HC<-hclust(d=dist(cbind(M_S1$x,M_S2$x)),method="ward.D2")
 plot(HC, hang = -1,labels=F, axes="n")
 axis(2,cex.axis=0.6)
-GR<-cutree(HC,k=4)
+GR<-cutree(HC,k=5)
 GR
 
 COL<-character()
@@ -266,7 +266,7 @@ BDD_moy_esp$groupe<-GR
 
 
 # Reclassement de la variable groupe 
-BDD_moy_esp$groupe <- factor(BDD_moy_esp$groupe, levels = c(6,2,4, 3, 1,5))
+BDD_moy_esp$groupe <- factor(BDD_moy_esp$groupe, levels = c(2,4, 3, 1,5))
 write.csv2(BDD_moy_esp,"Data/BDD_moy_esp_groupe.csv")
 
 # boxplot MT
@@ -595,10 +595,10 @@ resultats_tous
 
 ################## DISTRIBUTION DES DONNEES #####################
 #Infla
-hist(BDD_moy_esp_net3$DI_test,xlab="DI",main="DI distribution",xlim=c(0,10),breaks=seq(0,10,1)) # asymétrique droite
-hist(BDD_moy_esp_net3$BT_test,xlab="BT",main="BT distribution",breaks=seq(0,120,10)) # asymétrique droite
-hist(BDD_moy_esp_net3$BB_test,,xlab="BB",main="BB distribution") # normale proportion
-hist(BDD_moy_echMT$MT,xlab="MT",main="MT distribution",breaks=seq(0,1000,100))      # normale 
+hist(BDD_moy_esp3$DI_test,xlab="DI",main="DI distribution",xlim=c(0,10),breaks=seq(0,10,1)) # asymétrique droite
+hist(BDD_moy_esp3$BT_test,xlab="BT",main="BT distribution",breaks=seq(0,120,10)) # asymétrique droite
+hist(BDD_moy_esp3$BB_test,,xlab="BB",main="BB distribution") # normale proportion
+hist(BDD_moy_espMT$MT,xlab="MT",main="MT distribution",breaks=seq(0,1000,100))      # normale 
 
 #Infla ech
 hist(BDD_moy_ech3$DI_test,xlab="DI",main="DI distribution",xlim=c(0,10),breaks=seq(0,10,0.5)) # asymétrique droite
@@ -609,7 +609,7 @@ hist(BDD_moy_echMT$MT,xlab="MT",main="MT distribution")
 
 #traits
 hist(BDD_moy_esp$Nb_rami)  
-hist(BDD_moy_esp$SD)       
+hist(BDD_moy_esp$BD_mean)       
 hist(BDD_moy_esp$TMC_t0)         
 hist(BDD_moy_esp$TMC_t24)  
 hist(BDD_moy_esp$TDMC)         
@@ -623,65 +623,8 @@ hist(BDD_moy_esp$SLA)
 hist(BDD_moy_esp$LT)        
 
 
-
-
-
-#################### ACP TRAITS (pour sélection)############################
-
-# Sélection des colonnes des traits fonctionnels
-colonnes_traits <- na.omit(BDD_moy_esp[, setdiff(17:31, c(23, 27))])
-
-#strandardiser les données
-colonnes_traits_cr <- scale(log(colonnes_traits)+1)
-
-# Application de l'ACP
-res.pca <- PCA(colonnes_traits, scale.unit = TRUE, graph = FALSE)
-
-# Résumé des résultats
-summary(res.pca)
-
-# Graphique des contributions des variables aux composantes principales
-fviz_pca_var(res.pca, col.var = "contrib", gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"), repel = TRUE)
-
-# Graphique combiné des variables et des individus
-fviz_pca_biplot(res.pca, col.var = "contrib", gradient.cols =c("#00AFBB", "#E7B800", "#FC4E07"),repel = TRUE)
-
-# Afficher l'ébouli
-fviz_screeplot(res.pca, addlabels = TRUE, ylim = c(0, 50), main="Graphique de l'ébouli")
-
-
-####################### matrice de corrélation (pour le choix des traits) ######################
-
-### des traits foncitonnels
-library (corrplot)
-mat_cor_trait<-cor(colonnes_traits,method="spearman")
-round(mat_cor_trait, 2)   ## afficher les valeurs
-corrplot(mat_cor_trait, method = "color", tl.cex = 0.8, tl.col = "black", number.cex = 0.7, addCoef.col = "black")
-
-library(caret)
-traits_non_corrélés <- colonnes_traits[, -findCorrelation(mat_cor_trait, cutoff = 0.68)]
-traits_non_corrélés
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-################################################################################
-############################ ECHELLE ESPECE ###############################
-################################################################################
-
 #standardisation des données 
-BDD_moy_esp$SD_cr<-as.numeric(scale(BDD_moy_esp$SD))
+BDD_moy_esp$BD_mean_cr<-as.numeric(scale(BDD_moy_esp$BD_mean))
 BDD_moy_esp$TD_cr<-as.numeric(scale(BDD_moy_esp$TD))
 BDD_moy_esp$LA_cr<-as.numeric(scale(BDD_moy_esp$Surface_F))
 BDD_moy_esp$LDMC_cr<-as.numeric(scale(BDD_moy_esp$LDMC))
@@ -691,32 +634,29 @@ BDD_moy_esp$Nb_rami_cr<-as.numeric(scale(BDD_moy_esp$Nb_rami))
 BDD_moy_esp$Gmin_cr<-as.numeric(scale(BDD_moy_esp$Gmin))
 
 
-############### MODELES #############################
+
+
+
+
+############### MODELES classiques sans pgls #############################
+##########################################################################
+
+
 
 ###### FI ########
-# Comptage du nombre d'essais par espèce dans BDD_moy_ech
-essais_par_espece <- table(BDD_moy_ech$Nom_scientifique)
-essais_par_espece
-
-# Création d'une nouvelle colonne Nb_essais dans BDD_moy_esp en s'appuyant sur le nom scientifique
-BDD_moy_esp$Nb_essais <- essais_par_espece[BDD_moy_esp$Nom_scientifique]
-
-# Vérification
-head(BDD_moy_esp)
 
 #modèle
-mFI3<-glm(cbind(Nb_FI,Nb_essais-Nb_FI)~SD_cr+TD_cr+SLA_cr+Nb_rami_cr+LDMC_cr+Gmin_cr,data=BDD_moy_esp,family="binomial")
+mFI3<-glm(cbind(Nb_FI,Nb_essais-Nb_FI)~Gmin_cr+BD_mean_cr+TD_cr+SLA_cr+Nb_rami_cr+LDMC_cr,data=BDD_moy_esp,family="binomial")
 summary(mFI3)
 
-mFI4<-glm(cbind(Nb_FI,Nb_essais-Nb_FI)~SD_cr+TD_cr+SLA_cr+Nb_rami_cr+LMC_t24_cr,data=BDD_moy_esp,family="binomial")
+mFI4<-glm(cbind(Nb_FI,Nb_essais-Nb_FI)~Gmin_cr+BD_mean_cr+TD_cr+SLA_cr+Nb_rami_cr+LMC_t24_cr,data=BDD_moy_esp,family="binomial")
 summary(mFI4)
 
 AIC(mFI3,mFI4)
 
-###################### graph vert rouge ###############
+###################### graph bleu rouge avec LDMC+LMC_t24 ###############
 
 # Extraire coefficients (sans l'intercept)
-par(mar = c(5,10,5,5))
 coefs1 <- summary(mFI3)$coefficients[-1, ]
 coefs2 <- summary(mFI4)$coefficients[-1, ]
 
@@ -755,7 +695,8 @@ cols2 <- ifelse(estimates2 < 0, "blue", "blue")
 y_pos1 <- length(estimates1):1
 y_pos2 <- length(estimates2):1
 
-# Plot de base
+
+#####  Plot comparaison modèle 1 et 2 ####
 par(mar=c(4,6,2,2))
 plot(estimates1, y_pos1,type = "n",
      xlim = c(-4,4),
@@ -765,8 +706,6 @@ plot(estimates1, y_pos1,type = "n",
      axes = FALSE,
      main = "Fréquence d'ignition",
      cex.main = 1.1)
-
-
 
 # Ligne verticale à zéro
 abline(v = 0, lty = 2)
@@ -781,8 +720,7 @@ segments(ci1[,1], y_pos1, ci1[,2], y_pos1, col = cols1)
 segments(ci2[,1], y_pos2 - 0.4, ci2[,2], y_pos2 - 0.4, col = cols2)
 
 # Axe Y avec noms des variables
-axis(2, at = c(4.8,3.8,2.8,1.8,1,0.6), labels = c("SD","TD","SLA","Nb_Rami","LDMC","LMC_t24"), las = 1,cex.axis = 0.9)
-
+axis(2, at = c(5.8,4.8,3.8,2.8,1.8,1,0.6), labels = c("Gmin","BD","TD","SLA","Nb_Rami","LDMC","LMC_t24"), las = 1,cex.axis = 0.9)
 
 # Axe X
 axis(1,cex.axis = 0.9)
@@ -794,6 +732,46 @@ text(estimates1, y_pos1 + 0.16,
 text(estimates2, y_pos2 -0.24,
      labels = paste0(round(estimates2, 2), stars2),
      col = cols2, font = 2, cex =  0.9)
+
+
+
+#####  Plot seulement modèle 1 ####
+plot(estimates1, y_pos1,type = "n",
+     xlim = c(-4,4),
+     ylim = c(0.7,length(estimates1) +0.2 ),
+     xlab = "Estimate",
+     ylab = "",
+     axes = FALSE,
+     main = "Fréquence d'ignition",
+     cex.main = 1.1)
+
+# Ligne verticale à zéro
+abline(v = 0, lty = 2)
+abline(h = y_pos1, lwd = 0.5, lty = 3, col="grey")
+
+#points des coefs
+points(estimates1, y_pos1 ,pch = 16, col = cols1,cex = 1.1)
+
+# Barres d'erreur (IC)
+segments(ci1[,1], y_pos1, ci1[,2], y_pos1, col = cols1)
+
+# Axe Y avec noms des variables
+axis(2, at = c(6,5,4,3,2,1), labels = c("Gmin","BD","TD","SLA","Nb_Rami","LDMC"), las = 1,cex.axis = 0.9)
+
+# Axe X
+axis(1,cex.axis = 0.9)
+
+# Valeurs des coefficients + étoiles
+text(estimates1, y_pos1 + 0.16,
+     labels = paste0(round(estimates1, 2), stars1),
+     col = cols1, font = 2, cex =  0.9)
+
+
+
+
+
+
+
 
 ###################### prédicion ############### mettre LMC_t24 ou LDMC
 # Modèle GLM binomial (mFI3 ou mFI4)
@@ -853,58 +831,9 @@ lines((foo * ecart + moy), pmax(pred1$fit - 1.96 * pred1$se.fit, 0), col = "blue
 
 
 
-
-
-
-
-
-
-
-
-
-
-#################### ACP TRAITS ############################
-
-
-# Sélection des colonnes des traits fonctionnels
-colonnes_traits <- na.omit(BDD_moy_ech[, setdiff(17:31, c(23,24, 27))])
-
-# Vérifier les données
-colonnes_traits
-
-
-colonnes_traits_cr <- scale(log(colonnes_traits +0.01))
-colonnes_traits_cr
-# Application de l'ACP
-res.pca <- PCA(colonnes_traits_cr, scale.unit = FALSE, graph = FALSE)
-
-# Résumé des résultats
-summary(res.pca)
-
-# Graphique des contributions des variables aux composantes principales
-fviz_pca_var(res.pca, col.var = "contrib", gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"), repel = TRUE)
-
-# Graphique combiné des variables et des individus
-fviz_pca_biplot(res.pca, col.var = "contrib", gradient.cols =c("#00AFBB", "#E7B800", "#FC4E07"),repel = TRUE)
-
-# Afficher l'ébouli
-fviz_screeplot(res.pca, addlabels = TRUE, ylim = c(0, 50), main="Graphique de l'ébouli")
-
-
-####################### matrice de corrélation (pour le choix des traits) ######################
-
-### des traits foncitonnels
-library (corrplot)
-mat_cor_trait<-cor(colonnes_traits,method="spearman")
-round(mat_cor_trait, 2)   ## afficher les valeurs
-par(mar = c(10,10,10,10))
-corrplot(mat_cor_trait, method = "color", tl.cex = 0.8, tl.col = "black", number.cex = 0.7, addCoef.col = "black")
-
-library(caret)
-traits_non_corrélés <- colonnes_traits[, -findCorrelation(mat_cor_trait, cutoff = 0.7)]
-traits_non_corrélés
-
-
+#################################################################
+################### ECHELLE ECHANTILLON #########################
+#################################################################
 
 
 ################## DISTRIBUTION DES DONNEES #####################
@@ -933,181 +862,32 @@ hist(BDD_moy_ech$LT)
 
 
 
-
-
-
-
-
-
-
-############# PLOT INFLA ESPECE ######################
-
-library(ggplot2)
-############### MT ####################
-# Calcul des moyennes par espèce
-moyennes_MT <- aggregate(MT ~ Nom_scientifique, data = BDD_moy_ech, FUN = mean, na.rm = TRUE)
-
-# Ordonner les espèces croissante
-moyennes_MT <- moyennes_MT[order(moyennes_MT$MT), ]
-BDD_moy_ech$Nom_scientifique <- factor(BDD_moy_ech$Nom_scientifique, levels = moyennes_MT$Nom_scientifique)
-
-# Créer un dataframe pour les moyennes (pour ggplot)
-moyennes_MT$Type <- "Moyenne"
-BDD_moy_ech$Type <- "Individuel"
-
-# Plot avec légende
-MT<-ggplot() +
-  geom_point(data = BDD_moy_ech, aes(x = MT, y = Nom_scientifique, color = Type), size = 2) +
-  geom_point(data = moyennes_MT, aes(x = MT, y = Nom_scientifique, color = Type), size = 3) +
-  scale_color_manual(values = c("Individuel" = "black", "Moyenne" = "#f14900")) +
-  labs(x = "MT", y = "Espèces", color = "") +
-  theme_bw()
-MT
-
-############### DI ####################
-# Calcul des moyennes par espèce
-moyennes_DI_test <- aggregate(DI_test ~ Nom_scientifique, data = BDD_moy_ech, FUN = mean, na.rm = TRUE)
-
-# Ordonner les espèces croissante (en fonction de MT)
-moyennes_DI_test <- moyennes_DI_test[order(moyennes_MT$MT),  ]
-BDD_moy_ech$Nom_scientifique <- factor(BDD_moy_ech$Nom_scientifique, levels = moyennes_DI_test$Nom_scientifique)
-
-# Créer un dataframe pour les moyennes (pour ggplot)
-moyennes_DI_test$Type <- "Moyenne"
-BDD_moy_ech$Type <- "Individuel"
-
-# Plot avec légende
-DI<- ggplot() +
-  geom_point(data = BDD_moy_ech, aes(x = DI_test, y = Nom_scientifique, color = Type), size = 2) +
-  geom_point(data = moyennes_DI_test, aes(x = DI_test, y = Nom_scientifique, color = Type), size = 3) +
-  scale_color_manual(values = c("Individuel" = "black", "Moyenne" = "#f14900")) +
-  labs(x = "DI", y = "Espèce", color = "") +
-  theme_bw()
-DI
-
-
-
-############### BT ####################
-# Calcul des moyennes par espèce
-moyennes_BT_test <- aggregate(BT_test ~ Nom_scientifique, data = BDD_moy_ech, FUN = mean, na.rm = TRUE)
-
-# Ordonner les espèces croissante
-moyennes_BT_test <- moyennes_BT_test[order(moyennes_MT$MT), ]
-BDD_moy_ech$Nom_scientifique <- factor(BDD_moy_ech$Nom_scientifique, levels = moyennes_BT_test$Nom_scientifique)
-
-# Créer un dataframe pour les moyennes (pour ggplot)
-moyennes_BT_test$Type <- "Moyenne"
-BDD_moy_ech$Type <- "Individuel"
-
-# Plot avec légende
-BT<-ggplot() +
-  geom_point(data = BDD_moy_ech, aes(x = BT_test, y = Nom_scientifique, color = Type), size = 2) +
-  geom_point(data = moyennes_BT_test, aes(x = BT_test, y = Nom_scientifique, color = Type), size = 3) +
-  scale_color_manual(values = c("Individuel" = "black", "Moyenne" = "#f14900")) +
-  labs(x = "BT", y = "Espèce", color = "") +
-  theme_bw()
-BT
-
-boxplot(log(BDD_moy_ech$BT_test+0.01)~BDD_moy_ech$Nom_scientifique)
-boxplot(BDD_moy_ech$BT_test~BDD_moy_ech$Nom_scientifique)
-log(100)
-
-
-############### BT ####################
-# Calcul des moyennes par espèce
-moyennes_BB_test <- aggregate(BB_test ~ Nom_scientifique, data = BDD_moy_ech, FUN = mean, na.rm = TRUE)
-
-# Ordonner les espèces croissante
-moyennes_BB_test <- moyennes_BB_test[order(moyennes_MT$MT),  ]
-BDD_moy_ech$Nom_scientifique <- factor(BDD_moy_ech$Nom_scientifique, levels = moyennes_BB_test$Nom_scientifique)
-
-# Créer un dataframe pour les moyennes (pour ggplot)
-moyennes_BB_test$Type <- "Moyenne"
-BDD_moy_ech$Type <- "Individuel"
-
-# Plot avec légende
-BB<-ggplot() +
-  geom_point(data = BDD_moy_ech, aes(x = BB_test, y = Nom_scientifique, color = Type), size = 2) +  
-  geom_point(data = moyennes_BB_test, aes(x = BB_test, y = Nom_scientifique, color = Type), size = 3)+
-  scale_color_manual(values = c("Individuel" = "black", "Moyenne" = "#f14900")) +
-  labs(x = "BB", y = "Espèce", color = "") +
-  theme_bw()
-BB
-
-
-############### FI ####################
-# Calcul des moyennes par espèce
-moyennes_FI <- aggregate(FI ~ Nom_scientifique, data = BDD_moy_ech, FUN = mean, na.rm = TRUE)
-
-# Ordonner les espèces croissante
-moyennes_FI <- moyennes_FI[order(moyennes_MT$MT),  ]
-BDD_moy_ech$Nom_scientifique <- factor(BDD_moy_ech$Nom_scientifique, levels = moyennes_FI$Nom_scientifique)
-
-# Créer un dataframe pour les moyennes (pour ggplot)
-moyennes_FI$Type <- "Moyenne"
-BDD_moy_ech$Type <- "Individuel"
-
-# Plot avec légende
-FI<-ggplot() +
-  geom_point(data = BDD_moy_ech, aes(x = FI, y = Nom_scientifique, color = Type), size = 2) +  
-  geom_point(data = moyennes_FI, aes(x = FI, y = Nom_scientifique, color = Type), size = 3)+
-  scale_color_manual(values = c("Individuel" = "black", "Moyenne" = "#f14900")) +
-  labs(x = "FI", y = "Espèce", color = "") +
-  theme_bw()
-FI
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-############################ MODELES échelle ech ###############################
-
 #standardisation des données 
-BDD_moy_ech$SD_cr<-as.numeric(scale(BDD_moy_ech$SD))
+BDD_moy_ech$BD_mean_cr<-as.numeric(scale(BDD_moy_ech$BD_mean))
 BDD_moy_ech$TD_cr<-as.numeric(scale(BDD_moy_ech$TD))
 BDD_moy_ech$LA_cr<-as.numeric(scale(BDD_moy_ech$Surface_F))
 BDD_moy_ech$LDMC_cr<-as.numeric(scale(BDD_moy_ech$LDMC))
 BDD_moy_ech$LMC_t24_cr<-as.numeric(scale(BDD_moy_ech$LMC_t24))
-BDD_moy_ech$VPD_cr<-as.numeric(scale(BDD_moy_ech$VPD))
+BDD_moy_ech$Gmin_cr<-as.numeric(scale(BDD_moy_ech$Gmin))
 BDD_moy_ech$SLA_cr<-as.numeric(scale(BDD_moy_ech$SLA))
 BDD_moy_ech$Nb_rami_cr<-as.numeric(scale(BDD_moy_ech$Nb_rami))
 
 
-BDD_moy_echMT$SD_cr<-as.numeric(scale(BDD_moy_echMT$SD))
+BDD_moy_echMT$BD_mean_cr<-as.numeric(scale(BDD_moy_echMT$BD_mean))
 BDD_moy_echMT$TD_cr<-as.numeric(scale(BDD_moy_echMT$TD))
 BDD_moy_echMT$LA_cr<-as.numeric(scale(BDD_moy_echMT$Surface_F))
 BDD_moy_echMT$LDMC_cr<-as.numeric(scale(BDD_moy_echMT$LDMC))
 BDD_moy_echMT$LMC_t24_cr<-as.numeric(scale(BDD_moy_echMT$LMC_t24))
-BDD_moy_echMT$VPD_cr<-as.numeric(scale(BDD_moy_echMT$VPD))
+BDD_moy_echMT$Gmin_cr<-as.numeric(scale(BDD_moy_echMT$Gmin))
 BDD_moy_echMT$SLA_cr<-as.numeric(scale(BDD_moy_echMT$SLA))
 BDD_moy_echMT$Nb_rami_cr<-as.numeric(scale(BDD_moy_echMT$Nb_rami))
 
-BDD_moy_ech3$SD_cr<-as.numeric(scale(BDD_moy_ech3$SD))
+BDD_moy_ech3$BD_mean_cr<-as.numeric(scale(BDD_moy_ech3$BD_mean))
 BDD_moy_ech3$TD_cr<-as.numeric(scale(BDD_moy_ech3$TD))
 BDD_moy_ech3$LA_cr<-as.numeric(scale(BDD_moy_ech3$Surface_F))
 BDD_moy_ech3$LDMC_cr<-as.numeric(scale(BDD_moy_ech3$LDMC))
 BDD_moy_ech3$LMC_t24_cr<-as.numeric(scale(BDD_moy_ech3$LMC_t24))
-BDD_moy_ech3$VPD_cr<-as.numeric(scale(BDD_moy_ech3$VPD))
+BDD_moy_ech3$Gmin_cr<-as.numeric(scale(BDD_moy_ech3$Gmin))
 BDD_moy_ech3$SLA_cr<-as.numeric(scale(BDD_moy_ech3$SLA))
 BDD_moy_ech3$Nb_rami_cr<-as.numeric(scale(BDD_moy_ech3$Nb_rami))
 
