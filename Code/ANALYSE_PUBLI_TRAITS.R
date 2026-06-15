@@ -66,18 +66,6 @@ BDD_moy_esp$Nb_essais <- essais_par_espece[BDD_moy_esp$Nom_scientifique]
 head(BDD_moy_esp)
 
 
-head(BDD_moy_esp)
-BDD_moy_esp$BD_mean <- BDD_moy_esp$BD           # copier la colonne originale
-BDD_moy_esp$BD_mean[is.na(BDD_moy_esp$BD_mean)] <- mean(BDD_moy_esp$BD, na.rm = TRUE)
-head(BDD_moy_esp)
-
-
-head(BDD_moy_ech)
-BDD_moy_ech$BD_mean <- BDD_moy_ech$BD           # copier la colonne originale
-BDD_moy_ech$BD_mean[is.na(BDD_moy_ech$BD_mean)] <- mean(BDD_moy_ech$BD, na.rm = TRUE)
-head(BDD_moy_ech)
-
-
 
 
 
@@ -191,11 +179,54 @@ BDD_moy_ech$score <- ind_coords[,1]
 # Graphique de base
 par(mar = c(5,5,5,5))  # marges
 
-HC<-hclust(d=dist(cbind(M_S1$x,M_S2$x)),method="ward.D2")
-plot(HC, hang = -1,labels=F, axes="n")
-axis(2,cex.axis=0.6)
-GR<-cutree(HC,k=5)
+#### CAH (Classification Ascendante Hiérarchique)
+
+# Matrice des coordonnées moyennes par espèce
+data_clust <- cbind(M_S1$x, M_S2$x)
+rownames(data_clust) <- M_S1$Group.1
+colnames(data_clust) <- c("Axe1", "Axe2")
+
+# CAH sur les distances euclidiennes
+HC <- hclust(d = dist(data_clust), method = "ward.D2")
+
+par(mar = c(5,5,5,5))
+plot(HC, hang = -1, labels = FALSE, axes = "n",
+     main = "Dendrogramme CAH")
+axis(2, cex.axis = 0.6)
+
+# Découpage en k groupes (choix arbitraire, à ajuster si besoin)
+k_cah <- 5
+GR <- cutree(HC, k = k_cah)
 GR
+
+#### Choix du k pour k-means (aide à la décision)
+
+library(factoextra)
+
+# Méthode du coude
+fviz_nbclust(data_clust, kmeans, method = "wss") +
+  labs(title = "Méthode du coude")
+
+# Méthode de la silhouette
+fviz_nbclust(data_clust, kmeans, method = "silhouette") +
+  labs(title = "Méthode de la silhouette")
+
+# ===========================================================
+# 6. K-means avec k choisi manuellement
+# ===========================================================
+
+k_opt <- 4   # <-- choisis ici la valeur de k que tu veux tester
+
+res.kmeans <- kmeans(data_clust, centers = k_opt, iter.max = 50, nstart = 25,
+                     algorithm = "Hartigan-Wong")
+
+res.kmeans$cluster      # affectation de chaque espèce
+res.kmeans$centers      # centres des clusters
+res.kmeans$betweenss / res.kmeans$totss * 100  # % de variance expliquée
+
+
+
+
 
 COL<-character()
 COL[GR==5]<-"#FF2A00"
@@ -302,7 +333,6 @@ boxplot(DI_test ~ groupe, data = BDD_moy_esp,
 
 
 
-
 #Calcul de la moyenne du score pour ajout dans BDD_moy_esp
 #création de table avec moyenne et sd pour chaque variable en fonction du nom de l'espèce
 tem3<-BDD_moy_ech[,7:36] ###sélection des colonnes comprenant les variables pour les intégrer dans la boucle
@@ -337,7 +367,7 @@ BDD_moy_score
 write.csv2(BDD_moy_score,"Data/Publi/BDD_moy_score.csv")
 
 
-BDD_moy_score
+View(BDD_moy_score)
 
 
 
@@ -786,10 +816,11 @@ foo <- seq(min(BDD_moy_esp$LMC_t24_cr), max(BDD_moy_esp$LMC_t24_cr),length.out =
 # on fait varier LMDC et on fixe les autres variables
 pred_data1 <- data.frame(
   LMC_t24_cr = foo,
-  SD_cr = rep(mean(BDD_moy_esp$SD_cr,na.rm = TRUE), length(foo)),
+  BD_mean_cr = rep(mean(BDD_moy_esp$BD_mean_cr,na.rm = TRUE), length(foo)),
   TD_cr = rep(mean(BDD_moy_esp$TD_cr), length(foo)),
   Nb_rami_cr = rep(mean(BDD_moy_esp$Nb_rami_cr), length(foo)),
-  SLA_cr = rep(mean(BDD_moy_esp$SLA_cr), length(foo))
+  SLA_cr = rep(mean(BDD_moy_esp$SLA_cr), length(foo)),
+  Gmin_cr = rep(mean(BDD_moy_esp$Gmin_cr), length(foo))
 )
 
 
@@ -847,7 +878,7 @@ hist(BDD_moy_ech$score,xlab="Score d'inflammabilité",main="Distribution score")
 
 #traits
 hist(BDD_moy_ech$Nb_rami)  
-hist(BDD_moy_ech$SD)       
+hist(BDD_moy_ech$BD_mean)       
 hist(BDD_moy_ech$TMC_t0)         
 hist(BDD_moy_ech$TMC_t24)  
 hist(BDD_moy_ech$TDMC)         
@@ -913,10 +944,10 @@ lines(foo, pred1$fit - 1.96 * pred1$se.fit, col = "blue", lty = 3)
 #######################################################
 
 #modèles
-m_MT1 <- lmer(MT ~ SD_cr+TD_cr+SLA_cr+Nb_rami_cr+LDMC_cr + (1 | Nom_scientifique), data = BDD_moy_echMT)
+m_MT1 <- lmer(MT ~ Gmin_cr+BD_mean_cr+TD_cr+SLA_cr+Nb_rami_cr+LDMC_cr + (1 | Nom_scientifique), data = BDD_moy_echMT)
 summary(m_MT1)
 r.squaredGLMM(m_MT1)
-m_MT3 <- lmer(MT ~ SD_cr+TD_cr+SLA_cr+Nb_rami_cr+LMC_t24_cr + (1 | Nom_scientifique), data = BDD_moy_echMT)
+m_MT3 <- lmer(MT ~ Gmin_cr+BD_mean_cr+TD_cr+SLA_cr+Nb_rami_cr+LMC_t24_cr + (1 | Nom_scientifique), data = BDD_moy_echMT)
 summary(m_MT3)
 r.squaredGLMM(m_MT3)
 
@@ -965,7 +996,6 @@ y_pos1 <- length(estimates1):1
 y_pos2 <- length(estimates2):1
 
 # Plot de base
-png("C:/IRD/Stage_inflammabilit-/Figures/FIN/Coef_MT.png",width = 500, height = 500,res=150)
 par(mar=c(4,6,2,2))
 plot(estimates1, y_pos1,type = "n",
      xlim = c(-100,100),
@@ -982,7 +1012,7 @@ plot(estimates1, y_pos1,type = "n",
 abline(v = 0, lty = 2)
 abline(h = y_pos1 -0.2, lwd = 0.5, lty = 3, col="grey")
 
-
+#points des coefs
 points(estimates1, y_pos1 ,pch = 16, col = cols1,cex = 1.1)
 points(estimates2, y_pos2 - 0.4,pch = 17, col = cols2,cex = 1.1)
 
@@ -991,8 +1021,7 @@ segments(ci1[,1], y_pos1, ci1[,2], y_pos1, col = cols1)
 segments(ci2[,1], y_pos2 - 0.4, ci2[,2], y_pos2 - 0.4, col = cols2)
 
 # Axe Y avec noms des variables
-axis(2, at = c(4.8,3.8,2.8,1.8,1,0.6), labels = c("SD","TD","SLA","Nb_rami","LDMC","LMC_t24"), las = 1,cex.axis = 0.9)
-
+axis(2, at = c(5.8,4.8,3.8,2.8,1.8,1,0.6), labels = c("Gmin","BD","TD","SLA","Nb_Rami","LDMC","LMC_t24"), las = 1,cex.axis = 0.9)
 
 # Axe X
 axis(1,cex.axis = 0.9)
@@ -1006,7 +1035,47 @@ text(estimates2, y_pos2 -0.24,
      col = cols2, font = 2, cex =  0.9)
 
 
-dev.off()
+
+
+
+#####  Plot seulement modèle 1 ####
+plot(estimates1, y_pos1,type = "n",
+     xlim = c(-100,100),
+     ylim = c(0.7,length(estimates1) +0.2 ),
+     xlab = "Estimate",
+     ylab = "", 
+     axes = FALSE,
+     main = "Température maximum",
+     cex.main = 1.1)
+
+# Ligne verticale à zéro
+abline(v = 0, lty = 2)
+abline(h = y_pos1, lwd = 0.5, lty = 3, col="grey")
+
+#points des coefs
+points(estimates1, y_pos1 ,pch = 16, col = cols1,cex = 1.1)
+
+# Barres d'erreur (IC)
+segments(ci1[,1], y_pos1, ci1[,2], y_pos1, col = cols1)
+
+# Axe Y avec noms des variables
+axis(2, at = c(6,5,4,3,2,1), labels = c("Gmin","BD","TD","SLA","Nb_Rami","LDMC"), las = 1,cex.axis = 0.9)
+
+# Axe X
+axis(1,cex.axis = 0.9)
+
+# Valeurs des coefficients + étoiles
+text(estimates1, y_pos1 + 0.16,
+     labels = paste0(round(estimates1, 2), stars1),
+     col = cols1, font = 2, cex =  0.9)
+
+
+
+
+
+
+
+
 
 ###################### prédicion ############### 
 
@@ -1133,16 +1202,11 @@ lines((foo*ecart + moy), pred1$fit - 1.96 * pred1$se.fit, col = "blue", lty = 3)
 BDD_moy_ech3$BB_prop <- BDD_moy_ech3$BB_test/100
 
 
-m_BB0 <- lmer(BB_prop ~ SD_cr+TD_cr+Nb_rami_cr+LDMC_cr+LT_cr+VPD_cr + (1 | Nom_scientifique), data = BDD_moy_ech3)    #### meilleur modèle 
-summary(m_BB0)
-r.squaredGLMM(m_BB0)
-m_BB1 <- lmer(BB_prop ~ SD_cr+TD_cr+SLA_cr+Nb_rami_cr+LDMC_cr + (1 | Nom_scientifique), data = BDD_moy_ech3)    #### meilleur modèle 
+m_BB1 <- lmer(BB_prop ~ Gmin_cr+BD_mean_cr+TD_cr+SLA_cr+Nb_rami_cr+LDMC_cr + (1 | Nom_scientifique), data = BDD_moy_ech3)    #### meilleur modèle 
 summary(m_BB1)
 r.squaredGLMM(m_BB1)
-m_BB2 <- lmer(BB_prop ~ SD_cr+TD_cr+Nb_rami_cr+LMC_t24_cr+LT_cr+VPD_cr + (1 | Nom_scientifique), data = BDD_moy_ech3)    #### meilleur modèle 
-summary(m_BB2)
-r.squaredGLMM(m_BB2)
-m_BB3 <- lmer(BB_prop ~ SD_cr+TD_cr+SLA_cr+Nb_rami_cr+LMC_t24_cr + (1 | Nom_scientifique), data = BDD_moy_ech3)    #### meilleur modèle 
+
+m_BB3 <- lmer(BB_prop ~ Gmin_cr+BD_mean_cr+TD_cr+SLA_cr+Nb_rami_cr+LMC_t24_cr + (1 | Nom_scientifique), data = BDD_moy_ech3)    #### meilleur modèle 
 summary(m_BB3)
 r.squaredGLMM(m_BB3)
 
@@ -1191,7 +1255,6 @@ y_pos1 <- length(estimates1):1
 y_pos2 <- length(estimates2):1
 
 # Plot de base
-png("C:/IRD/Stage_inflammabilit-/Figures/FIN/Coef_BB.png",width = 500, height = 500,res=150)
 par(mar=c(4,6,2,2))
 plot(estimates1, y_pos1,type = "n",
      xlim = c(-0.3,0.3),
@@ -1208,7 +1271,7 @@ plot(estimates1, y_pos1,type = "n",
 abline(v = 0, lty = 2)
 abline(h = y_pos1 -0.2, lwd = 0.5, lty = 3, col="grey")
 
-
+#points des coefs
 points(estimates1, y_pos1 ,pch = 16, col = cols1,cex = 1.1)
 points(estimates2, y_pos2 - 0.4,pch = 17, col = cols2,cex = 1.1)
 
@@ -1217,7 +1280,7 @@ segments(ci1[,1], y_pos1, ci1[,2], y_pos1, col = cols1)
 segments(ci2[,1], y_pos2 - 0.4, ci2[,2], y_pos2 - 0.4, col = cols2)
 
 # Axe Y avec noms des variables
-axis(2, at = c(4.8,3.8,2.8,1.8,1,0.6), labels = c("SD","TD","SLA","Nb_rami","LDMC","LMC_t24"), las = 1,cex.axis = 0.9)
+axis(2, at = c(5.8,4.8,3.8,2.8,1.8,1,0.6), labels = c("Gmin","BD","TD","SLA","Nb_Rami","LDMC","LMC_t24"), las = 1,cex.axis = 0.9)
 
 # Axe X
 axis(1,cex.axis = 0.9)
@@ -1231,7 +1294,46 @@ text(estimates2, y_pos2 -0.24,
      col = cols2, font = 2, cex =  0.9)
 
 
-dev.off()
+
+
+
+#####  Plot seulement modèle 1 ####
+plot(estimates1, y_pos1,type = "n",
+     xlim = c(-0.3,0.3),
+     ylim = c(0.7,length(estimates1) +0.2 ),
+     xlab = "Estimate",
+     ylab = "",
+     axes = FALSE,
+     main = "Biomasse brulée",
+     cex.main = 1.1)
+
+
+# Ligne verticale à zéro
+abline(v = 0, lty = 2)
+abline(h = y_pos1, lwd = 0.5, lty = 3, col="grey")
+
+#points des coefs
+points(estimates1, y_pos1 ,pch = 16, col = cols1,cex = 1.1)
+
+# Barres d'erreur (IC)
+segments(ci1[,1], y_pos1, ci1[,2], y_pos1, col = cols1)
+
+# Axe Y avec noms des variables
+axis(2, at = c(6,5,4,3,2,1), labels = c("Gmin","BD","TD","SLA","Nb_Rami","LDMC"), las = 1,cex.axis = 0.9)
+
+# Axe X
+axis(1,cex.axis = 0.9)
+
+# Valeurs des coefficients + étoiles
+text(estimates1, y_pos1 + 0.16,
+     labels = paste0(round(estimates1, 2), stars1),
+     col = cols1, font = 2, cex =  0.9)
+
+
+
+
+
+
 
 ################# Prédiction ########################
 # LDMC
@@ -1359,16 +1461,12 @@ lines((foo*ecart + moy), pred1$fit - 1.96 * pred1$se.fit, col = "blue", lty = 3)
 ######################################
 
 #modèles
-m_BT0 <- glmer(BT_test ~ SD_cr+TD_cr+Nb_rami_cr+LDMC_cr+LT_cr+VPD_cr + (1 | Nom_scientifique), family=Gamma(link="log"), data = BDD_moy_ech3)  #meilleur modèle
-summary(m_BT0)
-r.squaredGLMM(m_BT0)
-m_BT1 <- glmer(BT_test ~ SD_cr+TD_cr+SLA_cr+Nb_rami_cr+LDMC_cr + (1 | Nom_scientifique), family=Gamma(link="log"), data = BDD_moy_ech3)  #meilleur modèle
+
+m_BT1 <- glmer(BT_test ~ Gmin_cr+BD_mean_cr+TD_cr+SLA_cr+Nb_rami_cr+LDMC_cr + (1 | Nom_scientifique), family=Gamma(link="log"), data = BDD_moy_ech3)  #meilleur modèle
 summary(m_BT1)
 r.squaredGLMM(m_BT1)
-m_BT2 <- glmer(BT_test ~ SD_cr+TD_cr+Nb_rami_cr+LMC_t24_cr+LT_cr+VPD_cr + (1 | Nom_scientifique), family=Gamma(link="log"), data = BDD_moy_ech3)  #meilleur modèle
-summary(m_BT2)
-r.squaredGLMM(m_BT2)
-m_BT3 <- glmer(BT_test ~ SD_cr+TD_cr+SLA_cr+Nb_rami_cr+LMC_t24_cr + (1 | Nom_scientifique), family=Gamma(link="log"), data = BDD_moy_ech3)  #meilleur modèle
+
+m_BT3 <- glmer(BT_test ~ Gmin_cr+BD_mean_cr+TD_cr+SLA_cr+Nb_rami_cr+LMC_t24_cr + (1 | Nom_scientifique), family=Gamma(link="log"), data = BDD_moy_ech3)  #meilleur modèle
 summary(m_BT3)
 r.squaredGLMM(m_BT3)
 
@@ -1433,7 +1531,7 @@ plot(estimates1, y_pos1,type = "n",
 abline(v = 0, lty = 2)
 abline(h = y_pos1 -0.2, lwd = 0.5, lty = 3, col="grey")
 
-
+#points des coefs
 points(estimates1, y_pos1 ,pch = 16, col = cols1,cex = 1.1)
 points(estimates2, y_pos2 - 0.4,pch = 17, col = cols2,cex = 1.1)
 
@@ -1442,7 +1540,7 @@ segments(ci1[,1], y_pos1, ci1[,2], y_pos1, col = cols1)
 segments(ci2[,1], y_pos2 - 0.4, ci2[,2], y_pos2 - 0.4, col = cols2)
 
 # Axe Y avec noms des variables
-axis(2, at = c(4.8,3.8,2.8,1.8,1,0.6), labels = c("SD","TD","SLA","Nb_rami","LDMC","LMC_t24"), las = 1,cex.axis = 0.9)
+axis(2, at = c(5.8,4.8,3.8,2.8,1.8,1,0.6), labels = c("Gmin","BD","TD","SLA","Nb_Rami","LDMC","LMC_t24"), las = 1,cex.axis = 0.9)
 
 # Axe X
 axis(1,cex.axis = 0.9)
@@ -1454,6 +1552,42 @@ text(estimates1, y_pos1 + 0.16,
 text(estimates2, y_pos2 -0.24,
      labels = paste0(round(estimates2, 2), stars2),
      col = cols2, font = 2, cex =  0.9)
+
+
+
+
+
+#####  Plot seulement modèle 1 ####
+plot(estimates1, y_pos1,type = "n",
+    xlim = c(-0.5,0.5),
+    ylim = c(0.7,length(estimates1) +0.2 ),
+    xlab = "Estimate",
+    ylab = "",
+    axes = FALSE,
+    main = "Temps de combustion",
+    cex.main = 1.1)
+
+# Ligne verticale à zéro
+abline(v = 0, lty = 2)
+abline(h = y_pos1, lwd = 0.5, lty = 3, col="grey")
+
+#points des coefs
+points(estimates1, y_pos1 ,pch = 16, col = cols1,cex = 1.1)
+
+# Barres d'erreur (IC)
+segments(ci1[,1], y_pos1, ci1[,2], y_pos1, col = cols1)
+
+# Axe Y avec noms des variables
+axis(2, at = c(6,5,4,3,2,1), labels = c("Gmin","BD","TD","SLA","Nb_Rami","LDMC"), las = 1,cex.axis = 0.9)
+
+# Axe X
+axis(1,cex.axis = 0.9)
+
+# Valeurs des coefficients + étoiles
+text(estimates1, y_pos1 + 0.16,
+     labels = paste0(round(estimates1, 2), stars1),
+     col = cols1, font = 2, cex =  0.9)
+
 
 
 
@@ -1589,16 +1723,12 @@ lines((foo*ecart + moy), ((pred1$fit + 1.96 * pred1$se.fit)*ecart + moy), col = 
 
 #modèles
 
-m_DI0 <- glmer(DI_test ~ SD_cr+TD_cr+Nb_rami_cr+LDMC_cr+SLA_cr+VPD_cr + (1 | Nom_scientifique), family=Gamma(link="log"), data = BDD_moy_ech3)  #meilleur modèle
-summary(m_DI0)
-r.squaredGLMM(m_DI0)
-m_DI1 <- glmer(DI_test ~ SD_cr+TD_cr+SLA_cr+Nb_rami_cr+LDMC_cr + (1 | Nom_scientifique), family=Gamma(link="log"), data = BDD_moy_ech3)  #meilleur modèle
+
+m_DI1 <- glmer(DI_test ~ Gmin_cr+BD_mean_cr+TD_cr+SLA_cr+Nb_rami_cr+LDMC_cr + (1 | Nom_scientifique), family=Gamma(link="log"), data = BDD_moy_ech3)  #meilleur modèle
 summary(m_DI1)
 r.squaredGLMM(m_DI1)
-m_DI2 <- glmer(DI_test ~ SD_cr+TD_cr+Nb_rami_cr+LMC_t24_cr+LT_cr+VPD_cr + (1 | Nom_scientifique), family=Gamma(link="log"), data = BDD_moy_ech3)  #meilleur modèle
-summary(m_DI2)
-r.squaredGLMM(m_DI2)
-m_DI3 <- glmer(DI_test ~ SD_cr+TD_cr+SLA_cr+Nb_rami_cr+LMC_t24_cr + (1 | Nom_scientifique), family=Gamma(link="log"), data = BDD_moy_ech3)  #meilleur modèle
+
+m_DI3 <- glmer(DI_test ~ Gmin_cr+BD_mean_cr+TD_cr+SLA_cr+Nb_rami_cr+LMC_t24_cr + (1 | Nom_scientifique), family=Gamma(link="log"), data = BDD_moy_ech3)  #meilleur modèle
 summary(m_DI3)
 r.squaredGLMM(m_DI3)
 
@@ -1649,7 +1779,6 @@ y_pos1 <- length(estimates1):1
 y_pos2 <- length(estimates2):1
 
 # Plot de base
-png("C:/IRD/Stage_inflammabilit-/Figures/FIN/Coef_DI.png",width = 500, height = 500,res=150)
 par(mar=c(4,6,2,2))
 plot(estimates1, y_pos1,type = "n",
      xlim = c(-0.3,0.3),
@@ -1666,7 +1795,7 @@ plot(estimates1, y_pos1,type = "n",
 abline(v = 0, lty = 2)
 abline(h = y_pos1 -0.2, lwd = 0.5, lty = 3, col="grey")
 
-
+#points des coefs
 points(estimates1, y_pos1 ,pch = 16, col = cols1,cex = 1.1)
 points(estimates2, y_pos2 - 0.4,pch = 17, col = cols2,cex = 1.1)
 
@@ -1675,7 +1804,7 @@ segments(ci1[,1], y_pos1, ci1[,2], y_pos1, col = cols1)
 segments(ci2[,1], y_pos2 - 0.4, ci2[,2], y_pos2 - 0.4, col = cols2)
 
 # Axe Y avec noms des variables
-axis(2, at = c(4.8,3.8,2.8,1.8,1,0.6), labels = c("SD","TD","SLA","Nb_rami","LDMC","LMC_t24"), las = 1,cex.axis = 0.9)
+axis(2, at = c(5.8,4.8,3.8,2.8,1.8,1,0.6), labels = c("Gmin","BD","TD","SLA","Nb_Rami","LDMC","LMC_t24"), las = 1,cex.axis = 0.9)
 
 # Axe X
 axis(1,cex.axis = 0.9)
@@ -1689,7 +1818,48 @@ text(estimates2, y_pos2 -0.24,
      col = cols2, font = 2, cex =  0.9)
 
 
-dev.off()
+
+
+
+
+#####  Plot seulement modèle 1 ####
+plot(estimates1, y_pos1,type = "n",
+     xlim = c(-0.3,0.3),
+     ylim = c(0.7,length(estimates1) +0.2 ),
+     xlab = "Estimate",
+     ylab = "",
+     axes = FALSE,
+     main = "Délai d'ignition",
+     cex.main = 1.1)
+
+# Ligne verticale à zéro
+abline(v = 0, lty = 2)
+abline(h = y_pos1, lwd = 0.5, lty = 3, col="grey")
+
+#points des coefs
+points(estimates1, y_pos1 ,pch = 16, col = cols1,cex = 1.1)
+
+# Barres d'erreur (IC)
+segments(ci1[,1], y_pos1, ci1[,2], y_pos1, col = cols1)
+
+# Axe Y avec noms des variables
+axis(2, at = c(6,5,4,3,2,1), labels = c("Gmin","BD","TD","SLA","Nb_Rami","LDMC"), las = 1,cex.axis = 0.9)
+
+# Axe X
+axis(1,cex.axis = 0.9)
+
+# Valeurs des coefficients + étoiles
+text(estimates1, y_pos1 + 0.16,
+     labels = paste0(round(estimates1, 2), stars1),
+     col = cols1, font = 2, cex =  0.9)
+
+
+
+
+
+
+
+
 
 
 ################# Prédiction ########################
@@ -1812,14 +1982,13 @@ lines((foo*ecart+moy), pred3$fit, col = "red",lty=3)
 #####################
 
 #modèles
-m_score1 <- lmer(score ~ SD_cr+TD_cr+SLA_cr+Nb_rami_cr+LDMC_cr + (1 | Nom_scientifique), data = BDD_moy_ech)
+m_score1 <- lmer(score ~ Gmin_cr+BD_mean_cr+TD_cr+SLA_cr+Nb_rami_cr+LDMC_cr + (1 | Nom_scientifique), data = BDD_moy_ech)
 summary(m_score1)
 r.squaredGLMM(m_score1)
-m_score3 <- lmer(score ~ SD_cr+TD_cr+SLA_cr+Nb_rami_cr+LMC_t24_cr + (1 | Nom_scientifique), data = BDD_moy_ech)
+
+m_score3 <- lmer(score ~ Gmin_cr+BD_mean_cr+TD_cr+SLA_cr+Nb_rami_cr+LMC_t24_cr + (1 | Nom_scientifique), data = BDD_moy_ech)
 summary(m_score3)
-m_score2 <- lmer(score ~ LDMC_cr + (1 | Nom_scientifique), data = BDD_moy_ech)
-summary(m_score2)
-r.squaredGLMM(m_score2)
+
 
 AIC(m_score1,m_score3)
 
@@ -1884,7 +2053,7 @@ plot(estimates1, y_pos1,type = "n",
 abline(v = 0, lty = 2)
 abline(h = y_pos1 -0.2, lwd = 0.5, lty = 3, col="grey")
 
-
+#points des coefs
 points(estimates1, y_pos1 ,pch = 16, col = cols1,cex = 1.1)
 points(estimates2, y_pos2 - 0.4,pch = 17, col = cols2,cex = 1.1)
 
@@ -1893,7 +2062,7 @@ segments(ci1[,1], y_pos1, ci1[,2], y_pos1, col = cols1)
 segments(ci2[,1], y_pos2 - 0.4, ci2[,2], y_pos2 - 0.4, col = cols2)
 
 # Axe Y avec noms des variables
-axis(2, at = c(4.8,3.8,2.8,1.8,1,0.6), labels = c("SD","TD","SLA","Nb_rami","LDMC","LMC_t24"), las = 1,cex.axis = 0.9)
+axis(2, at = c(5.8,4.8,3.8,2.8,1.8,1,0.6), labels = c("Gmin","BD","TD","SLA","Nb_Rami","LDMC","LMC_t24"), las = 1,cex.axis = 0.9)
 
 # Axe X
 axis(1,cex.axis = 0.9)
@@ -1905,6 +2074,46 @@ text(estimates1, y_pos1 + 0.16,
 text(estimates2, y_pos2 -0.24,
      labels = paste0(round(estimates2, 2), stars2),
      col = cols2, font = 2, cex =  0.9)
+
+
+
+
+#####  Plot seulement modèle 1 ####
+plot(estimates1, y_pos1,type = "n",
+     xlim = c(-2,2),
+     ylim = c(0.7,length(estimates1) +0.2 ),
+     xlab = "Estimate",
+     ylab = "",
+     axes = FALSE,
+     main = "Score d'inflammabilité",
+     cex.main = 1.1)
+
+# Ligne verticale à zéro
+abline(v = 0, lty = 2)
+abline(h = y_pos1, lwd = 0.5, lty = 3, col="grey")
+
+#points des coefs
+points(estimates1, y_pos1 ,pch = 16, col = cols1,cex = 1.1)
+
+# Barres d'erreur (IC)
+segments(ci1[,1], y_pos1, ci1[,2], y_pos1, col = cols1)
+
+# Axe Y avec noms des variables
+axis(2, at = c(6,5,4,3,2,1), labels = c("Gmin","BD","TD","SLA","Nb_Rami","LDMC"), las = 1,cex.axis = 0.9)
+
+# Axe X
+axis(1,cex.axis = 0.9)
+
+# Valeurs des coefficients + étoiles
+text(estimates1, y_pos1 + 0.16,
+     labels = paste0(round(estimates1, 2), stars1),
+     col = cols1, font = 2, cex =  0.9)
+
+
+
+
+
+
 
 
 

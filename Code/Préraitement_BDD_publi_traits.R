@@ -297,6 +297,12 @@ for (id in ids_a_supprimer) {lignes_a_supprimer <- c(lignes_a_supprimer, which(B
 BDD_moy_ech <- BDD_moy_ech[-lignes_a_supprimer, ]
 
 
+## complete les NA de BD
+head(BDD_moy_ech)
+BDD_moy_ech$BD_mean <- BDD_moy_ech$BD           # copier la colonne originale
+BDD_moy_ech$BD_mean[is.na(BDD_moy_ech$BD_mean)] <- mean(BDD_moy_ech$BD, na.rm = TRUE)
+head(BDD_moy_ech)
+
 # Export des données
 write.csv2(BDD_moy_ech, "Data/Publi/BDD_moy_ech_publi.csv", row.names = FALSE)
 write.csv2(BDD_sd_ech, "Data/Publi/BDD_sd_ech_publi.csv", row.names = FALSE)
@@ -326,7 +332,7 @@ dim(BDD_moy_ech)
 
 ############# Base à l'échelle de l'espèce (complète : sans suppression des valeurs par défaut) ######################################
 #création de table avec moyenne et sd pour chaque variable en fonction du nom de l'espèce
-tem1<-BDD_moy_ech[,7:34] ###sélection des colonnes comprenant les variables pour les intégrer dans la boucle
+tem1<-BDD_moy_ech[,7:35] ###sélection des colonnes comprenant les variables pour les intégrer dans la boucle
 tem1
 #création d'un bdd d'origine pour moyenne (sert pour merge)
 BDD_moy_esp <- aggregate(tem1[,1] ~ Nom_scientifique + Genre + Espece + ID_espece + Milieu_recolte, data = BDD_moy_ech, FUN = mean, na.rm = TRUE)
@@ -373,6 +379,7 @@ head(BDD_moy_esp)
 head(BDD_sd_esp)
 
 
+
 #export de la BDD 
 write.csv2(BDD_moy_esp,"Data/Publi/BDD_moy_esp.csv")
 write.csv2(BDD_sd_esp, "Data/Publi/BDD_sd_esp.csv")
@@ -382,7 +389,7 @@ write.csv2(BDD_sd_esp, "Data/Publi/BDD_sd_esp.csv")
 
 ############# Base à l'échelle de l'espèce (nettoyée MT) ######################################
 #création de table avec moyenne et sd pour chaque variable en fonction du nom de l'espèce
-tem2<-BDD_moy_echMT[,7:34] ###sélection des colonnes comprenant les variables pour les intégrer dans la boucle
+tem2<-BDD_moy_echMT[,7:35] ###sélection des colonnes comprenant les variables pour les intégrer dans la boucle
 tem2
 #création d'un bdd d'origine pour moyenne (sert pour merge)
 BDD_moy_espMT <- aggregate(tem2[,1] ~ Nom_scientifique + Genre + Espece + ID_espece + Milieu_recolte, data = BDD_moy_echMT, FUN = mean, na.rm = TRUE)
@@ -433,7 +440,7 @@ write.csv2(BDD_moy_espMT,"Data/Publi/BDD_moy_espMT.csv")
 
 
 ############# Base à l'échelle de l'espèce (nettoyée reste) ######################################
-tem2 <- BDD_moy_ech3[, 7:34]
+tem2 <- BDD_moy_ech3[, 7:35]
 
 # Moyenne
 BDD_moy_esp3 <- aggregate(tem2[,1] ~ Nom_scientifique + Genre + Espece + ID_espece + Milieu_recolte, data = BDD_moy_ech3, FUN = mean, na.rm = TRUE)
