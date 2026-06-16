@@ -621,6 +621,9 @@ length(tree_final$tip.label)  # doit être 65
 
 plot(tree_final,cex=0.6)
 
+
+
+
 #################SIGNAL PHYLO###################################
 library(phytools)
 tree_final <- compute.brlen(tree_final, method = "Grafen") #### pour redonner longueur au branches de l'arbre
@@ -651,6 +654,1006 @@ for(i in 1:length(variables_toutes)){
 }
 
 resultats_tous
+
+
+
+
+################################################################################
+#---------------------------------------------------------------------------------
+
+################################################################################
+######################## PGLS ##################################################
+################################################################################
+
+#---------------------------------------------------------------------------------
+################################################################################
+
+# Recréer data avec toute la BDD sauf BD (qui a des NA)
+BDD_moy_esp_phylo$BD <- NULL
+
+####### suppression des échantillons qui ont une valeur par défaut pour MT (pour analyser MT)
+BDD_moy_esp_phyloMT <- BDD_moy_esp_phylo[BDD_moy_esp_phylo$MT != 150, ]
+
+####### suppression des échantillons qui ont une valeur par défaut pour reste composates (pour analyser DI, BB et BT)
+BDD_moy_esp_phylo3 <- BDD_moy_esp_phylo[BDD_moy_esp_phylo$DI_test != 10, ]
+
+#standardisation des données 
+BDD_moy_esp_phylo$BD_mean_cr<-as.numeric(scale(BDD_moy_esp_phylo$BD_mean))
+BDD_moy_esp_phylo$TD_cr<-as.numeric(scale(BDD_moy_esp_phylo$TD))
+BDD_moy_esp_phylo$LA_cr<-as.numeric(scale(BDD_moy_esp_phylo$Surface_F))
+BDD_moy_esp_phylo$LDMC_cr<-as.numeric(scale(BDD_moy_esp_phylo$LDMC))
+BDD_moy_esp_phylo$LMC_t24_cr<-as.numeric(scale(BDD_moy_esp_phylo$LMC_t24))
+BDD_moy_esp_phylo$SLA_cr<-as.numeric(scale(BDD_moy_esp_phylo$SLA))
+BDD_moy_esp_phylo$Nb_rami_cr<-as.numeric(scale(BDD_moy_esp_phylo$Nb_rami))
+BDD_moy_esp_phylo$Gmin_cr<-as.numeric(scale(BDD_moy_esp_phylo$Gmin))
+
+BDD_moy_esp_phyloMT$BD_mean_cr<-as.numeric(scale(BDD_moy_esp_phyloMT$BD_mean))
+BDD_moy_esp_phyloMT$TD_cr<-as.numeric(scale(BDD_moy_esp_phyloMT$TD))
+BDD_moy_esp_phyloMT$LA_cr<-as.numeric(scale(BDD_moy_esp_phyloMT$Surface_F))
+BDD_moy_esp_phyloMT$LDMC_cr<-as.numeric(scale(BDD_moy_esp_phyloMT$LDMC))
+BDD_moy_esp_phyloMT$LMC_t24_cr<-as.numeric(scale(BDD_moy_esp_phyloMT$LMC_t24))
+BDD_moy_esp_phyloMT$SLA_cr<-as.numeric(scale(BDD_moy_esp_phyloMT$SLA))
+BDD_moy_esp_phyloMT$Nb_rami_cr<-as.numeric(scale(BDD_moy_esp_phyloMT$Nb_rami))
+BDD_moy_esp_phyloMT$Gmin_cr<-as.numeric(scale(BDD_moy_esp_phyloMT$Gmin))
+
+BDD_moy_esp_phylo3$BD_mean_cr<-as.numeric(scale(BDD_moy_esp_phylo3$BD_mean))
+BDD_moy_esp_phylo3$TD_cr<-as.numeric(scale(BDD_moy_esp_phylo3$TD))
+BDD_moy_esp_phylo3$LA_cr<-as.numeric(scale(BDD_moy_esp_phylo3$Surface_F))
+BDD_moy_esp_phylo3$LDMC_cr<-as.numeric(scale(BDD_moy_esp_phylo3$LDMC))
+BDD_moy_esp_phylo3$LMC_t24_cr<-as.numeric(scale(BDD_moy_esp_phylo3$LMC_t24))
+BDD_moy_esp_phylo3$SLA_cr<-as.numeric(scale(BDD_moy_esp_phylo3$SLA))
+BDD_moy_esp_phylo3$Nb_rami_cr<-as.numeric(scale(BDD_moy_esp_phylo3$Nb_rami))
+BDD_moy_esp_phylo3$Gmin_cr<-as.numeric(scale(BDD_moy_esp_phylo3$Gmin))
+
+#BB en proportion
+BDD_moy_esp_phylo3$BB_prop <- BDD_moy_esp_phylo3$BB_test/100
+
+
+comp_data <- comparative.data(
+  phy       = tree_final,
+  data      = BDD_moy_esp_phylo,
+  names.col = "Nom_scientifique",
+  vcv       = TRUE
+)
+
+comp_dataMT <- comparative.data(
+  phy       = tree_final,
+  data      = BDD_moy_esp_phyloMT,
+  names.col = "Nom_scientifique",
+  vcv       = TRUE
+)
+
+comp_data3 <- comparative.data(
+  phy       = tree_final,
+  data      = BDD_moy_esp_phylo3,
+  names.col = "Nom_scientifique",
+  vcv       = TRUE
+)
+
+#### modèles PGLS ####
+
+###### FI ########
+
+#modèle
+mphy_FI1 <- pgls(FI ~ Gmin_cr+BD_mean_cr+TD_cr+SLA_cr+Nb_rami_cr+LDMC_cr ,
+                 data   = comp_data,
+                 lambda = "ML")
+
+summary(mphy_FI1)
+
+mphy_FI2 <- pgls(FI ~ Gmin_cr+BD_mean_cr+TD_cr+SLA_cr+Nb_rami_cr+LMC_t24 ,
+                 data   = comp_data,
+                 lambda = "ML")
+
+summary(mphy_FI2)
+
+# Vérifier la normalité des résidus
+shapiro.test(residuals(mphy_FI1))
+hist(residuals(mphy_FI1))
+qqnorm(residuals(mphy_FI1))
+qqline(residuals(mphy_FI1))
+
+
+###################### graph bleu rouge avec LDMC+LMC_t24 ###############
+
+# Extraire coefficients (sans l'intercept)
+coefs1 <- summary(mphy_FI1)$coefficients[-1, ]
+coefs2 <- summary(mphy_FI2)$coefficients[-1, ]
+
+# Variables utiles
+estimates1 <- coefs1[, "Estimate"]
+stderr1 <- coefs1[, "Std. Error"]
+pval1 <- coefs1[, "Pr(>|t|)"]
+labels1 <- rownames(coefs1)
+
+estimates2 <- coefs2[, "Estimate"]
+stderr2 <- coefs2[, "Std. Error"]
+pval2 <- coefs2[, "Pr(>|t|)"]
+labels2 <- rownames(coefs2)
+
+# Calcul des intervalles de confiance plus ou moins SE
+ci1 <- cbind(estimates1 - stderr1, estimates1 + stderr1)
+ci2 <- cbind(estimates2 - stderr2, estimates2 + stderr2)
+
+# Étoiles de significativité
+stars1 <- ifelse(pval1 < 0.001, "***",
+                 ifelse(pval1 < 0.01, "**",
+                        ifelse(pval1 < 0.05, "*",
+                               ifelse(pval1 < 0.1, ".", ""))))
+
+stars2 <- ifelse(pval2 < 0.001, "***",
+                 ifelse(pval2 < 0.01, "**",
+                        ifelse(pval2 < 0.05, "*",
+                               ifelse(pval2 < 0.1, ".", ""))))
+
+
+# Couleurs selon signe du coefficient
+cols1 <- ifelse(estimates1 < 0, "red", "red")
+cols2 <- ifelse(estimates2 < 0, "blue", "blue")
+
+# Ordre des variables (du bas vers le haut)
+y_pos1 <- length(estimates1):1
+y_pos2 <- length(estimates2):1
+
+
+#####  Plot comparaison modèle 1 et 2 ####
+par(mar=c(4,6,2,2))
+plot(estimates1, y_pos1,type = "n",
+     xlim = c(-0.5,0.5),
+     ylim = c(0.7,length(estimates1) +0.2 ),
+     xlab = "Estimate",
+     ylab = "",
+     axes = FALSE,
+     main = "Fréquence d'ignition",
+     cex.main = 1.1)
+
+# Ligne verticale à zéro
+abline(v = 0, lty = 2)
+abline(h = y_pos1 -0.2, lwd = 0.5, lty = 3, col="grey")
+
+#points des coefs
+points(estimates1, y_pos1 ,pch = 16, col = cols1,cex = 1.1)
+points(estimates2, y_pos2 - 0.4,pch = 17, col = cols2,cex = 1.1)
+
+# Barres d'erreur (IC)
+segments(ci1[,1], y_pos1, ci1[,2], y_pos1, col = cols1)
+segments(ci2[,1], y_pos2 - 0.4, ci2[,2], y_pos2 - 0.4, col = cols2)
+
+# Axe Y avec noms des variables
+axis(2, at = c(5.8,4.8,3.8,2.8,1.8,1,0.6), labels = c("Gmin","BD","TD","SLA","Nb_Rami","LDMC","LMC_t24"), las = 1,cex.axis = 0.9)
+
+# Axe X
+axis(1,cex.axis = 0.9)
+
+# Valeurs des coefficients + étoiles
+text(estimates1, y_pos1 + 0.16,
+     labels = paste0(round(estimates1, 2), stars1),
+     col = cols1, font = 2, cex =  0.9)
+text(estimates2, y_pos2 -0.24,
+     labels = paste0(round(estimates2, 2), stars2),
+     col = cols2, font = 2, cex =  0.9)
+
+
+
+#####  Plot seulement modèle 1 ####
+plot(estimates1, y_pos1,type = "n",
+     xlim = c(-0.5,0.5),
+     ylim = c(0.7,length(estimates1) +0.2 ),
+     xlab = "Estimate",
+     ylab = "",
+     axes = FALSE,
+     main = "Fréquence d'ignition",
+     cex.main = 1.1)
+
+# Ligne verticale à zéro
+abline(v = 0, lty = 2)
+abline(h = y_pos1, lwd = 0.5, lty = 3, col="grey")
+
+#points des coefs
+points(estimates1, y_pos1 ,pch = 16, col = cols1,cex = 1.1)
+
+# Barres d'erreur (IC)
+segments(ci1[,1], y_pos1, ci1[,2], y_pos1, col = cols1)
+
+# Axe Y avec noms des variables
+axis(2, at = c(6,5,4,3,2,1), labels = c("Gmin","BD","TD","SLA","Nb_Rami","LDMC"), las = 1,cex.axis = 0.9)
+
+# Axe X
+axis(1,cex.axis = 0.9)
+
+# Valeurs des coefficients + étoiles
+text(estimates1, y_pos1 + 0.16,
+     labels = paste0(round(estimates1, 2), stars1),
+     col = cols1, font = 2, cex =  0.9)
+
+
+
+
+
+
+
+
+#######################################################
+###### MT #########
+#######################################################
+
+#modèles
+mphy_MT1 <- pgls(MT ~ Gmin_cr+BD_mean_cr+TD_cr+SLA_cr+Nb_rami_cr+LDMC_cr ,
+                 data   = comp_dataMT,
+                 lambda = "ML")
+
+summary(mphy_MT1)
+
+mphy_MT2 <- pgls(MT ~ Gmin_cr+BD_mean_cr+TD_cr+SLA_cr+Nb_rami_cr+LMC_t24 ,
+                 data   = comp_dataMT,
+                 lambda = "ML")
+
+summary(mphy_MT2)
+
+# Vérifier la normalité des résidus
+shapiro.test(residuals(mphy_MT1))
+hist(residuals(mphy_MT1))
+qqnorm(residuals(mphy_MT1))
+qqline(residuals(mphy_MT1))
+
+
+###################### graph coefs ###############
+
+# Extraire coefficients (sans l'intercept)
+par(mar = c(5,10,5,5))
+coefs1 <- summary(mphy_MT1)$coefficients[-1, ]
+coefs2 <- summary(mphy_MT2)$coefficients[-1, ]
+
+# Variables utiles
+estimates1 <- coefs1[, "Estimate"]
+stderr1 <- coefs1[, "Std. Error"]
+pval1 <- coefs1[, "Pr(>|t|)"]
+labels1 <- rownames(coefs1)
+
+estimates2 <- coefs2[, "Estimate"]
+stderr2 <- coefs2[, "Std. Error"]
+pval2 <- coefs2[, "Pr(>|t|)"]
+labels2 <- rownames(coefs2)
+
+# Calcul des intervalles de confiance plus ou moins SE
+ci1 <- cbind(estimates1 - stderr1, estimates1 + stderr1)
+ci2 <- cbind(estimates2 - stderr2, estimates2 + stderr2)
+
+# Étoiles de significativité
+stars1 <- ifelse(pval1 < 0.001, "***",
+                 ifelse(pval1 < 0.01, "**",
+                        ifelse(pval1 < 0.05, "*",
+                               ifelse(pval1 < 0.1, ".", ""))))
+
+stars2 <- ifelse(pval2 < 0.001, "***",
+                 ifelse(pval2 < 0.01, "**",
+                        ifelse(pval2 < 0.05, "*",
+                               ifelse(pval2 < 0.1, ".", ""))))
+
+
+# Couleurs selon signe du coefficient
+cols1 <- ifelse(estimates1 < 0, "red", "red")
+cols2 <- ifelse(estimates2 < 0, "blue", "blue")
+
+# Ordre des variables (du bas vers le haut)
+y_pos1 <- length(estimates1):1
+y_pos2 <- length(estimates2):1
+
+# Plot de base
+par(mar=c(4,6,2,2))
+plot(estimates1, y_pos1,type = "n",
+     xlim = c(-150,150),
+     ylim = c(0.7,length(estimates1) +0.2 ),
+     xlab = "Estimate",
+     ylab = "", 
+     axes = FALSE,
+     main = "Température maximum",
+     cex.main = 1.1)
+
+
+
+# Ligne verticale à zéro
+abline(v = 0, lty = 2)
+abline(h = y_pos1 -0.2, lwd = 0.5, lty = 3, col="grey")
+
+#points des coefs
+points(estimates1, y_pos1 ,pch = 16, col = cols1,cex = 1.1)
+points(estimates2, y_pos2 - 0.4,pch = 17, col = cols2,cex = 1.1)
+
+# Barres d'erreur (IC)
+segments(ci1[,1], y_pos1, ci1[,2], y_pos1, col = cols1)
+segments(ci2[,1], y_pos2 - 0.4, ci2[,2], y_pos2 - 0.4, col = cols2)
+
+# Axe Y avec noms des variables
+axis(2, at = c(5.8,4.8,3.8,2.8,1.8,1,0.6), labels = c("Gmin","BD","TD","SLA","Nb_Rami","LDMC","LMC_t24"), las = 1,cex.axis = 0.9)
+
+# Axe X
+axis(1,cex.axis = 0.9)
+
+# Valeurs des coefficients + étoiles
+text(estimates1, y_pos1 + 0.16,
+     labels = paste0(round(estimates1, 2), stars1),
+     col = cols1, font = 2, cex =  0.9)
+text(estimates2, y_pos2 -0.24,
+     labels = paste0(round(estimates2, 2), stars2),
+     col = cols2, font = 2, cex =  0.9)
+
+
+
+
+
+#####  Plot seulement modèle 1 ####
+plot(estimates1, y_pos1,type = "n",
+     xlim = c(-150,150),
+     ylim = c(0.7,length(estimates1) +0.2 ),
+     xlab = "Estimate",
+     ylab = "", 
+     axes = FALSE,
+     main = "Température maximum",
+     cex.main = 1.1)
+
+# Ligne verticale à zéro
+abline(v = 0, lty = 2)
+abline(h = y_pos1, lwd = 0.5, lty = 3, col="grey")
+
+#points des coefs
+points(estimates1, y_pos1 ,pch = 16, col = cols1,cex = 1.1)
+
+# Barres d'erreur (IC)
+segments(ci1[,1], y_pos1, ci1[,2], y_pos1, col = cols1)
+
+# Axe Y avec noms des variables
+axis(2, at = c(6,5,4,3,2,1), labels = c("Gmin","BD","TD","SLA","Nb_Rami","LDMC"), las = 1,cex.axis = 0.9)
+
+# Axe X
+axis(1,cex.axis = 0.9)
+
+# Valeurs des coefficients + étoiles
+text(estimates1, y_pos1 + 0.16,
+     labels = paste0(round(estimates1, 2), stars1),
+     col = cols1, font = 2, cex =  0.9)
+
+
+
+
+
+
+
+
+
+
+##################################
+###### BB #########
+##################################
+
+#modèles
+
+
+#modèles
+mphy_BB1 <- pgls(BB_prop ~ Gmin_cr+BD_mean_cr+TD_cr+SLA_cr+Nb_rami_cr+LDMC_cr ,
+                 data   = comp_data3,
+                 lambda = "ML")
+
+summary(mphy_BB1)
+
+mphy_BB2 <- pgls(BB_prop ~ Gmin_cr+BD_mean_cr+TD_cr+SLA_cr+Nb_rami_cr+LMC_t24 ,
+                 data   = comp_data3,
+                 lambda = "ML")
+
+summary(mphy_BB2)
+
+# Vérifier la normalité des résidus
+shapiro.test(residuals(mphy_BB1))
+hist(residuals(mphy_BB1))
+qqnorm(residuals(mphy_BB1))
+qqline(residuals(mphy_BB1))
+
+
+###################### graph coefs ###############
+
+# Extraire coefficients (sans l'intercept)
+par(mar = c(5,10,5,5))
+coefs1 <- summary(mphy_BB1)$coefficients[-1, ]
+coefs2 <- summary(mphy_BB2)$coefficients[-1, ]
+
+# Variables utiles
+estimates1 <- coefs1[, "Estimate"]
+stderr1 <- coefs1[, "Std. Error"]
+pval1 <- coefs1[, "Pr(>|t|)"]
+labels1 <- rownames(coefs1)
+
+estimates2 <- coefs2[, "Estimate"]
+stderr2 <- coefs2[, "Std. Error"]
+pval2 <- coefs2[, "Pr(>|t|)"]
+labels2 <- rownames(coefs2)
+
+# Calcul des intervalles de confiance plus ou moins SE
+ci1 <- cbind(estimates1 - stderr1, estimates1 + stderr1)
+ci2 <- cbind(estimates2 - stderr2, estimates2 + stderr2)
+
+# Étoiles de significativité
+stars1 <- ifelse(pval1 < 0.001, "***",
+                 ifelse(pval1 < 0.01, "**",
+                        ifelse(pval1 < 0.05, "*",
+                               ifelse(pval1 < 0.1, ".", ""))))
+
+stars2 <- ifelse(pval2 < 0.001, "***",
+                 ifelse(pval2 < 0.01, "**",
+                        ifelse(pval2 < 0.05, "*",
+                               ifelse(pval2 < 0.1, ".", ""))))
+
+
+# Couleurs selon signe du coefficient
+cols1 <- ifelse(estimates1 < 0, "red", "red")
+cols2 <- ifelse(estimates2 < 0, "blue", "blue")
+
+# Ordre des variables (du bas vers le haut)
+y_pos1 <- length(estimates1):1
+y_pos2 <- length(estimates2):1
+
+# Plot de base
+par(mar=c(4,6,2,2))
+plot(estimates1, y_pos1,type = "n",
+     xlim = c(-0.3,0.3),
+     ylim = c(0.7,length(estimates1) +0.2 ),
+     xlab = "Estimate",
+     ylab = "",
+     axes = FALSE,
+     main = "Biomasse brulée",
+     cex.main = 1.1)
+
+
+
+# Ligne verticale à zéro
+abline(v = 0, lty = 2)
+abline(h = y_pos1 -0.2, lwd = 0.5, lty = 3, col="grey")
+
+#points des coefs
+points(estimates1, y_pos1 ,pch = 16, col = cols1,cex = 1.1)
+points(estimates2, y_pos2 - 0.4,pch = 17, col = cols2,cex = 1.1)
+
+# Barres d'erreur (IC)
+segments(ci1[,1], y_pos1, ci1[,2], y_pos1, col = cols1)
+segments(ci2[,1], y_pos2 - 0.4, ci2[,2], y_pos2 - 0.4, col = cols2)
+
+# Axe Y avec noms des variables
+axis(2, at = c(5.8,4.8,3.8,2.8,1.8,1,0.6), labels = c("Gmin","BD","TD","SLA","Nb_Rami","LDMC","LMC_t24"), las = 1,cex.axis = 0.9)
+
+# Axe X
+axis(1,cex.axis = 0.9)
+
+# Valeurs des coefficients + étoiles
+text(estimates1, y_pos1 + 0.16,
+     labels = paste0(round(estimates1, 2), stars1),
+     col = cols1, font = 2, cex =  0.9)
+text(estimates2, y_pos2 -0.24,
+     labels = paste0(round(estimates2, 2), stars2),
+     col = cols2, font = 2, cex =  0.9)
+
+
+
+
+
+#####  Plot seulement modèle 1 ####
+plot(estimates1, y_pos1,type = "n",
+     xlim = c(-0.3,0.3),
+     ylim = c(0.7,length(estimates1) +0.2 ),
+     xlab = "Estimate",
+     ylab = "",
+     axes = FALSE,
+     main = "Biomasse brulée",
+     cex.main = 1.1)
+
+
+# Ligne verticale à zéro
+abline(v = 0, lty = 2)
+abline(h = y_pos1, lwd = 0.5, lty = 3, col="grey")
+
+#points des coefs
+points(estimates1, y_pos1 ,pch = 16, col = cols1,cex = 1.1)
+
+# Barres d'erreur (IC)
+segments(ci1[,1], y_pos1, ci1[,2], y_pos1, col = cols1)
+
+# Axe Y avec noms des variables
+axis(2, at = c(6,5,4,3,2,1), labels = c("Gmin","BD","TD","SLA","Nb_Rami","LDMC"), las = 1,cex.axis = 0.9)
+
+# Axe X
+axis(1,cex.axis = 0.9)
+
+# Valeurs des coefficients + étoiles
+text(estimates1, y_pos1 + 0.16,
+     labels = paste0(round(estimates1, 2), stars1),
+     col = cols1, font = 2, cex =  0.9)
+
+
+
+
+
+
+
+
+#######################################
+###### BT #########
+######################################
+
+#modèles
+mphy_BT1 <- pgls(BT ~ Gmin_cr+BD_mean_cr+TD_cr+SLA_cr+Nb_rami_cr+LDMC_cr ,
+                 data   = comp_data3,
+                 lambda = "ML")
+
+summary(mphy_BT1)
+
+mphy_BT2 <- pgls(BT ~ Gmin_cr+BD_mean_cr+TD_cr+SLA_cr+Nb_rami_cr+LMC_t24 ,
+                 data   = comp_data3,
+                 lambda = "ML")
+
+summary(mphy_BT2)
+
+# Vérifier la normalité des résidus
+shapiro.test(residuals(mphy_BT1))
+hist(residuals(mphy_BT1))
+qqnorm(residuals(mphy_BT1))
+qqline(residuals(mphy_BT1))
+
+
+###################### graph coefs ###############
+
+# Extraire coefficients (sans l'intercept)
+par(mar = c(5,10,5,5))
+coefs1 <- summary(m_BT1)$coefficients[-1, ]
+coefs2 <- summary(m_BT3)$coefficients[-1, ]
+
+# Variables utiles
+estimates1 <- coefs1[, "Estimate"]
+stderr1 <- coefs1[, "Std. Error"]
+pval1 <- coefs1[, "Pr(>|z|)"]
+labels1 <- rownames(coefs1)
+
+estimates2 <- coefs2[, "Estimate"]
+stderr2 <- coefs2[, "Std. Error"]
+pval2 <- coefs2[, "Pr(>|z|)"]
+labels2 <- rownames(coefs2)
+
+# Calcul des intervalles de confiance plus ou moins SE
+ci1 <- cbind(estimates1 - stderr1, estimates1 + stderr1)
+ci2 <- cbind(estimates2 - stderr2, estimates2 + stderr2)
+
+# Étoiles de significativité
+stars1 <- ifelse(pval1 < 0.001, "***",
+                 ifelse(pval1 < 0.01, "**",
+                        ifelse(pval1 < 0.05, "*",
+                               ifelse(pval1 < 0.1, ".", ""))))
+
+stars2 <- ifelse(pval2 < 0.001, "***",
+                 ifelse(pval2 < 0.01, "**",
+                        ifelse(pval2 < 0.05, "*",
+                               ifelse(pval2 < 0.1, ".", ""))))
+
+
+# Couleurs selon signe du coefficient
+cols1 <- ifelse(estimates1 < 0, "red", "red")
+cols2 <- ifelse(estimates2 < 0, "blue", "blue")
+
+# Ordre des variables (du bas vers le haut)
+y_pos1 <- length(estimates1):1
+y_pos2 <- length(estimates2):1
+
+# Plot de base
+par(mar=c(4,6,2,2))
+plot(estimates1, y_pos1,type = "n",
+     xlim = c(-0.5,0.5),
+     ylim = c(0.7,length(estimates1) +0.2 ),
+     xlab = "Estimate",
+     ylab = "",
+     axes = FALSE,
+     main = "Temps de combustion",
+     cex.main = 1.1)
+
+
+
+# Ligne verticale à zéro
+abline(v = 0, lty = 2)
+abline(h = y_pos1 -0.2, lwd = 0.5, lty = 3, col="grey")
+
+#points des coefs
+points(estimates1, y_pos1 ,pch = 16, col = cols1,cex = 1.1)
+points(estimates2, y_pos2 - 0.4,pch = 17, col = cols2,cex = 1.1)
+
+# Barres d'erreur (IC)
+segments(ci1[,1], y_pos1, ci1[,2], y_pos1, col = cols1)
+segments(ci2[,1], y_pos2 - 0.4, ci2[,2], y_pos2 - 0.4, col = cols2)
+
+# Axe Y avec noms des variables
+axis(2, at = c(5.8,4.8,3.8,2.8,1.8,1,0.6), labels = c("Gmin","BD","TD","SLA","Nb_Rami","LDMC","LMC_t24"), las = 1,cex.axis = 0.9)
+
+# Axe X
+axis(1,cex.axis = 0.9)
+
+# Valeurs des coefficients + étoiles
+text(estimates1, y_pos1 + 0.16,
+     labels = paste0(round(estimates1, 2), stars1),
+     col = cols1, font = 2, cex =  0.9)
+text(estimates2, y_pos2 -0.24,
+     labels = paste0(round(estimates2, 2), stars2),
+     col = cols2, font = 2, cex =  0.9)
+
+
+
+
+
+#####  Plot seulement modèle 1 ####
+plot(estimates1, y_pos1,type = "n",
+     xlim = c(-0.5,0.5),
+     ylim = c(0.7,length(estimates1) +0.2 ),
+     xlab = "Estimate",
+     ylab = "",
+     axes = FALSE,
+     main = "Temps de combustion",
+     cex.main = 1.1)
+
+# Ligne verticale à zéro
+abline(v = 0, lty = 2)
+abline(h = y_pos1, lwd = 0.5, lty = 3, col="grey")
+
+#points des coefs
+points(estimates1, y_pos1 ,pch = 16, col = cols1,cex = 1.1)
+
+# Barres d'erreur (IC)
+segments(ci1[,1], y_pos1, ci1[,2], y_pos1, col = cols1)
+
+# Axe Y avec noms des variables
+axis(2, at = c(6,5,4,3,2,1), labels = c("Gmin","BD","TD","SLA","Nb_Rami","LDMC"), las = 1,cex.axis = 0.9)
+
+# Axe X
+axis(1,cex.axis = 0.9)
+
+# Valeurs des coefficients + étoiles
+text(estimates1, y_pos1 + 0.16,
+     labels = paste0(round(estimates1, 2), stars1),
+     col = cols1, font = 2, cex =  0.9)
+
+
+
+
+
+
+
+###################
+###### DI ######################################################################
+###################
+
+#modèles
+mphy_DI1 <- pgls(DI_test ~ Gmin_cr+BD_mean_cr+TD_cr+SLA_cr+Nb_rami_cr+LDMC_cr ,
+                 data   = comp_data3,
+                 lambda = "ML")
+
+summary(mphy_DI1)
+
+mphy_DI2 <- pgls(DI_test ~ Gmin_cr+BD_mean_cr+TD_cr+SLA_cr+Nb_rami_cr+LMC_t24 ,
+                 data   = comp_data3,
+                 lambda = "ML")
+
+summary(mphy_DI2)
+
+# Vérifier la normalité des résidus
+shapiro.test(residuals(mphy_DI1))
+hist(residuals(mphy_DI1))
+qqnorm(residuals(mphy_DI1))
+qqline(residuals(mphy_DI1))
+
+
+
+AIC(m_DI1,m_DI3)
+
+###################### graph coefs ###############
+
+# Extraire coefficients (sans l'intercept)
+par(mar = c(5,10,5,5))
+coefs1 <- summary(m_DI1)$coefficients[-1, ]
+coefs2 <- summary(m_DI3)$coefficients[-1, ]
+
+# Variables utiles
+estimates1 <- coefs1[, "Estimate"]
+stderr1 <- coefs1[, "Std. Error"]
+pval1 <- coefs1[, "Pr(>|z|)"]
+labels1 <- rownames(coefs1)
+
+estimates2 <- coefs2[, "Estimate"]
+stderr2 <- coefs2[, "Std. Error"]
+pval2 <- coefs2[, "Pr(>|z|)"]
+labels2 <- rownames(coefs2)
+
+# Calcul des intervalles de confiance plus ou moins SE
+ci1 <- cbind(estimates1 - stderr1, estimates1 + stderr1)
+ci2 <- cbind(estimates2 - stderr2, estimates2 + stderr2)
+
+# Étoiles de significativité
+stars1 <- ifelse(pval1 < 0.001, "***",
+                 ifelse(pval1 < 0.01, "**",
+                        ifelse(pval1 < 0.05, "*",
+                               ifelse(pval1 < 0.1, ".", ""))))
+
+stars2 <- ifelse(pval2 < 0.001, "***",
+                 ifelse(pval2 < 0.01, "**",
+                        ifelse(pval2 < 0.05, "*",
+                               ifelse(pval2 < 0.1, ".", ""))))
+
+
+# Couleurs selon signe du coefficient
+cols1 <- ifelse(estimates1 < 0, "red", "red")
+cols2 <- ifelse(estimates2 < 0, "blue", "blue")
+
+# Ordre des variables (du bas vers le haut)
+y_pos1 <- length(estimates1):1
+y_pos2 <- length(estimates2):1
+
+# Plot de base
+par(mar=c(4,6,2,2))
+plot(estimates1, y_pos1,type = "n",
+     xlim = c(-0.3,0.3),
+     ylim = c(0.7,length(estimates1) +0.2 ),
+     xlab = "Estimate",
+     ylab = "",
+     axes = FALSE,
+     main = "Délai d'ignition",
+     cex.main = 1.1)
+
+
+
+# Ligne verticale à zéro
+abline(v = 0, lty = 2)
+abline(h = y_pos1 -0.2, lwd = 0.5, lty = 3, col="grey")
+
+#points des coefs
+points(estimates1, y_pos1 ,pch = 16, col = cols1,cex = 1.1)
+points(estimates2, y_pos2 - 0.4,pch = 17, col = cols2,cex = 1.1)
+
+# Barres d'erreur (IC)
+segments(ci1[,1], y_pos1, ci1[,2], y_pos1, col = cols1)
+segments(ci2[,1], y_pos2 - 0.4, ci2[,2], y_pos2 - 0.4, col = cols2)
+
+# Axe Y avec noms des variables
+axis(2, at = c(5.8,4.8,3.8,2.8,1.8,1,0.6), labels = c("Gmin","BD","TD","SLA","Nb_Rami","LDMC","LMC_t24"), las = 1,cex.axis = 0.9)
+
+# Axe X
+axis(1,cex.axis = 0.9)
+
+# Valeurs des coefficients + étoiles
+text(estimates1, y_pos1 + 0.16,
+     labels = paste0(round(estimates1, 2), stars1),
+     col = cols1, font = 2, cex =  0.9)
+text(estimates2, y_pos2 -0.24,
+     labels = paste0(round(estimates2, 2), stars2),
+     col = cols2, font = 2, cex =  0.9)
+
+
+
+
+
+
+#####  Plot seulement modèle 1 ####
+plot(estimates1, y_pos1,type = "n",
+     xlim = c(-0.3,0.3),
+     ylim = c(0.7,length(estimates1) +0.2 ),
+     xlab = "Estimate",
+     ylab = "",
+     axes = FALSE,
+     main = "Délai d'ignition",
+     cex.main = 1.1)
+
+# Ligne verticale à zéro
+abline(v = 0, lty = 2)
+abline(h = y_pos1, lwd = 0.5, lty = 3, col="grey")
+
+#points des coefs
+points(estimates1, y_pos1 ,pch = 16, col = cols1,cex = 1.1)
+
+# Barres d'erreur (IC)
+segments(ci1[,1], y_pos1, ci1[,2], y_pos1, col = cols1)
+
+# Axe Y avec noms des variables
+axis(2, at = c(6,5,4,3,2,1), labels = c("Gmin","BD","TD","SLA","Nb_Rami","LDMC"), las = 1,cex.axis = 0.9)
+
+# Axe X
+axis(1,cex.axis = 0.9)
+
+# Valeurs des coefficients + étoiles
+text(estimates1, y_pos1 + 0.16,
+     labels = paste0(round(estimates1, 2), stars1),
+     col = cols1, font = 2, cex =  0.9)
+
+
+
+
+
+
+
+
+
+
+#####################
+###### Score ########
+#####################
+
+#modèles
+m_score1 <- lmer(score ~ Gmin_cr+BD_mean_cr+TD_cr+SLA_cr+Nb_rami_cr+LDMC_cr + (1 | Nom_scientifique), data = BDD_moy_ech)
+summary(m_score1)
+r.squaredGLMM(m_score1)
+
+m_score3 <- lmer(score ~ Gmin_cr+BD_mean_cr+TD_cr+SLA_cr+Nb_rami_cr+LMC_t24_cr + (1 | Nom_scientifique), data = BDD_moy_ech)
+summary(m_score3)
+
+
+AIC(m_score1,m_score3)
+
+
+
+###################### graph coefs ###############
+
+# Extraire coefficients (sans l'intercept)
+par(mar = c(5,10,5,5))
+coefs1 <- summary(m_score1)$coefficients[-1, ]
+coefs2 <- summary(m_score3)$coefficients[-1, ]
+
+# Variables utiles
+estimates1 <- coefs1[, "Estimate"]
+stderr1 <- coefs1[, "Std. Error"]
+pval1 <- coefs1[, "Pr(>|t|)"]
+labels1 <- rownames(coefs1)
+
+estimates2 <- coefs2[, "Estimate"]
+stderr2 <- coefs2[, "Std. Error"]
+pval2 <- coefs2[, "Pr(>|t|)"]
+labels2 <- rownames(coefs2)
+
+# Calcul des intervalles de confiance plus ou moins SE
+ci1 <- cbind(estimates1 - stderr1, estimates1 + stderr1)
+ci2 <- cbind(estimates2 - stderr2, estimates2 + stderr2)
+
+# Étoiles de significativité
+stars1 <- ifelse(pval1 < 0.001, "***",
+                 ifelse(pval1 < 0.01, "**",
+                        ifelse(pval1 < 0.05, "*",
+                               ifelse(pval1 < 0.1, ".", ""))))
+
+stars2 <- ifelse(pval2 < 0.001, "***",
+                 ifelse(pval2 < 0.01, "**",
+                        ifelse(pval2 < 0.05, "*",
+                               ifelse(pval2 < 0.1, ".", ""))))
+
+
+# Couleurs selon signe du coefficient
+cols1 <- ifelse(estimates1 < 0, "red", "red")
+cols2 <- ifelse(estimates2 < 0, "blue", "blue")
+
+# Ordre des variables (du bas vers le haut)
+y_pos1 <- length(estimates1):1
+y_pos2 <- length(estimates2):1
+
+# Plot de base
+par(mar=c(4,6,2,2))
+plot(estimates1, y_pos1,type = "n",
+     xlim = c(-2,2),
+     ylim = c(0.7,length(estimates1) +0.2 ),
+     xlab = "Estimate",
+     ylab = "",
+     axes = FALSE,
+     main = "Score d'inflammabilité",
+     cex.main = 1.1)
+
+
+
+# Ligne verticale à zéro
+abline(v = 0, lty = 2)
+abline(h = y_pos1 -0.2, lwd = 0.5, lty = 3, col="grey")
+
+#points des coefs
+points(estimates1, y_pos1 ,pch = 16, col = cols1,cex = 1.1)
+points(estimates2, y_pos2 - 0.4,pch = 17, col = cols2,cex = 1.1)
+
+# Barres d'erreur (IC)
+segments(ci1[,1], y_pos1, ci1[,2], y_pos1, col = cols1)
+segments(ci2[,1], y_pos2 - 0.4, ci2[,2], y_pos2 - 0.4, col = cols2)
+
+# Axe Y avec noms des variables
+axis(2, at = c(5.8,4.8,3.8,2.8,1.8,1,0.6), labels = c("Gmin","BD","TD","SLA","Nb_Rami","LDMC","LMC_t24"), las = 1,cex.axis = 0.9)
+
+# Axe X
+axis(1,cex.axis = 0.9)
+
+# Valeurs des coefficients + étoiles
+text(estimates1, y_pos1 + 0.16,
+     labels = paste0(round(estimates1, 2), stars1),
+     col = cols1, font = 2, cex =  0.9)
+text(estimates2, y_pos2 -0.24,
+     labels = paste0(round(estimates2, 2), stars2),
+     col = cols2, font = 2, cex =  0.9)
+
+
+
+
+#####  Plot seulement modèle 1 ####
+plot(estimates1, y_pos1,type = "n",
+     xlim = c(-2,2),
+     ylim = c(0.7,length(estimates1) +0.2 ),
+     xlab = "Estimate",
+     ylab = "",
+     axes = FALSE,
+     main = "Score d'inflammabilité",
+     cex.main = 1.1)
+
+# Ligne verticale à zéro
+abline(v = 0, lty = 2)
+abline(h = y_pos1, lwd = 0.5, lty = 3, col="grey")
+
+#points des coefs
+points(estimates1, y_pos1 ,pch = 16, col = cols1,cex = 1.1)
+
+# Barres d'erreur (IC)
+segments(ci1[,1], y_pos1, ci1[,2], y_pos1, col = cols1)
+
+# Axe Y avec noms des variables
+axis(2, at = c(6,5,4,3,2,1), labels = c("Gmin","BD","TD","SLA","Nb_Rami","LDMC"), las = 1,cex.axis = 0.9)
+
+# Axe X
+axis(1,cex.axis = 0.9)
+
+# Valeurs des coefficients + étoiles
+text(estimates1, y_pos1 + 0.16,
+     labels = paste0(round(estimates1, 2), stars1),
+     col = cols1, font = 2, cex =  0.9)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -711,14 +1714,9 @@ BDD_moy_esp$Nb_rami_cr<-as.numeric(scale(BDD_moy_esp$Nb_rami))
 BDD_moy_esp$Gmin_cr<-as.numeric(scale(BDD_moy_esp$Gmin))
 
 
-
-
-
-
+############################################################################
 ############### MODELES classiques sans pgls #############################
 ##########################################################################
-
-
 
 ###### FI ########
 
@@ -2254,6 +3252,17 @@ lines((foo*ecart + moy), pred1$fit, col = "black", lwd = 2 )
 # Intervalle de confiance pour SD moyen
 lines((foo*ecart + moy), pred1$fit + 1.96 * pred1$se.fit, col = "blue", lty = 3)
 lines((foo*ecart + moy), pred1$fit - 1.96 * pred1$se.fit, col = "blue", lty = 3)
+
+
+
+
+
+
+
+
+
+
+
 
 
 
