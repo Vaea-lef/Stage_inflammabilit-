@@ -143,21 +143,19 @@ colonnes_infla <- BDD_moy_ech[, c("score_DI", "BB_test", "BT", "MT")]
 head(colonnes_infla)
 
 #sélection de variabes supplémentaires (traits)
-colonnes_traits <- BDD_moy_ech [, c("Nb_rami","Gmin","TD","TDMC","LDMC","SLA","BD_mean")]
+colonnes_traits <- BDD_moy_ech [, c("Nb_rami","Gmin","TD","LDMC","SLA","BD_mean")]
 head(colonnes_traits)
 
 # Centrage-réduction des données
-colonnes_infla_cr <- scale(colonnes_infla)
+colonnes_clean <- scale(colonnes_infla)
 colonnes_traits_cr <- scale(colonnes_traits)
-
-# Nettoyage des données
-colonnes_clean <- na.omit(colonnes_infla_cr)
 
 # ACP centrée et réduite
 res.pca <- prcomp(colonnes_clean, scale. = FALSE)
 summary(res.pca)
 res.pca
 
+#moyenne et sd des coordonées par espèces
 M_S1<-aggregate(res.pca$x[,1],by=list(BDD_moy_ech$Nom_scientifique),mean)
 SD_S1<-aggregate(res.pca$x[,1],by=list(BDD_moy_ech$Nom_scientifique),sd)
 
@@ -176,69 +174,161 @@ colonnes_taits_coord <- cor(colonnes_traits_cr, ind_coords)
 BDD_moy_ech$score <- ind_coords[,1]
 
 
-# Graphique de base
-par(mar = c(5,5,5,5))  # marges
 
+#####################
 #### CAH (Classification Ascendante Hiérarchique)
+#####################
 
-# Matrice des coordonnées moyennes par espèce
-data_clust <- cbind(M_S1$x, M_S2$x)
-rownames(data_clust) <- M_S1$Group.1
-colnames(data_clust) <- c("Axe1", "Axe2")
+# Tableau des coordonnées moyennes par espèce 
+coords_esp <- data.frame(
+  PC1 = M_S1$x,
+  PC2 = M_S2$x,
+  row.names = M_S1$Group.1
+)
 
-# CAH sur les distances euclidiennes
-HC <- hclust(d = dist(data_clust), method = "ward.D2")
-
-par(mar = c(5,5,5,5))
-plot(HC, hang = -1, labels = FALSE, axes = "n",
-     main = "Dendrogramme CAH")
-axis(2, cex.axis = 0.6)
-
-# Découpage en k groupes (choix arbitraire, à ajuster si besoin)
-k_cah <- 5
-GR <- cutree(HC, k = k_cah)
-GR
-
-#### Choix du k pour k-means (aide à la décision)
-
+# Choix du nombre de groupes
 library(factoextra)
 
-# Méthode du coude
-fviz_nbclust(data_clust, kmeans, method = "wss") +
+fviz_nbclust(coords_esp, kmeans, method = "wss", k.max = 8) +
   labs(title = "Méthode du coude")
 
-# Méthode de la silhouette
-fviz_nbclust(data_clust, kmeans, method = "silhouette") +
-  labs(title = "Méthode de la silhouette")
-
-# ===========================================================
-# 6. K-means avec k choisi manuellement
-# ===========================================================
-
-k_opt <- 4   # <-- choisis ici la valeur de k que tu veux tester
-
-res.kmeans <- kmeans(data_clust, centers = k_opt, iter.max = 50, nstart = 25,
-                     algorithm = "Hartigan-Wong")
-
-res.kmeans$cluster      # affectation de chaque espèce
-res.kmeans$centers      # centres des clusters
-res.kmeans$betweenss / res.kmeans$totss * 100  # % de variance expliquée
+fviz_nbclust(coords_esp, kmeans, method = "silhouette", k.max = 8) +
+  labs(title = "Indice de silhouette")
 
 
+# K-means
+set.seed(123) #prends toujours le même point de départ aléatoire, pour que les résultats soient reproductibles
 
+km_esp <- kmeans(coords_esp, centers = 5, nstart = 25)
+GR <- km_esp$cluster
 
+correspondance <- c(`1` = 2, `2` = 5, `3` = 3, `4` = 1, `5` = 4)
+GR_new <- correspondance[as.character(GR)]
+GR_new <- as.integer(GR_new)
 
-COL<-character()
-COL[GR==5]<-"#FF2A00"
-COL[GR==4]<-"#CFF200"
-COL[GR==3]<-"#FFE100"
-COL[GR==2]<-"#6DC700"
-COL[GR==1]<-"#FF8900"
+# Couleurs avec GR_new
+COL <- character(length(GR_new))
+COL[GR_new == 5] <- "#FF2A00"
+COL[GR_new == 2] <- "#CFF200"
+COL[GR_new == 3] <- "#FFE100"
+COL[GR_new == 1] <- "#6DC700"
+COL[GR_new == 4] <- "#FF8900"
 
 
 col=rgb()
 
-# Tracer les individus
+
+
+# GRAPH ACP + groupes
+plot(ind_coords[,1], ind_coords[,2],
+     xlim = range(ind_coords[,1]) * 1.2,
+     ylim = c(-2,4),
+     xlab = paste0("PC1 (", explained_var[1], "%)"),
+     ylab = paste0("PC2 (", explained_var[2], "%)"),
+     main = "ACP - Individus et variables d'inflammabilité",
+     pch = 21, bg = rgb(190/255,190/255,190/255,0.5),col=NA,cex=0.8)
+
+# Tracer les axes
+abline(h = 0, v = 0, lty = 2)
+
+# Barres d'erreur (SD)
+segments(x0=M_S1$x,x1=M_S1$x,y0=M_S2$x-SD_S2$x,y1=M_S2$x+SD_S2$x)
+segments(x0=M_S1$x-SD_S1$x,x1=M_S1$x+SD_S1$x,y0=M_S2$x,y1=M_S2$x)
+
+# Points espèces colorés par groupe
+points(M_S1$x,M_S2$x,pch=21,bg=COL,cex=1.5)
+
+# Légende
+legend("topright",
+       legend = paste("Groupe", 1:5),
+       pt.bg = c("#6DC700","#CFF200","#FFE100","#FF8900","#FF2A00"),
+       pch = 21, col = rgb(0,0,0,0.8),
+       bty = "n", pt.cex = 1.5)
+
+
+
+# Ajout dans BDD
+BDD_moy_esp$groupe <- GR_new
+BDD_moy_esp$groupe <- factor(BDD_moy_esp$groupe)
+write.csv2(BDD_moy_esp, "Data/Publi/BDD_moy_esp_groupe.csv")
+
+View(BDD_moy_esp)
+
+
+
+## BOSPLOTS
+par(mar = c(5,5,5,2)) 
+#INFLA
+# boxplot MT
+boxplot(MT ~ groupe, data = BDD_moy_esp,
+        main = "Distribution de MT par groupe",
+        xlab = "Groupe",
+        ylab = "MT (°C)",col=c("#6DC700","#CFF200","#FFE100","#FF8900","#FF2A00"))
+
+# boxplot BT
+boxplot(BT_test ~ groupe, data = BDD_moy_esp,
+        main = "Distribution de BT par groupe",
+        xlab = "Groupe",
+        ylab = "BT (s)",col=c("#6DC700","#CFF200","#FFE100","#FF8900","#FF2A00"))
+
+
+# boxplot BB
+boxplot(BB_test ~ groupe, data = BDD_moy_esp,
+        main = "Distribution de BB par groupe",
+        xlab = "Groupe",
+        ylab = "BB (%)",col=c("#6DC700","#CFF200","#FFE100","#FF8900","#FF2A00"))
+
+# boxplot DI
+boxplot(DI_test ~ groupe, data = BDD_moy_esp,
+        main = "Distribution de DI par groupe",
+        xlab = "Groupe",
+        ylab = "DI (s)",col=c("#6DC700","#CFF200","#FFE100","#FF8900","#FF2A00"))
+
+#TRAITS
+# boxplot Gmin
+boxplot(Gmin ~ groupe, data = BDD_moy_esp,
+        main = "Distribution de Gmin par groupe",
+        xlab = "Groupe",
+        ylab = "Gmin",col=c("#6DC700","#CFF200","#FFE100","#FF8900","#FF2A00"))
+
+# boxplot BD_mean
+boxplot(BD_mean ~ groupe, data = BDD_moy_esp,
+        main = "Distribution de BD par groupe",
+        xlab = "Groupe",
+        ylab = "BD",col=c("#6DC700","#CFF200","#FFE100","#FF8900","#FF2A00"))
+
+
+# boxplot SLA
+boxplot(SLA ~ groupe, data = BDD_moy_esp,
+        main = "Distribution de SLA par groupe",
+        xlab = "Groupe",
+        ylab = "SLA",col=c("#6DC700","#CFF200","#FFE100","#FF8900","#FF2A00"))
+
+# boxplot TD
+boxplot(TD ~ groupe, data = BDD_moy_esp,
+        main = "Distribution de TD par groupe",
+        xlab = "Groupe",
+        ylab = "TD",col=c("#6DC700","#CFF200","#FFE100","#FF8900","#FF2A00"))
+
+# boxplot LDMC
+boxplot(LDMC ~ groupe, data = BDD_moy_esp,
+        main = "Distribution de LDMC par groupe",
+        xlab = "Groupe",
+        ylab = "LDMC",col=c("#6DC700","#CFF200","#FFE100","#FF8900","#FF2A00"))
+
+# boxplot Nb_rami
+boxplot(Nb_rami ~ groupe, data = BDD_moy_esp,
+        main = "Distribution de Nb_rami par groupe",
+        xlab = "Groupe",
+        ylab = "Nb_rami",col=c("#6DC700","#CFF200","#FFE100","#FF8900","#FF2A00"))
+
+
+
+
+
+
+
+# ACP individus avec flèches infla et traits
 plot(ind_coords[,1], ind_coords[,2],
      xlim = range(ind_coords[,1]) * 1.2,
      ylim = c(-4,3.5),
@@ -264,7 +354,7 @@ text(var_coords[,1]*max(abs(ind_coords[,1])),
 arrows(0, 0,
        colonnes_taits_coord[,1]*max(abs(ind_coords[,1])),
        colonnes_taits_coord[,2]*max(abs(ind_coords[,2])),
-       length = 0.1, col = "#5490FF",lwd=0.5)
+       length = 0.1, col = "blue",lwd=0.5)
 
 text(colonnes_taits_coord[,1]*max(abs(ind_coords[,1])),
      colonnes_taits_coord[,2]*max(abs(ind_coords[,2])),
@@ -272,58 +362,7 @@ text(colonnes_taits_coord[,1]*max(abs(ind_coords[,1])),
      col = "blue", cex = 0.8)
 
 
-# Tracer les individus
-plot(ind_coords[,1], ind_coords[,2],
-     xlim = range(ind_coords[,1]) * 1.2,
-     ylim = c(-2,4),
-     xlab = paste0("PC1 (", explained_var[1], "%)"),
-     ylab = paste0("PC2 (", explained_var[2], "%)"),
-     main = "ACP - Individus et variables d'inflammabilité",
-     pch = 21, bg = rgb(190/255,190/255,190/255,0.5),col=NA,cex=0.8)
 
-# Tracer les axes
-abline(h = 0, v = 0, lty = 2)
-
-
-segments(x0=M_S1$x,x1=M_S1$x,y0=M_S2$x-SD_S2$x,y1=M_S2$x+SD_S2$x)
-segments(x0=M_S1$x-SD_S1$x,x1=M_S1$x+SD_S1$x,y0=M_S2$x,y1=M_S2$x)
-points(M_S1$x,M_S2$x,pch=21,bg=COL,cex=1.5)
-
-
-
-
-#ajout colonne groupe dans BDD
-BDD_moy_esp$groupe<-GR
-
-
-# Reclassement de la variable groupe 
-BDD_moy_esp$groupe <- factor(BDD_moy_esp$groupe, levels = c(2,4, 3, 1,5))
-write.csv2(BDD_moy_esp,"Data/BDD_moy_esp_groupe.csv")
-
-# boxplot MT
-boxplot(MT ~ groupe, data = BDD_moy_esp,
-        main = "Distribution de MT par groupe",
-        xlab = "Groupe",
-        ylab = "MT (°C)",col=c("#025E00","#6DC700","#CFF200","#FFE100","#FF8900","#FF2A00"))
-
-# boxplot BT
-boxplot(BT_test ~ groupe, data = BDD_moy_esp,
-        main = "Distribution de BT par groupe",
-        xlab = "Groupe",
-        ylab = "BT (s)",col=c("#025E00","#6DC700","#CFF200","#FFE100","#FF8900","#FF2A00"))
-
-
-# boxplot BB
-boxplot(BB_test ~ groupe, data = BDD_moy_esp,
-        main = "Distribution de BB par groupe",
-        xlab = "Groupe",
-        ylab = "BB (%)",col=c("#025E00","#6DC700","#CFF200","#FFE100","#FF8900","#FF2A00"))
-
-# boxplot DI
-boxplot(DI_test ~ groupe, data = BDD_moy_esp,
-        main = "Distribution de DI par groupe",
-        xlab = "Groupe",
-        ylab = "DI (s)",col=c("#025E00","#6DC700","#CFF200","#FFE100","#FF8900","#FF2A00"))
 
 
 
@@ -580,7 +619,7 @@ length(tree_final$tip.label)  # doit être 65
 #Résolution des polytomies
 #Élagage final à 65 espèces
 
-
+plot(tree_final,cex=0.6)
 
 #################SIGNAL PHYLO###################################
 library(phytools)
@@ -612,6 +651,14 @@ for(i in 1:length(variables_toutes)){
 }
 
 resultats_tous
+
+
+
+
+
+
+
+
 
 
 
