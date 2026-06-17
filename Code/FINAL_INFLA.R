@@ -51,6 +51,57 @@ names(BDD_esp_net3)[which(names(BDD_esp_net3) == "Nb_ramifications")] <- "Nb_ram
 
 
 
+################################################################################
+############# --------------------------------------------------- ##############
+########################### SELECTION TRAITS ###################################
+############# --------------------------------------------------- ##############
+################################################################################
+
+#################### ACP TRAITS (pour sélection)############################
+
+# Sélection des colonnes des traits fonctionnels
+colonnes_traits <- na.omit(BDD_esp[, setdiff(17:31, c(23, 27))])
+
+#strandardiser les données
+colonnes_traits_cr <- scale(log(colonnes_traits)+1)
+
+# Application de l'ACP
+res.pca <- PCA(colonnes_traits, scale.unit = TRUE, graph = FALSE)
+
+# Résumé des résultats
+summary(res.pca)
+
+# Graphique des contributions des variables aux composantes principales
+fviz_pca_var(res.pca, col.var = "contrib", gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"), repel = TRUE)
+
+# Graphique combiné des variables et des individus
+fviz_pca_biplot(res.pca, col.var = "contrib", gradient.cols =c("#00AFBB", "#E7B800", "#FC4E07"),repel = TRUE)
+
+# Afficher l'ébouli
+fviz_screeplot(res.pca, addlabels = TRUE, ylim = c(0, 50), main="Graphique de l'ébouli")
+
+
+############## matrice de corrélation (pour le choix des traits) ###############
+
+### des traits foncitonnels
+library (corrplot)
+mat_cor_trait<-cor(colonnes_traits,method="spearman")
+round(mat_cor_trait, 2)   ## afficher les valeurs
+corrplot(mat_cor_trait, method = "color", tl.cex = 0.8, tl.col = "black", number.cex = 0.7, addCoef.col = "black")
+
+library(caret)
+traits_non_corrélés <- colonnes_traits[, -findCorrelation(mat_cor_trait, cutoff = 0.68)]
+traits_non_corrélés
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -65,8 +116,6 @@ names(BDD_esp_net3)[which(names(BDD_esp_net3) == "Nb_ramifications")] <- "Nb_ram
 ################################################################################
 ############################ ECHELLE ESPECE ####################################
 ################################################################################
-
-
 
 ################## DISTRIBUTION DES DONNEES #####################
 #Infla
@@ -95,65 +144,7 @@ hist(BDD_esp$LMC_t24)
 hist(BDD_esp$LDMC)          
 hist(BDD_esp$Surface_F) 
 hist(BDD_esp$SLA)            
-hist(BDD_esp$LT)        
-
-
-
-
-
-#################### ACP TRAITS (pour sélection)############################
-
-# Sélection des colonnes des traits fonctionnels
-colonnes_traits <- na.omit(BDD_esp[, setdiff(17:31, c(23, 27))])
-
-#strandardiser les données
-colonnes_traits_cr <- scale(log(colonnes_traits)+1)
-
-# Application de l'ACP
-res.pca <- PCA(colonnes_traits, scale.unit = TRUE, graph = FALSE)
-
-# Résumé des résultats
-summary(res.pca)
-
-# Graphique des contributions des variables aux composantes principales
-fviz_pca_var(res.pca, col.var = "contrib", gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"), repel = TRUE)
-
-# Graphique combiné des variables et des individus
-fviz_pca_biplot(res.pca, col.var = "contrib", gradient.cols =c("#00AFBB", "#E7B800", "#FC4E07"),repel = TRUE)
-
-# Afficher l'ébouli
-fviz_screeplot(res.pca, addlabels = TRUE, ylim = c(0, 50), main="Graphique de l'ébouli")
-
-
-####################### matrice de corrélation (pour le choix des traits) ######################
-
-### des traits foncitonnels
-library (corrplot)
-mat_cor_trait<-cor(colonnes_traits,method="spearman")
-round(mat_cor_trait, 2)   ## afficher les valeurs
-corrplot(mat_cor_trait, method = "color", tl.cex = 0.8, tl.col = "black", number.cex = 0.7, addCoef.col = "black")
-
-library(caret)
-traits_non_corrélés <- colonnes_traits[, -findCorrelation(mat_cor_trait, cutoff = 0.68)]
-traits_non_corrélés
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-################################################################################
-############################ ECHELLE ESPECE ###############################
-################################################################################
+hist(BDD_esp$LT)  
 
 #standardisation des données 
 BDD_esp$SD_cr<-as.numeric(scale(BDD_esp$SD))

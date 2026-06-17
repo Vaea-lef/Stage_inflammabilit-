@@ -78,8 +78,17 @@ head(BDD_moy_esp)
 
 
 
+
+
+
+
+
+
+
+
+
 ############################################################################
-#################### ACP TRAITS (pour sélection des traits modèle)############################
+#################### ACP TRAITS (pour sélection des traits modèle)##########
 ############################################################################
 
 
@@ -102,7 +111,7 @@ fviz_pca_var(res.pca, col.var = "contrib", gradient.cols = c("#00AFBB", "#E7B800
 fviz_screeplot(res.pca, addlabels = TRUE, ylim = c(0, 50), main="Graphique de l'ébouli")
 
 
-####################### matrice de corrélation (pour le choix des traits) ######################
+############### matrice de corrélation (pour le choix des traits) ##############
 
 ### des traits foncitonnels
 library (corrplot)
@@ -133,10 +142,11 @@ traits_non_corrélés
 
 
 ################################################################################
-############################ ECHELLE ECHANTILLON ###############################
+############################  ACP CLASSEMENT  ##################################
+############################ ET PROFILS INFLA ##################################
 ################################################################################
 
-############################### ACP INFLA (avec projection des traits) ######################################
+################ ACP INFLA (avec projection des traits) ########################
 
 # Sélection des colonnes des composantes de l'inflammabilité
 colonnes_infla <- BDD_moy_ech[, c("score_DI", "BB_test", "BT", "MT")]
@@ -175,9 +185,9 @@ BDD_moy_ech$score <- ind_coords[,1]
 
 
 
-#####################
-#### CAH (Classification Ascendante Hiérarchique)
-#####################
+
+################ CAH (Classification Ascendante Hiérarchique) ##################
+
 
 # Tableau des coordonnées moyennes par espèce 
 coords_esp <- data.frame(
@@ -215,10 +225,6 @@ COL[GR_new == 1] <- "#6DC700"
 COL[GR_new == 4] <- "#FF8900"
 
 
-col=rgb()
-
-
-
 # GRAPH ACP + groupes
 plot(ind_coords[,1], ind_coords[,2],
      xlim = range(ind_coords[,1]) * 1.2,
@@ -246,7 +252,6 @@ legend("topright",
        bty = "n", pt.cex = 1.5)
 
 
-
 # Ajout dans BDD
 BDD_moy_esp$groupe <- GR_new
 BDD_moy_esp$groupe <- factor(BDD_moy_esp$groupe)
@@ -256,7 +261,8 @@ View(BDD_moy_esp)
 
 
 
-## BOSPLOTS
+########### BOXPLOTS ############
+
 par(mar = c(5,5,5,2)) 
 #INFLA
 # boxplot MT
@@ -328,7 +334,8 @@ boxplot(Nb_rami ~ groupe, data = BDD_moy_esp,
 
 
 
-# ACP individus avec flèches infla et traits
+################ ACP individus avec flèches infla et traits ################
+
 plot(ind_coords[,1], ind_coords[,2],
      xlim = range(ind_coords[,1]) * 1.2,
      ylim = c(-4,3.5),
@@ -367,10 +374,9 @@ text(colonnes_taits_coord[,1]*max(abs(ind_coords[,1])),
 
 
 
-
-
-
-
+################################################################################
+######################### SCORE ESPECES ########################################
+################################################################################
 
 #Calcul de la moyenne du score pour ajout dans BDD_moy_esp
 #création de table avec moyenne et sd pour chaque variable en fonction du nom de l'espèce
@@ -407,7 +413,6 @@ write.csv2(BDD_moy_score,"Data/Publi/BDD_moy_score.csv")
 
 
 View(BDD_moy_score)
-
 
 
 
@@ -488,9 +493,13 @@ points(BDD_moy_score$score[o], 1:length(BDD_moy_score$Nom_scientifique),
 
 
 
-###########################################
-############# ARBRE PHYLO #################
-###########################################
+
+
+
+
+################################################################################
+############################## ARBRE PHYLO #####################################
+################################################################################
 
 
 # Chargement du fichier de l'arbre paftol
@@ -654,6 +663,24 @@ for(i in 1:length(variables_toutes)){
 }
 
 resultats_tous
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1344,7 +1371,6 @@ qqline(residuals(mphy_DI1))
 
 
 
-AIC(m_DI1,m_DI3)
 
 ###################### graph coefs ###############
 
@@ -1477,15 +1503,23 @@ text(estimates1, y_pos1 + 0.16,
 #####################
 
 #modèles
-m_score1 <- lmer(score ~ Gmin_cr+BD_mean_cr+TD_cr+SLA_cr+Nb_rami_cr+LDMC_cr + (1 | Nom_scientifique), data = BDD_moy_ech)
-summary(m_score1)
-r.squaredGLMM(m_score1)
+mphy_score1 <- pgls(score ~ Gmin_cr+BD_mean_cr+TD_cr+SLA_cr+Nb_rami_cr+LDMC_cr ,
+                 data   = comp_data,
+                 lambda = "ML")
 
-m_score3 <- lmer(score ~ Gmin_cr+BD_mean_cr+TD_cr+SLA_cr+Nb_rami_cr+LMC_t24_cr + (1 | Nom_scientifique), data = BDD_moy_ech)
-summary(m_score3)
+summary(mphy_score1)
 
+mphy_score2 <- pgls(score ~ Gmin_cr+BD_mean_cr+TD_cr+SLA_cr+Nb_rami_cr+LMC_t24 ,
+                 data   = comp_data,
+                 lambda = "ML")
 
-AIC(m_score1,m_score3)
+summary(mphy_score2)
+
+# Vérifier la normalité des résidus
+shapiro.test(residuals(mphy_score1))
+hist(residuals(mphy_score1))
+qqnorm(residuals(mphy_score1))
+qqline(residuals(mphy_score1))
 
 
 
@@ -1493,8 +1527,8 @@ AIC(m_score1,m_score3)
 
 # Extraire coefficients (sans l'intercept)
 par(mar = c(5,10,5,5))
-coefs1 <- summary(m_score1)$coefficients[-1, ]
-coefs2 <- summary(m_score3)$coefficients[-1, ]
+coefs1 <- summary(mphy_score1)$coefficients[-1, ]
+coefs2 <- summary(mphy_score2)$coefficients[-1, ]
 
 # Variables utiles
 estimates1 <- coefs1[, "Estimate"]
@@ -1534,7 +1568,7 @@ y_pos2 <- length(estimates2):1
 # Plot de base
 par(mar=c(4,6,2,2))
 plot(estimates1, y_pos1,type = "n",
-     xlim = c(-2,2),
+     xlim = c(-1.5,1.5),
      ylim = c(0.7,length(estimates1) +0.2 ),
      xlab = "Estimate",
      ylab = "",
@@ -1665,10 +1699,14 @@ text(estimates1, y_pos1 + 0.16,
 
 
 
-
+################################################################################
+#---------------------------------------------------------------------------------
 
 ################################################################################
-############################ ECHELLE ESPECE ####################################
+######################## GLM ##################################################
+################################################################################
+
+#---------------------------------------------------------------------------------
 ################################################################################
 
 
@@ -1704,15 +1742,52 @@ hist(BDD_moy_esp$LT)
 
 
 #standardisation des données 
-BDD_moy_esp$BD_mean_cr<-as.numeric(scale(BDD_moy_esp$BD_mean))
-BDD_moy_esp$TD_cr<-as.numeric(scale(BDD_moy_esp$TD))
-BDD_moy_esp$LA_cr<-as.numeric(scale(BDD_moy_esp$Surface_F))
-BDD_moy_esp$LDMC_cr<-as.numeric(scale(BDD_moy_esp$LDMC))
-BDD_moy_esp$LMC_t24_cr<-as.numeric(scale(BDD_moy_esp$LMC_t24))
-BDD_moy_esp$SLA_cr<-as.numeric(scale(BDD_moy_esp$SLA))
-BDD_moy_esp$Nb_rami_cr<-as.numeric(scale(BDD_moy_esp$Nb_rami))
-BDD_moy_esp$Gmin_cr<-as.numeric(scale(BDD_moy_esp$Gmin))
+BDD_moy_ech$BD_mean_cr<-as.numeric(scale(BDD_moy_ech$BD_mean))
+BDD_moy_ech$TD_cr<-as.numeric(scale(BDD_moy_ech$TD))
+BDD_moy_ech$LA_cr<-as.numeric(scale(BDD_moy_ech$Surface_F))
+BDD_moy_ech$LDMC_cr<-as.numeric(scale(BDD_moy_ech$LDMC))
+BDD_moy_ech$LMC_t24_cr<-as.numeric(scale(BDD_moy_ech$LMC_t24))
+BDD_moy_ech$SLA_cr<-as.numeric(scale(BDD_moy_ech$SLA))
+BDD_moy_ech$Nb_rami_cr<-as.numeric(scale(BDD_moy_ech$Nb_rami))
+BDD_moy_ech$Gmin_cr<-as.numeric(scale(BDD_moy_ech$Gmin))
+BDD_moy_ech$LMC_t0_cr<-as.numeric(scale(BDD_moy_ech$LMC_t0))
 
+# Modèle nul (sans effet espèce)
+modele_nul <- lm(LMC_t24 ~ 1, data = BDD_moy_ech)
+
+# Modèle avec espèce
+modele_espece <- lm(LMC_t24 ~ Nom_scientifique, data = BDD_moy_ech)
+
+# Comparer les deux
+anova(modele_nul, modele_espece)
+
+#modèle gaussien
+modele_gauss <- lmer(LMC_t24 ~ LMC_t0_cr * Gmin_cr + (1 | Nom_scientifique),
+                     data = BDD_moy_ech)
+summary(modele_gauss)
+hist(resid(modele_gauss))
+plot(modele_gauss)
+#modèle gaus log
+modele_gauss_log <- glmer(LMC_t24 ~ LMC_t0_cr * Gmin_cr + (1 | Nom_scientifique),
+                            family = gaussian(link = "log"),
+                            data = BDD_moy_ech)
+summary(modele_gauss_log)
+hist(resid(modele_gauss_log))
+plot(modele_gauss_log)
+
+# modèle log
+modele_log <- lmer(log(LMC_t24) ~ LMC_t0_cr * Gmin_cr + (1 | Nom_scientifique),
+                   data = BDD_moy_ech)
+summary(modele_log)
+hist(resid(modele_log))
+plot(modele_log)
+
+# modèle log log
+modele_loglog <- lmer(log(LMC_t24) ~ log(LMC_t0) * Gmin_cr + (1 | Nom_scientifique),
+                      data = BDD_moy_ech)
+summary(modele_loglog)
+hist(resid(modele_loglog))
+plot(modele_loglog)
 
 ############################################################################
 ############### MODELES classiques sans pgls #############################
@@ -1907,6 +1982,109 @@ lines((foo * ecart + moy), pmax(pred1$fit - 1.96 * pred1$se.fit, 0), col = "blue
 
 
 
+
+
+
+
+
+
+
+#BT
+
+# Modèle linéaire mixte
+mod_BT <- lmer(BT ~ 1 + (1 | Nom_scientifique), data = BDD_moy_ech) #ok
+mod_BB_test <- lmer(BB_test ~ 1 + (1 | Nom_scientifique), data = BDD_moy_ech) #ok
+mod_DI_test <- lmer(DI_test ~ 1 + (1 | Nom_scientifique), data = BDD_moy_ech) #ok
+mod_MT <- lmer(MT ~ 1 + (1 | Nom_scientifique), data = BDD_moy_ech) #ok
+mod_score <- lmer(score ~ 1 + (1 | Nom_scientifique), data = BDD_moy_ech) #ok
+
+mod_BD_mean <- lmer(BD_mean ~ 1 + (1 | Nom_scientifique), data = BDD_moy_ech)
+mod_Gmin <- lmer(Gmin ~ 1 + (1 | Nom_scientifique), data = BDD_moy_ech)
+mod_SLA <- lmer(SLA ~ 1 + (1 | Nom_scientifique), data = BDD_moy_ech)
+mod_Nb_rami <- lmer(Nb_rami ~ 1 + (1 | Nom_scientifique), data = BDD_moy_ech)
+mod_LDMC <- lmer(LDMC ~ 1 + (1 | Nom_scientifique), data = BDD_moy_ech)
+mod_TD <- lmer(TD ~ 1 + (1 | Nom_scientifique), data = BDD_moy_ech)
+mod_LMC_t24 <- lmer(LMC_t24 ~ 1 + (1 | Nom_scientifique), data = BDD_moy_ech)
+
+
+plot(mod_LMC_t24)
+hist(resid(mod_LMC_t24))
+
+# Extraire les composantes de variance
+var_BT <- as.data.frame(VarCorr(mod_BT))
+var_BT_inter <- var_BT$vcov[1]
+var_BT_intra <- attr(VarCorr(mod_BT), "sc")^2
+
+# Pourcentage de variance
+total_BT <- var_BT_inter + var_BT_intra
+100 * var_BT_inter / total_BT  # variance inter (espèce)
+100 * var_BT_intra / total_BT  # variance intra (résiduelle)
+
+library(lme4)
+
+# Liste des modèles
+liste_mod <- list(
+  BT = mod_BT,
+  BB_test = mod_BB_test,
+  DI_test = mod_DI_test,
+  MT = mod_MT,
+  score = mod_score,
+  BD_mean = mod_BD_mean,
+  Gmin = mod_Gmin,
+  SLA = mod_SLA,
+  Nb_rami = mod_Nb_rami,
+  LDMC = mod_LDMC,
+  TD = mod_TD,
+  LMC_t24 = mod_LMC_t24
+)
+
+# Data frame vide
+variance_df <- data.frame()
+
+# Boucle
+for(i in names(liste_mod)){
+  
+  mod <- liste_mod[[i]]
+  
+  vc <- as.data.frame(VarCorr(mod))
+  
+  var_inter <- vc$vcov[1]
+  var_intra <- vc$vcov[2]
+  
+  total <- var_inter + var_intra
+  
+  variance_df <- rbind(
+    variance_df,
+    data.frame(
+      Variable = i,
+      Var_inter = round(100 * var_inter / total, 1),
+      Var_intra = round(100 * var_intra / total, 1)
+    )
+  )
+}
+
+variance_df
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #################################################################
 ################### ECHELLE ECHANTILLON #########################
 #################################################################
@@ -1947,7 +2125,6 @@ BDD_moy_ech$LMC_t24_cr<-as.numeric(scale(BDD_moy_ech$LMC_t24))
 BDD_moy_ech$Gmin_cr<-as.numeric(scale(BDD_moy_ech$Gmin))
 BDD_moy_ech$SLA_cr<-as.numeric(scale(BDD_moy_ech$SLA))
 BDD_moy_ech$Nb_rami_cr<-as.numeric(scale(BDD_moy_ech$Nb_rami))
-
 
 BDD_moy_echMT$BD_mean_cr<-as.numeric(scale(BDD_moy_echMT$BD_mean))
 BDD_moy_echMT$TD_cr<-as.numeric(scale(BDD_moy_echMT$TD))
