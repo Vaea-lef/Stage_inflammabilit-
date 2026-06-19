@@ -53,6 +53,10 @@ names(BDD_moy_espMT)[which(names(BDD_moy_espMT) == "Nb_ramifications")] <- "Nb_r
 BDD_moy_esp3<-read.csv2("Data/Publi/BDD_moy_esp3.csv", header = TRUE) #importation de la base
 names(BDD_moy_esp3)[which(names(BDD_moy_esp3) == "Nb_ramifications")] <- "Nb_rami"
 
+BDD_finale_publi<-read.csv2("Data/Publi/BDD_finale_publi.csv", header = TRUE) #importation de la base
+names(BDD_finale_publi)[which(names(BDD_finale_publi) == "Nb_ramifications")] <- "Nb_rami"
+
+
 ##calcul FI
 
 # Comptage du nombre d'essais par espèce dans BDD_moy_ech
@@ -93,7 +97,7 @@ head(BDD_moy_esp)
 
 
 # Sélection des colonnes des traits fonctionnels
-colonnes_traits <- BDD_moy_ech [, c("Nb_rami","Gmin","TD","TDMC","Surface_F","LDMC","SLA","LT","BD_mean")]
+colonnes_traits <- BDD_moy_ech [, c("TDMC", "TMC_t0","TMC_t24","LMC_t0","Nb_rami","Gmin","TD","Surface_F","LDMC","SLA","LT","BD_mean","LMC_t24")]
 
 #strandardiser les données
 colonnes_traits_cr <- scale(log(colonnes_traits)+1)
@@ -120,7 +124,7 @@ round(mat_cor_trait, 2)   ## afficher les valeurs
 corrplot(mat_cor_trait, method = "color", tl.cex = 0.8, tl.col = "black", number.cex = 0.7, addCoef.col = "black")
 
 library(caret)
-traits_non_corrélés <- colonnes_traits[, -findCorrelation(mat_cor_trait, cutoff = 0.68)]
+traits_non_corrélés <- colonnes_traits[, -findCorrelation(mat_cor_trait, cutoff = 0.65)]
 traits_non_corrélés
 
 
@@ -129,7 +133,7 @@ traits_non_corrélés
 
 
 
-
+#par(mar = c(bas, gauche, haut, droite))
 
 
 
@@ -209,48 +213,58 @@ fviz_nbclust(coords_esp, kmeans, method = "silhouette", k.max = 8) +
 # K-means
 set.seed(123) #prends toujours le même point de départ aléatoire, pour que les résultats soient reproductibles
 
-km_esp <- kmeans(coords_esp, centers = 5, nstart = 25)
+km_esp <- kmeans(coords_esp, centers = 6, nstart = 25)
 GR <- km_esp$cluster
 
-correspondance <- c(`1` = 2, `2` = 5, `3` = 3, `4` = 1, `5` = 4)
+correspondance <- c(`3` = 1, `4` = 2, `2` = 3, `1` = 5, `5` = 4,`6` = 6)
 GR_new <- correspondance[as.character(GR)]
 GR_new <- as.integer(GR_new)
 
 # Couleurs avec GR_new
 COL <- character(length(GR_new))
-COL[GR_new == 5] <- "#FF2A00"
-COL[GR_new == 2] <- "#CFF200"
-COL[GR_new == 3] <- "#FFE100"
-COL[GR_new == 1] <- "#6DC700"
-COL[GR_new == 4] <- "#FF8900"
+COL[GR_new == 5] <- "#FF6600"
+COL[GR_new == 1] <- "#336600"
+COL[GR_new == 2] <- "#33CC00"
+COL[GR_new == 3] <- "#FFFF00"
+COL[GR_new == 4] <- "#FFCC00"
+COL[GR_new == 6] <- "#FF0000"
 
+#CFF200
+
+png("Figures/VSC/clusters.png", width  = 600, height = 600,units  = "px") 
+par(mar = c(5, 6, 5, 2))
+par(
+  cex.main = 1.5,   # titre
+  cex.lab  = 1.5,   # labels axes
+  cex.axis = 1.5   # valeurs axes
+)
 
 # GRAPH ACP + groupes
 plot(ind_coords[,1], ind_coords[,2],
-     xlim = range(ind_coords[,1]) * 1.2,
-     ylim = c(-2,4),
+     xlim = range(ind_coords[,1]) * 1.1,
+     ylim = c(-1.5,3.5),
      xlab = paste0("PC1 (", explained_var[1], "%)"),
      ylab = paste0("PC2 (", explained_var[2], "%)"),
      main = "ACP - Individus et variables d'inflammabilité",
-     pch = 21, bg = rgb(190/255,190/255,190/255,0.5),col=NA,cex=0.8)
+     pch = 21, bg = rgb(190/255,190/255,190/255,0.5),col=NA)
 
 # Tracer les axes
-abline(h = 0, v = 0, lty = 2)
+abline(h = 0, v = 0, lty = 2,cex=1.5)
 
 # Barres d'erreur (SD)
 segments(x0=M_S1$x,x1=M_S1$x,y0=M_S2$x-SD_S2$x,y1=M_S2$x+SD_S2$x)
 segments(x0=M_S1$x-SD_S1$x,x1=M_S1$x+SD_S1$x,y0=M_S2$x,y1=M_S2$x)
 
 # Points espèces colorés par groupe
-points(M_S1$x,M_S2$x,pch=21,bg=COL,cex=1.5)
+points(M_S1$x,M_S2$x,pch=21,bg=COL,cex=1.9)
 
 # Légende
 legend("topright",
-       legend = paste("Groupe", 1:5),
-       pt.bg = c("#6DC700","#CFF200","#FFE100","#FF8900","#FF2A00"),
+       legend = paste("Groupe", 1:6),
+       pt.bg = c("#336600","#33CC00","#FFFF00","#FFCC00","#FF6600","#FF0000"),
        pch = 21, col = rgb(0,0,0,0.8),
-       bty = "n", pt.cex = 1.5)
-
+       bty = "n", pt.cex = 1.9,cex=1.5)
+dev.off()
 
 # Ajout dans BDD
 BDD_moy_esp$groupe <- GR_new
@@ -266,68 +280,95 @@ View(BDD_moy_esp)
 par(mar = c(5,5,5,2)) 
 #INFLA
 # boxplot MT
+png("Figures/VSC/boxplot 6 groupe MT.png", width  = 600, height = 600,units  = "px") 
+par(cex = 1.5)
 boxplot(MT ~ groupe, data = BDD_moy_esp,
         main = "Distribution de MT par groupe",
         xlab = "Groupe",
-        ylab = "MT (°C)",col=c("#6DC700","#CFF200","#FFE100","#FF8900","#FF2A00"))
+        ylab = "MT (°C)",col=c("#336600","#33CC00","#FFFF00","#FFCC00","#FF6600","#FF0000"))
+dev.off()
 
 # boxplot BT
+png("Figures/VSC/boxplot 6 groupe BT.png", width  = 600, height = 600,units  = "px") 
+par(cex = 1.5)
 boxplot(BT_test ~ groupe, data = BDD_moy_esp,
         main = "Distribution de BT par groupe",
         xlab = "Groupe",
-        ylab = "BT (s)",col=c("#6DC700","#CFF200","#FFE100","#FF8900","#FF2A00"))
-
+        ylab = "BT (s)",col=c("#336600","#33CC00","#FFFF00","#FFCC00","#FF6600","#FF0000"))
+dev.off()
 
 # boxplot BB
+png("Figures/VSC/boxplot 6 groupe BB.png", width  = 600, height = 600,units  = "px") 
+par(cex = 1.5)
 boxplot(BB_test ~ groupe, data = BDD_moy_esp,
         main = "Distribution de BB par groupe",
         xlab = "Groupe",
-        ylab = "BB (%)",col=c("#6DC700","#CFF200","#FFE100","#FF8900","#FF2A00"))
+        ylab = "BB (%)",col=c("#336600","#33CC00","#FFFF00","#FFCC00","#FF6600","#FF0000"))
+dev.off()
 
 # boxplot DI
+png("Figures/VSC/boxplot 6 groupe DI.png", width  = 600, height = 600,units  = "px") 
+par(cex = 1.5)
 boxplot(DI_test ~ groupe, data = BDD_moy_esp,
         main = "Distribution de DI par groupe",
         xlab = "Groupe",
-        ylab = "DI (s)",col=c("#6DC700","#CFF200","#FFE100","#FF8900","#FF2A00"))
+        ylab = "DI (s)",col=c("#336600","#33CC00","#FFFF00","#FFCC00","#FF6600","#FF0000"))
+dev.off()
 
 #TRAITS
 # boxplot Gmin
+png("Figures/VSC/boxplot 6 groupe Gmin.png", width  = 600, height = 600,units  = "px") 
+par(cex = 1.5)
 boxplot(Gmin ~ groupe, data = BDD_moy_esp,
         main = "Distribution de Gmin par groupe",
         xlab = "Groupe",
-        ylab = "Gmin",col=c("#6DC700","#CFF200","#FFE100","#FF8900","#FF2A00"))
+        ylab = "Gmin",col=c("#336600","#33CC00","#FFFF00","#FFCC00","#FF6600","#FF0000"))
+dev.off()
 
 # boxplot BD_mean
+png("Figures/VSC/boxplot 6 groupe BD.png", width  = 600, height = 600,units  = "px") 
+par(cex = 1.5)
 boxplot(BD_mean ~ groupe, data = BDD_moy_esp,
         main = "Distribution de BD par groupe",
         xlab = "Groupe",
-        ylab = "BD",col=c("#6DC700","#CFF200","#FFE100","#FF8900","#FF2A00"))
-
+        ylab = "BD",col=c("#336600","#33CC00","#FFFF00","#FFCC00","#FF6600","#FF0000"))
+dev.off()
 
 # boxplot SLA
+png("Figures/VSC/boxplot 6 groupe SLA.png", width  = 600, height = 600,units  = "px") 
+par(cex = 1.5)
 boxplot(SLA ~ groupe, data = BDD_moy_esp,
         main = "Distribution de SLA par groupe",
         xlab = "Groupe",
-        ylab = "SLA",col=c("#6DC700","#CFF200","#FFE100","#FF8900","#FF2A00"))
+        ylab = "SLA",col=c("#336600","#33CC00","#FFFF00","#FFCC00","#FF6600","#FF0000"))
+dev.off()
 
 # boxplot TD
+png("Figures/VSC/boxplot 6 groupe TD.png", width  = 600, height = 600,units  = "px") 
+par(cex = 1.5)
 boxplot(TD ~ groupe, data = BDD_moy_esp,
         main = "Distribution de TD par groupe",
         xlab = "Groupe",
-        ylab = "TD",col=c("#6DC700","#CFF200","#FFE100","#FF8900","#FF2A00"))
+        ylab = "TD",col=c("#336600","#33CC00","#FFFF00","#FFCC00","#FF6600","#FF0000"))
+dev.off()
 
 # boxplot LDMC
+png("Figures/VSC/boxplot 6 groupe LDMC.png", width  = 600, height = 600,units  = "px") 
+par(cex = 1.5)
 boxplot(LDMC ~ groupe, data = BDD_moy_esp,
         main = "Distribution de LDMC par groupe",
         xlab = "Groupe",
-        ylab = "LDMC",col=c("#6DC700","#CFF200","#FFE100","#FF8900","#FF2A00"))
+        ylab = "LDMC",col=c("#336600","#33CC00","#FFFF00","#FFCC00","#FF6600","#FF0000"))
+dev.off()
 
 # boxplot Nb_rami
+png("Figures/VSC/boxplot 6 groupe Nb_rami.png", width  = 600, height = 600,units  = "px") 
+par(cex = 1.5)
 boxplot(Nb_rami ~ groupe, data = BDD_moy_esp,
         main = "Distribution de Nb_rami par groupe",
         xlab = "Groupe",
-        ylab = "Nb_rami",col=c("#6DC700","#CFF200","#FFE100","#FF8900","#FF2A00"))
-
+        ylab = "Nb_rami",col=c("#336600","#33CC00","#FFFF00","#FFCC00","#FF6600","#FF0000"))
+dev.off()
 
 
 
@@ -336,13 +377,21 @@ boxplot(Nb_rami ~ groupe, data = BDD_moy_esp,
 
 ################ ACP individus avec flèches infla et traits ################
 
+png("Figures/VSC/ACP_traits_infla.png", width  = 600, height = 600,units  = "px") 
+par(mar = c(5, 6, 5, 2))
+par(
+  cex.main = 1.5,   # titre
+  cex.lab  = 1.5,   # labels axes
+  cex.axis = 1.5   # valeurs axes
+)
+
 plot(ind_coords[,1], ind_coords[,2],
-     xlim = range(ind_coords[,1]) * 1.2,
-     ylim = c(-4,3.5),
+     xlim = range(ind_coords[,1]) * 1.1,
+     ylim = c(-3,3),
      xlab = paste0("PC1 (", explained_var[1], "%)"),
      ylab = paste0("PC2 (", explained_var[2], "%)"),
      main = "ACP - Individus et variables d'inflammabilité",
-     pch = 21, bg = rgb(0,0,0,0.5),col=NA,cex=0.8)
+     pch = 21, bg = rgb(0,0,0,0.5),col=NA,cex=1.2)
 
 # Tracer les axes
 abline(h = 0, v = 0, lty = 2)
@@ -351,24 +400,24 @@ abline(h = 0, v = 0, lty = 2)
 arrows(0, 0,                        # départ
        var_coords[,1]*max(abs(ind_coords[,1])),
        var_coords[,2]*max(abs(ind_coords[,2])),
-       length = 0.1, col = "red", lwd = 2)
+       length = 0.1, col = "red", lwd = 2.5)
 
 text(var_coords[,1]*max(abs(ind_coords[,1])),
      var_coords[,2]*max(abs(ind_coords[,2])),labels = colnames(colonnes_infla_cr),
-     col = "red", cex = 0.8)
+     col = "red", cex = 1.2,adj = ifelse(var_coords[,1] >= 0, -0.1, 1.1))
 
 # Variables supplémentaires en bleu
 arrows(0, 0,
        colonnes_taits_coord[,1]*max(abs(ind_coords[,1])),
        colonnes_taits_coord[,2]*max(abs(ind_coords[,2])),
-       length = 0.1, col = "blue",lwd=0.5)
+       length = 0.1, col = "blue",lwd=1)
 
 text(colonnes_taits_coord[,1]*max(abs(ind_coords[,1])),
      colonnes_taits_coord[,2]*max(abs(ind_coords[,2])),
      labels = colnames(colonnes_traits_cr),
-     col = "blue", cex = 0.8)
+     col = "blue", cex = 1.2,adj = ifelse(var_coords[,1] >= 0, -0.1, 1.1))
 
-
+dev.off()
 
 
 
@@ -488,10 +537,81 @@ points(BDD_moy_score$score[o], 1:length(BDD_moy_score$Nom_scientifique),
 
 
 
+#Arbre v.phylomaker
+sp_list <- data.frame(
+  species = BDD_moy_esp$Nom_scientifique,
+  genus = BDD_moy_esp$Genre,
+  family = BDD_finale_publi$Famille[match(BDD_moy_esp$Nom_scientifique, BDD_finale_publi$Nom_scientifique)]
+)
+
+sp_list$family[sp_list$species == "Hibiscus tiliaceus"] <- "Malvaceae"
+sp_list$family[sp_list$genus == "Glochidion"] <- "Phyllanthaceae"
+
+# Vérifier
+sum(is.na(sp_list$family))  # doit être 0
+
+# quelles espèces sont déjà dans la base GBOTB
+present <- sp_list$species %in% GBOTB.extended.TPL$species
+sum(present)   # combien sont présentes
+sum(!present)  # combien sont absentes
 
 
+# Extraire  genres de l'arbre GBOTB
+genres_gbotb <- unique(sapply(strsplit(GBOTB.extended.TPL$tip.label, "_"), function(x) x[1]))
+
+# Genres absents
+sp_list$genus[!sp_list$genus %in% genres_gbotb]
+
+# Formater les noms comme dans l'arbre GBOTB (Genre_espece)
+sp_list$species_format <- gsub(" ", "_", sp_list$species)
+
+# Vérifier lesquelles sont présentes
+present <- sp_list$species_format %in% GBOTB.extended.TPL$tip.label
+sum(present)   # combien sont présentes
+sum(!present)  # combien sont absentes
+sp_list$species[present]  # lesquelles
+
+tree_vpm <- phylo.maker(sp.list = sp_list, tree = GBOTB.extended.TPL, nodes = nodes.info.1.TPL, scenarios = "S3")
+tree_vpm
+# L'arbre  dans tree_vpm$scenario.3
+tree_vpm2 <- tree_vpm$scenario.3
+plot(tree_vpm2)
+# Vérifier
+length(tree_vpm2$tip.label)  # doit être 67
+is.ultrametric(tree_vpm2)    # doit être TRUE
+
+tree_vpm2$tip.label <- gsub("_", " ", tree_vpm2$tip.label)
+
+# Vérifier
+head(tree_vpm2$tip.label)
+
+rownames(BDD_moy_score) <- BDD_moy_score$Nom_scientifique
+check_vpm <- name.check(tree_vpm2, BDD_moy_esp)
 
 
+variables_toutes <- c("DI_test", "BB_test", "BT", "MT", "FI","BD_mean", "score","Nb_rami", "TD", "Gmin", "LDMC", "SLA", "TDMC")
+resultats_vpm <- data.frame(
+  variable = variables_toutes,
+  lambda = NA,
+  lambda_p = NA,
+  K = NA,
+  K_p = NA
+)
+
+for(i in 1:length(variables_toutes)){
+  
+  trait <- setNames(BDD_moy_score[[variables_toutes[i]]], BDD_moy_score$Nom_scientifique)
+  
+  res_lambda <- phylosig(tree_vpm2, trait, method = "lambda", test = TRUE)
+  resultats_vpm$lambda[i] <- res_lambda$lambda
+  resultats_vpm$lambda_p[i] <- res_lambda$P
+  
+  res_K <- phylosig(tree_vpm2, trait, method = "K", test = TRUE)
+  resultats_vpm$K[i] <- res_K$K
+  resultats_vpm$K_p[i] <- res_K$P
+}
+
+resultats_vpm
 
 
 
@@ -1228,18 +1348,18 @@ qqline(residuals(mphy_BT1))
 
 # Extraire coefficients (sans l'intercept)
 par(mar = c(5,10,5,5))
-coefs1 <- summary(m_BT1)$coefficients[-1, ]
-coefs2 <- summary(m_BT3)$coefficients[-1, ]
+coefs1 <- summary(mphy_BT1)$coefficients[-1, ]
+coefs2 <- summary(mphy_BT2)$coefficients[-1, ]
 
 # Variables utiles
 estimates1 <- coefs1[, "Estimate"]
 stderr1 <- coefs1[, "Std. Error"]
-pval1 <- coefs1[, "Pr(>|z|)"]
+pval1 <- coefs1[, "Pr(>|t|)"]
 labels1 <- rownames(coefs1)
 
 estimates2 <- coefs2[, "Estimate"]
 stderr2 <- coefs2[, "Std. Error"]
-pval2 <- coefs2[, "Pr(>|z|)"]
+pval2 <- coefs2[, "Pr(>|t|)"]
 labels2 <- rownames(coefs2)
 
 # Calcul des intervalles de confiance plus ou moins SE
@@ -1269,7 +1389,7 @@ y_pos2 <- length(estimates2):1
 # Plot de base
 par(mar=c(4,6,2,2))
 plot(estimates1, y_pos1,type = "n",
-     xlim = c(-0.5,0.5),
+     xlim = c(-15,15),
      ylim = c(0.7,length(estimates1) +0.2 ),
      xlab = "Estimate",
      ylab = "",
