@@ -1,5 +1,5 @@
 #### ANALYSE DE DONNEE PUBLICATION TRAITS ####
-
+#par(mar = c(bas, gauche, haut, droite))
 
 
 
@@ -133,7 +133,7 @@ traits_non_corrélés
 
 
 
-#par(mar = c(bas, gauche, haut, droite))
+
 
 
 
@@ -190,7 +190,6 @@ BDD_moy_ech$score <- ind_coords[,1]
 
 
 
-################ CAH (Classification Ascendante Hiérarchique) ##################
 
 
 # Tableau des coordonnées moyennes par espèce 
@@ -199,6 +198,24 @@ coords_esp <- data.frame(
   PC2 = M_S2$x,
   row.names = M_S1$Group.1
 )
+
+############# Kmeans################
+
+k <- 5  # changer ici si besoin
+
+set.seed(123)
+km_esp <- kmeans(coords_esp, centers = k, nstart = 25)
+GR <- km_esp$cluster
+
+# Ordonner les groupes selon PC1 (gauche -> droite)
+ordre_groupes <- order(km_esp$centers[, "PC1"])
+correspondance <- setNames(1:k, ordre_groupes)
+GR_new <- as.integer(correspondance[as.character(GR)])
+
+# Palette verte -> rouge, générée automatiquement pour k groupes
+palette_groupes <- colorRampPalette(c("#336600", "#FFFF00", "#FF0000"))(k)
+COL <- palette_groupes[GR_new]
+
 
 # Choix du nombre de groupes
 library(factoextra)
@@ -210,26 +227,8 @@ fviz_nbclust(coords_esp, kmeans, method = "silhouette", k.max = 8) +
   labs(title = "Indice de silhouette")
 
 
-# K-means
-set.seed(123) #prends toujours le même point de départ aléatoire, pour que les résultats soient reproductibles
 
-km_esp <- kmeans(coords_esp, centers = 6, nstart = 25)
-GR <- km_esp$cluster
-
-correspondance <- c(`3` = 1, `4` = 2, `2` = 3, `1` = 5, `5` = 4,`6` = 6)
-GR_new <- correspondance[as.character(GR)]
-GR_new <- as.integer(GR_new)
-
-# Couleurs avec GR_new
-COL <- character(length(GR_new))
-COL[GR_new == 5] <- "#FF6600"
-COL[GR_new == 1] <- "#336600"
-COL[GR_new == 2] <- "#33CC00"
-COL[GR_new == 3] <- "#FFFF00"
-COL[GR_new == 4] <- "#FFCC00"
-COL[GR_new == 6] <- "#FF0000"
-
-#CFF200
+####################### PLOT ##########################
 
 png("Figures/VSC/clusters.png", width  = 600, height = 600,units  = "px") 
 par(mar = c(5, 6, 5, 2))
@@ -260,10 +259,10 @@ points(M_S1$x,M_S2$x,pch=21,bg=COL,cex=1.9)
 
 # Légende
 legend("topright",
-       legend = paste("Groupe", 1:6),
-       pt.bg = c("#336600","#33CC00","#FFFF00","#FFCC00","#FF6600","#FF0000"),
-       pch = 21, col = rgb(0,0,0,0.8),
-       bty = "n", pt.cex = 1.9,cex=1.5)
+       legend = paste("Group", 1:k),
+       pt.bg  = palette_groupes,
+       pch    = 21, col = rgb(0,0,0,0.8),
+       bty    = "n", pt.cex = 1.9, cex = 1.5)
 dev.off()
 
 # Ajout dans BDD
@@ -285,7 +284,7 @@ par(cex = 1.5)
 boxplot(MT ~ groupe, data = BDD_moy_esp,
         main = "Distribution de MT par groupe",
         xlab = "Groupe",
-        ylab = "MT (°C)",col=c("#336600","#33CC00","#FFFF00","#FFCC00","#FF6600","#FF0000"))
+        ylab = "MT (°C)",col=palette_groupes)
 dev.off()
 
 # boxplot BT
@@ -294,7 +293,7 @@ par(cex = 1.5)
 boxplot(BT_test ~ groupe, data = BDD_moy_esp,
         main = "Distribution de BT par groupe",
         xlab = "Groupe",
-        ylab = "BT (s)",col=c("#336600","#33CC00","#FFFF00","#FFCC00","#FF6600","#FF0000"))
+        ylab = "BT (s)",col=palette_groupes)
 dev.off()
 
 # boxplot BB
@@ -303,7 +302,7 @@ par(cex = 1.5)
 boxplot(BB_test ~ groupe, data = BDD_moy_esp,
         main = "Distribution de BB par groupe",
         xlab = "Groupe",
-        ylab = "BB (%)",col=c("#336600","#33CC00","#FFFF00","#FFCC00","#FF6600","#FF0000"))
+        ylab = "BB (%)",col=palette_groupes)
 dev.off()
 
 # boxplot DI
@@ -312,7 +311,7 @@ par(cex = 1.5)
 boxplot(DI_test ~ groupe, data = BDD_moy_esp,
         main = "Distribution de DI par groupe",
         xlab = "Groupe",
-        ylab = "DI (s)",col=c("#336600","#33CC00","#FFFF00","#FFCC00","#FF6600","#FF0000"))
+        ylab = "DI (s)",col=palette_groupes)
 dev.off()
 
 #TRAITS
@@ -322,7 +321,7 @@ par(cex = 1.5)
 boxplot(Gmin ~ groupe, data = BDD_moy_esp,
         main = "Distribution de Gmin par groupe",
         xlab = "Groupe",
-        ylab = "Gmin",col=c("#336600","#33CC00","#FFFF00","#FFCC00","#FF6600","#FF0000"))
+        ylab = "Gmin",col=palette_groupes)
 dev.off()
 
 # boxplot BD_mean
@@ -331,7 +330,7 @@ par(cex = 1.5)
 boxplot(BD_mean ~ groupe, data = BDD_moy_esp,
         main = "Distribution de BD par groupe",
         xlab = "Groupe",
-        ylab = "BD",col=c("#336600","#33CC00","#FFFF00","#FFCC00","#FF6600","#FF0000"))
+        ylab = "BD",col=palette_groupes)
 dev.off()
 
 # boxplot SLA
@@ -340,7 +339,7 @@ par(cex = 1.5)
 boxplot(SLA ~ groupe, data = BDD_moy_esp,
         main = "Distribution de SLA par groupe",
         xlab = "Groupe",
-        ylab = "SLA",col=c("#336600","#33CC00","#FFFF00","#FFCC00","#FF6600","#FF0000"))
+        ylab = "SLA",col=palette_groupes)
 dev.off()
 
 # boxplot TD
@@ -349,7 +348,7 @@ par(cex = 1.5)
 boxplot(TD ~ groupe, data = BDD_moy_esp,
         main = "Distribution de TD par groupe",
         xlab = "Groupe",
-        ylab = "TD",col=c("#336600","#33CC00","#FFFF00","#FFCC00","#FF6600","#FF0000"))
+        ylab = "TD",col=palette_groupes)
 dev.off()
 
 # boxplot LDMC
@@ -358,7 +357,7 @@ par(cex = 1.5)
 boxplot(LDMC ~ groupe, data = BDD_moy_esp,
         main = "Distribution de LDMC par groupe",
         xlab = "Groupe",
-        ylab = "LDMC",col=c("#336600","#33CC00","#FFFF00","#FFCC00","#FF6600","#FF0000"))
+        ylab = "LDMC",col=palette_groupes)
 dev.off()
 
 # boxplot Nb_rami
@@ -367,8 +366,41 @@ par(cex = 1.5)
 boxplot(Nb_rami ~ groupe, data = BDD_moy_esp,
         main = "Distribution de Nb_rami par groupe",
         xlab = "Groupe",
-        ylab = "Nb_rami",col=c("#336600","#33CC00","#FFFF00","#FFCC00","#FF6600","#FF0000"))
+        ylab = "Nb_rami",col=palette_groupes)
 dev.off()
+
+
+
+
+
+
+
+####################### TEST DE WILCOXON - comparaisons par paires entre groupes ##########################
+# Variable testée : changer 
+variable_test <- "BB_test"
+
+# pairwise.wilcox.test compare tous les groupes 2 à 2 et corrige automatiquement les p-values
+res_wilcox <- pairwise.wilcox.test(
+  x = BDD_moy_esp[[variable_test]],
+  g = BDD_moy_esp$groupe,
+  p.adjust.method = "BH"   # correction de Benjamini-Hochberg (FDR), classique pour comparaisons multiples
+)
+
+print(res_wilcox)
+
+# Tableau propre des p-values ajustées
+pval_table <- as.data.frame(as.table(res_wilcox$p.value))
+names(pval_table) <- c("Groupe1", "Groupe2", "p_adjust")
+pval_table <- pval_table[!is.na(pval_table$p_adjust), ]
+pval_table$signif <- cut(pval_table$p_adjust,
+                         breaks = c(-Inf, 0.001, 0.01, 0.05, Inf),
+                         labels = c("***", "**", "*", "ns"))
+print(pval_table) #BB_test
+
+
+# Export du tableau
+write.csv2(pval_table, paste0("Data/Publi/wilcoxon_", variable_test, "_groupes.csv"), row.names = FALSE)
+
 
 
 
@@ -502,9 +534,9 @@ y_pos <- 1:length(BDD_moy_score$Nom_scientifique)
 plot(BDD_moy_score$score[o], 1:length(BDD_moy_score$Nom_scientifique), axes="n",xlim = c(-6,4))
 # Axes
 axis(2, at = 1:length(BDD_moy_score$Nom_scientifique), labels = BDD_moy_score$Nom_scientifique[o], las = 1, cex.axis = 0.65,font=3)
-mtext("Espèces", side = 2, line = 11, cex = 1)
+mtext("Species", side = 2, line = 11, cex = 1)
 axis(1, at = seq(-6, 4, by = 1))
-mtext("Score d'inflammabilité", side = 1, line = 3, cex = 1)
+mtext("Flammability score", side = 1, line = 3, cex = 1)
 
 # Lignes de référence
 abline(v = mean_score, lwd = 2)
@@ -537,6 +569,9 @@ points(BDD_moy_score$score[o], 1:length(BDD_moy_score$Nom_scientifique),
 
 
 
+
+library(V.PhyloMaker2)
+
 #Arbre v.phylomaker
 sp_list <- data.frame(
   species = BDD_moy_esp$Nom_scientifique,
@@ -549,6 +584,8 @@ sp_list$family[sp_list$genus == "Glochidion"] <- "Phyllanthaceae"
 
 # Vérifier
 sum(is.na(sp_list$family))  # doit être 0
+sp_list
+
 
 # quelles espèces sont déjà dans la base GBOTB
 present <- sp_list$species %in% GBOTB.extended.TPL$species
@@ -572,10 +609,11 @@ sum(!present)  # combien sont absentes
 sp_list$species[present]  # lesquelles
 
 tree_vpm <- phylo.maker(sp.list = sp_list, tree = GBOTB.extended.TPL, nodes = nodes.info.1.TPL, scenarios = "S3")
-tree_vpm
+
 # L'arbre  dans tree_vpm$scenario.3
 tree_vpm2 <- tree_vpm$scenario.3
-plot(tree_vpm2)
+par(mar = c(2, 2, 2, 2))
+plot(tree_vpm2,cex=0.7)
 # Vérifier
 length(tree_vpm2$tip.label)  # doit être 67
 is.ultrametric(tree_vpm2)    # doit être TRUE
@@ -613,9 +651,49 @@ for(i in 1:length(variables_toutes)){
 
 resultats_vpm
 
+# Identifier les familles de gymnospermes présentes dans ta liste
+gymno_familles <- c("Araucariaceae", "Podocarpaceae", "Cupressaceae", 
+                    "Gnetaceae", "Cycadaceae", "Zamiaceae", "Pinaceae")
 
+sp_list$family[sp_list$family %in% gymno_familles] %>% unique()
+# vérifie que ça correspond bien à ce que tu attends
 
+# Espèces gymnospermes à enlever (basé sur sp_list, avant le gsub des "_")
+especes_gymno <- sp_list$species[sp_list$family %in% gymno_familles]
+especes_gymno
 
+# Élaguer l'arbre
+tree_vpm2_angio <- drop.tip(tree_vpm2, tip = especes_gymno)
+
+# Vérifications
+length(tree_vpm2_angio$tip.label)
+is.ultrametric(tree_vpm2_angio)  # doit rester TRUE après drop.tip
+
+resultats_vpm_angio <- data.frame(
+  variable = variables_toutes,
+  lambda = NA,
+  lambda_p = NA,
+  K = NA,
+  K_p = NA
+)
+
+for(i in 1:length(variables_toutes)){
+  
+  trait <- setNames(BDD_moy_score[[variables_toutes[i]]], BDD_moy_score$Nom_scientifique)
+  
+  # restreindre aux espèces présentes dans l'arbre élagué
+  trait_angio <- trait[names(trait) %in% tree_vpm2_angio$tip.label]
+  
+  res_lambda <- phylosig(tree_vpm2_angio, trait_angio, method = "lambda", test = TRUE)
+  resultats_vpm_angio$lambda[i] <- res_lambda$lambda
+  resultats_vpm_angio$lambda_p[i] <- res_lambda$P
+  
+  res_K <- phylosig(tree_vpm2_angio, trait_angio, method = "K", test = TRUE)
+  resultats_vpm_angio$K[i] <- res_K$K
+  resultats_vpm_angio$K_p[i] <- res_K$P
+}
+
+resultats_vpm_angio
 
 ################################################################################
 ############################## ARBRE PHYLO #####################################
@@ -736,6 +814,16 @@ length(check2$data_not_tree)  # doit être 0
 tree <- multi2di(tree)
 is.binary(tree)  # doit être TRUE
 
+
+# 1. exclure espèces
+exclure <- c("Araucaria columnaris", "Pinus caribea")
+BDD_filtre <- BDD_moy_esp_phylo[!BDD_moy_esp_phylo$Nom_scientifique %in% exclure, ]
+
+# 2. arbre filtré
+tree_final2 <- keep.tip(tree, BDD_filtre$Nom_scientifique)
+length(tree_final2$tip.label)  # doit être 65
+
+
 # Élaguer l'arbre pour ne garder que tes 65 espèces
 tree_final <- keep.tip(tree, BDD_moy_esp_phylo$Nom_scientifique)
 length(tree_final$tip.label)  # doit être 65
@@ -749,6 +837,7 @@ length(tree_final$tip.label)  # doit être 65
 #Élagage final à 65 espèces
 
 plot(tree_final,cex=0.6)
+plot(tree_final2,cex=0.6)
 
 
 
@@ -946,7 +1035,7 @@ y_pos2 <- length(estimates2):1
 #####  Plot comparaison modèle 1 et 2 ####
 par(mar=c(4,6,2,2))
 plot(estimates1, y_pos1,type = "n",
-     xlim = c(-0.5,0.5),
+     xlim = c(-0.2,0.2),
      ylim = c(0.7,length(estimates1) +0.2 ),
      xlab = "Estimate",
      ylab = "",
@@ -1496,8 +1585,8 @@ qqline(residuals(mphy_DI1))
 
 # Extraire coefficients (sans l'intercept)
 par(mar = c(5,10,5,5))
-coefs1 <- summary(m_DI1)$coefficients[-1, ]
-coefs2 <- summary(m_DI3)$coefficients[-1, ]
+coefs1 <- summary(mphy_DI1)$coefficients[-1, ]
+coefs2 <- summary(mphy_DI2)$coefficients[-1, ]
 
 # Variables utiles
 estimates1 <- coefs1[, "Estimate"]
@@ -1537,7 +1626,7 @@ y_pos2 <- length(estimates2):1
 # Plot de base
 par(mar=c(4,6,2,2))
 plot(estimates1, y_pos1,type = "n",
-     xlim = c(-0.3,0.3),
+     xlim = c(-1,1),
      ylim = c(0.7,length(estimates1) +0.2 ),
      xlab = "Estimate",
      ylab = "",
@@ -1820,13 +1909,13 @@ text(estimates1, y_pos1 + 0.16,
 
 
 ################################################################################
-#---------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 
 ################################################################################
 ######################## GLM ##################################################
 ################################################################################
 
-#---------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 ################################################################################
 
 
@@ -1843,6 +1932,8 @@ hist(BDD_moy_ech3$DI_test,xlab="DI",main="DI distribution",xlim=c(0,10),breaks=s
 hist(BDD_moy_ech3$BT_test,xlab="BT",main="BT distribution") # asymétrique droite
 hist(BDD_moy_ech3$BB_test,,xlab="BB",main="BB distribution",breaks=seq(0,100,10)) # normale proportion
 hist(BDD_moy_echMT$MT,xlab="MT",main="MT distribution") 
+
+
 
 
 #traits
@@ -1862,6 +1953,16 @@ hist(BDD_moy_esp$LT)
 
 
 #standardisation des données 
+BDD_moy_esp$BD_mean_cr<-as.numeric(scale(BDD_moy_esp$BD_mean))
+BDD_moy_esp$TD_cr<-as.numeric(scale(BDD_moy_esp$TD))
+BDD_moy_esp$LA_cr<-as.numeric(scale(BDD_moy_esp$Surface_F))
+BDD_moy_esp$LDMC_cr<-as.numeric(scale(BDD_moy_esp$LDMC))
+BDD_moy_esp$LMC_t24_cr<-as.numeric(scale(BDD_moy_esp$LMC_t24))
+BDD_moy_esp$SLA_cr<-as.numeric(scale(BDD_moy_esp$SLA))
+BDD_moy_esp$Nb_rami_cr<-as.numeric(scale(BDD_moy_esp$Nb_rami))
+BDD_moy_esp$Gmin_cr<-as.numeric(scale(BDD_moy_esp$Gmin))
+BDD_moy_esp$LMC_t0_cr<-as.numeric(scale(BDD_moy_esp$LMC_t0))
+
 BDD_moy_ech$BD_mean_cr<-as.numeric(scale(BDD_moy_ech$BD_mean))
 BDD_moy_ech$TD_cr<-as.numeric(scale(BDD_moy_ech$TD))
 BDD_moy_ech$LA_cr<-as.numeric(scale(BDD_moy_ech$Surface_F))
@@ -1872,42 +1973,7 @@ BDD_moy_ech$Nb_rami_cr<-as.numeric(scale(BDD_moy_ech$Nb_rami))
 BDD_moy_ech$Gmin_cr<-as.numeric(scale(BDD_moy_ech$Gmin))
 BDD_moy_ech$LMC_t0_cr<-as.numeric(scale(BDD_moy_ech$LMC_t0))
 
-# Modèle nul (sans effet espèce)
-modele_nul <- lm(LMC_t24 ~ 1, data = BDD_moy_ech)
 
-# Modèle avec espèce
-modele_espece <- lm(LMC_t24 ~ Nom_scientifique, data = BDD_moy_ech)
-
-# Comparer les deux
-anova(modele_nul, modele_espece)
-
-#modèle gaussien
-modele_gauss <- lmer(LMC_t24 ~ LMC_t0_cr * Gmin_cr + (1 | Nom_scientifique),
-                     data = BDD_moy_ech)
-summary(modele_gauss)
-hist(resid(modele_gauss))
-plot(modele_gauss)
-#modèle gaus log
-modele_gauss_log <- glmer(LMC_t24 ~ LMC_t0_cr * Gmin_cr + (1 | Nom_scientifique),
-                            family = gaussian(link = "log"),
-                            data = BDD_moy_ech)
-summary(modele_gauss_log)
-hist(resid(modele_gauss_log))
-plot(modele_gauss_log)
-
-# modèle log
-modele_log <- lmer(log(LMC_t24) ~ LMC_t0_cr * Gmin_cr + (1 | Nom_scientifique),
-                   data = BDD_moy_ech)
-summary(modele_log)
-hist(resid(modele_log))
-plot(modele_log)
-
-# modèle log log
-modele_loglog <- lmer(log(LMC_t24) ~ log(LMC_t0) * Gmin_cr + (1 | Nom_scientifique),
-                      data = BDD_moy_ech)
-summary(modele_loglog)
-hist(resid(modele_loglog))
-plot(modele_loglog)
 
 ############################################################################
 ############### MODELES classiques sans pgls #############################
@@ -2037,12 +2103,6 @@ text(estimates1, y_pos1 + 0.16,
      col = cols1, font = 2, cex =  0.9)
 
 
-
-
-
-
-
-
 ###################### prédicion ############### mettre LMC_t24 ou LDMC
 # Modèle GLM binomial (mFI3 ou mFI4)
 moy <- mean(BDD_moy_esp$LMC_t24, na.rm = TRUE)
@@ -2109,81 +2169,6 @@ lines((foo * ecart + moy), pmax(pred1$fit - 1.96 * pred1$se.fit, 0), col = "blue
 
 
 
-#BT
-
-# Modèle linéaire mixte
-mod_BT <- lmer(BT ~ 1 + (1 | Nom_scientifique), data = BDD_moy_ech) #ok
-mod_BB_test <- lmer(BB_test ~ 1 + (1 | Nom_scientifique), data = BDD_moy_ech) #ok
-mod_DI_test <- lmer(DI_test ~ 1 + (1 | Nom_scientifique), data = BDD_moy_ech) #ok
-mod_MT <- lmer(MT ~ 1 + (1 | Nom_scientifique), data = BDD_moy_ech) #ok
-mod_score <- lmer(score ~ 1 + (1 | Nom_scientifique), data = BDD_moy_ech) #ok
-
-mod_BD_mean <- lmer(BD_mean ~ 1 + (1 | Nom_scientifique), data = BDD_moy_ech)
-mod_Gmin <- lmer(Gmin ~ 1 + (1 | Nom_scientifique), data = BDD_moy_ech)
-mod_SLA <- lmer(SLA ~ 1 + (1 | Nom_scientifique), data = BDD_moy_ech)
-mod_Nb_rami <- lmer(Nb_rami ~ 1 + (1 | Nom_scientifique), data = BDD_moy_ech)
-mod_LDMC <- lmer(LDMC ~ 1 + (1 | Nom_scientifique), data = BDD_moy_ech)
-mod_TD <- lmer(TD ~ 1 + (1 | Nom_scientifique), data = BDD_moy_ech)
-mod_LMC_t24 <- lmer(LMC_t24 ~ 1 + (1 | Nom_scientifique), data = BDD_moy_ech)
-
-
-plot(mod_LMC_t24)
-hist(resid(mod_LMC_t24))
-
-# Extraire les composantes de variance
-var_BT <- as.data.frame(VarCorr(mod_BT))
-var_BT_inter <- var_BT$vcov[1]
-var_BT_intra <- attr(VarCorr(mod_BT), "sc")^2
-
-# Pourcentage de variance
-total_BT <- var_BT_inter + var_BT_intra
-100 * var_BT_inter / total_BT  # variance inter (espèce)
-100 * var_BT_intra / total_BT  # variance intra (résiduelle)
-
-library(lme4)
-
-# Liste des modèles
-liste_mod <- list(
-  BT = mod_BT,
-  BB_test = mod_BB_test,
-  DI_test = mod_DI_test,
-  MT = mod_MT,
-  score = mod_score,
-  BD_mean = mod_BD_mean,
-  Gmin = mod_Gmin,
-  SLA = mod_SLA,
-  Nb_rami = mod_Nb_rami,
-  LDMC = mod_LDMC,
-  TD = mod_TD,
-  LMC_t24 = mod_LMC_t24
-)
-
-# Data frame vide
-variance_df <- data.frame()
-
-# Boucle
-for(i in names(liste_mod)){
-  
-  mod <- liste_mod[[i]]
-  
-  vc <- as.data.frame(VarCorr(mod))
-  
-  var_inter <- vc$vcov[1]
-  var_intra <- vc$vcov[2]
-  
-  total <- var_inter + var_intra
-  
-  variance_df <- rbind(
-    variance_df,
-    data.frame(
-      Variable = i,
-      Var_inter = round(100 * var_inter / total, 1),
-      Var_intra = round(100 * var_intra / total, 1)
-    )
-  )
-}
-
-variance_df
 
 
 
@@ -3571,6 +3556,147 @@ lines((foo*ecart + moy), pred1$fit - 1.96 * pred1$se.fit, col = "blue", lty = 3)
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#VAR INTRA INTER
+
+# Modèle linéaire mixte
+mod_BT <- lmer(BT ~ 1 + (1 | Nom_scientifique), data = BDD_moy_ech) #ok
+mod_BB_test <- lmer(BB_test ~ 1 + (1 | Nom_scientifique), data = BDD_moy_ech) #ok
+mod_DI_test <- lmer(DI_test ~ 1 + (1 | Nom_scientifique), data = BDD_moy_ech) #ok
+mod_MT <- lmer(MT ~ 1 + (1 | Nom_scientifique), data = BDD_moy_ech) #ok
+mod_score <- lmer(score ~ 1 + (1 | Nom_scientifique), data = BDD_moy_ech) #ok
+
+mod_BD_mean <- lmer(BD_mean ~ 1 + (1 | Nom_scientifique), data = BDD_moy_ech)
+mod_Gmin <- lmer(Gmin ~ 1 + (1 | Nom_scientifique), data = BDD_moy_ech)
+mod_SLA <- lmer(SLA ~ 1 + (1 | Nom_scientifique), data = BDD_moy_ech)
+mod_Nb_rami <- lmer(Nb_rami ~ 1 + (1 | Nom_scientifique), data = BDD_moy_ech)
+mod_LDMC <- lmer(LDMC ~ 1 + (1 | Nom_scientifique), data = BDD_moy_ech)
+mod_TD <- lmer(TD ~ 1 + (1 | Nom_scientifique), data = BDD_moy_ech)
+mod_LMC_t24 <- lmer(LMC_t24 ~ 1 + (1 | Nom_scientifique), data = BDD_moy_ech)
+
+
+plot(mod_LMC_t24)
+hist(resid(mod_LMC_t24))
+
+# Extraire les composantes de variance
+var_BT <- as.data.frame(VarCorr(mod_BT))
+var_BT_inter <- var_BT$vcov[1]
+var_BT_intra <- attr(VarCorr(mod_BT), "sc")^2
+
+# Pourcentage de variance
+total_BT <- var_BT_inter + var_BT_intra
+100 * var_BT_inter / total_BT  # variance inter (espèce)
+100 * var_BT_intra / total_BT  # variance intra (résiduelle)
+
+library(lme4)
+
+# Liste des modèles
+liste_mod <- list(
+  BT = mod_BT,
+  BB_test = mod_BB_test,
+  DI_test = mod_DI_test,
+  MT = mod_MT,
+  score = mod_score,
+  BD_mean = mod_BD_mean,
+  Gmin = mod_Gmin,
+  SLA = mod_SLA,
+  Nb_rami = mod_Nb_rami,
+  LDMC = mod_LDMC,
+  TD = mod_TD,
+  LMC_t24 = mod_LMC_t24
+)
+
+# Data frame vide
+variance_df <- data.frame()
+
+# Boucle
+for(i in names(liste_mod)){
+  
+  mod <- liste_mod[[i]]
+  
+  vc <- as.data.frame(VarCorr(mod))
+  
+  var_inter <- vc$vcov[1]
+  var_intra <- vc$vcov[2]
+  
+  total <- var_inter + var_intra
+  
+  variance_df <- rbind(
+    variance_df,
+    data.frame(
+      Variable = i,
+      Var_inter = round(100 * var_inter / total, 1),
+      Var_intra = round(100 * var_intra / total, 1)
+    )
+  )
+}
+
+variance_df
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ###################################################################################
 ######################### ANALYSE GMIN #########################################
 ###################################################################################
@@ -3587,10 +3713,54 @@ BDD_moy_esp$LMC_t0_cr<-as.numeric(scale(BDD_moy_esp$LMC_t0))
 BDD_moy_esp$Gmin_cr<-as.numeric(scale(BDD_moy_esp$Gmin))
 
 
+# Modèle nul (sans effet espèce)
+modele_nul <- lm(LMC_t24 ~ 1, data = BDD_moy_esp)
+
+# Modèle avec espèce
+modele_espece <- lm(LMC_t24 ~ Nom_scientifique, data = BDD_moy_esp)
+
+# Comparer les deux
+anova(modele_nul, modele_espece)
+
+#modèle gaussien
+modele_gauss <- lm(LMC_t24 ~ LMC_t0_cr * Gmin_cr ,
+                     data = BDD_moy_esp)
+summary(modele_gauss)
+hist(resid(modele_gauss))
+plot(modele_gauss)
+#modèle gaus log
+modele_gauss_log <- glm(LMC_t24 ~ LMC_t0_cr * Gmin_cr ,
+                          family = gaussian(link = "log"),
+                          data = BDD_moy_esp)
+summary(modele_gauss_log)
+hist(resid(modele_gauss_log))
+plot(modele_gauss_log)
+
+# modèle log
+modele_log <- lm(log(LMC_t24) ~ LMC_t0_cr * Gmin_cr ,
+                   data = BDD_moy_esp)
+summary(modele_log)
+hist(resid(modele_log))
+plot(modele_log)
+
+# modèle log log
+modele_loglog <- lm(log(LMC_t24) ~ log(LMC_t0) * Gmin_cr ,
+                      data = BDD_moy_esp)
+summary(modele_loglog)
+hist(resid(modele_loglog))
+plot(modele_loglog)
+
+AIC(modele_gauss,modele_gauss_log)
+
+
+
 m_gmin2<-glm(logLMC24~logLMC0+Gmin_cr,family=gaussian,data=BDD_moy_esp)
 summary(m_gmin2)
-m_gmin2<-glm(LMC_t24~LMC_t0_cr+Gmin_cr,family=Gamma(link = "log"),data=BDD_moy_esp)
+m_gmin2<-glm(ratio~LMC_t0_cr+Gmin_cr,family=Gamma(link = "log"),data=BDD_moy_esp)
 summary(m_gmin2)
+
+BDD_moy_esp$ratio <- BDD_moy_esp$LMC_t24 / BDD_moy_esp$LMC_t0
+hist(BDD_moy_esp$ratio)
 m_gmin3<-glm(ratio~LMC_t0_cr+Gmin_cr,family=gaussian,data=BDD_moy_esp)
 summary(m_gmin3)
 
@@ -3598,7 +3768,7 @@ AIC(m_gmin2,m_gmin3)
 
 hist(resid(m_gmin3)) ### gmin3 retenu!!!
 plot(m_gmin3)
-hist
+shapiro.test(resid(m_gmin3))
 
 ################# Prédiction ########################
 # LMC_t0
@@ -3623,8 +3793,6 @@ pred_data3 <- data.frame(
   LMC_t0_cr = foo,
   Gmin_cr = rep(max(BDD_moy_esp$Gmin_cr,na.rm = TRUE), length(foo))
 )
-
-
 
 
 # Prédictions avec gmin3
@@ -3654,7 +3822,9 @@ abline(a = 0, b = 1)
 esp_a_annoter <- BDD_moy_esp$Nom_scientifique == "Scaevola taccada" | 
   BDD_moy_esp$Nom_scientifique == "Scaevola montana" |
   BDD_moy_esp$Nom_scientifique== "Barringtonia asiatica" |
-  BDD_moy_esp$Nom_scientifique== "Hibiscus tiliaceus R" 
+  BDD_moy_esp$Nom_scientifique== "Hibiscus tiliaceus" 
+
+BDD_moy_esp$Nom_scientifique[esp_a_annoter]
 
 points (BDD_moy_esp$LMC_t0[esp_a_annoter],
         BDD_moy_esp$LMC_t24[esp_a_annoter],pch=21,bg = rgb(1,0,0),cex=1.2
@@ -3662,7 +3832,7 @@ points (BDD_moy_esp$LMC_t0[esp_a_annoter],
 
 text(BDD_moy_esp$LMC_t0[esp_a_annoter] -10 ,
      BDD_moy_esp$LMC_t24[esp_a_annoter] + 25,
-     labels = c("B. asiatica","H. tiliaceus R","S. montana","S. taccada"),
+     labels = c("B. asiatica","H. tiliaceus ","S. montana","S. taccada"),
      cex = 1)
 
 
@@ -3686,9 +3856,9 @@ plot(BDD_moy_esp$LMC_t0, BDD_moy_esp$LMC_t24,
 
 
 # Ajouter les courbes de prédiction
-lines((foo * ecart + moy), pred1$fit, col = "#3B393B", lwd = 2) 
-lines((foo * ecart + moy), pred2$fit, col = "#005ED1", lwd = 2) 
-lines((foo * ecart + moy), pred3$fit, col = "#BD0000", lwd = 2)
+lines((foo*ecart+moy), pred1$fit*(foo*ecart+moy), col = "#3B393B", lwd = 2) 
+lines((foo*ecart+moy), pred2$fit*(foo*ecart+moy), col = "#005ED1" ,lwd = 2) 
+lines((foo*ecart+moy), pred3$fit*(foo*ecart+moy), col = "#BD0000",lwd = 2)
 
 
 polygon(x = c(-50, -50, 850), 
@@ -3743,8 +3913,7 @@ polygon(x = c(-50, -50, 850),
 abline(a = 0, b = 1)
 
 esp_a_annoter <- BDD_moy_esp$Nom_scientifique == "Scaevola montana" | 
-  BDD_moy_esp$Nom_scientifique == "Hibiscus tiliaceus R" |
-  BDD_moy_esp$Nom_scientifique== "Acropogon bullatus" | 
+   BDD_moy_esp$Nom_scientifique== "Acropogon bullatus" | 
   BDD_moy_esp$Nom_scientifique== "Barringtonia asiatica" | 
   BDD_moy_esp$Nom_scientifique== "Alphitonia neocaledonica" |
   BDD_moy_esp$Nom_scientifique== "Leucaena leucocephala" |
@@ -3752,13 +3921,16 @@ esp_a_annoter <- BDD_moy_esp$Nom_scientifique == "Scaevola montana" |
   BDD_moy_esp$Nom_scientifique== "Cerbera manghas" |
   BDD_moy_esp$Nom_scientifique== "Acalypha sp"
 
+BDD_moy_esp$Nom_scientifique[esp_a_annoter]
+
+
 points (BDD_moy_esp$LMC_t0[esp_a_annoter],
         BDD_moy_esp$LMC_t24[esp_a_annoter],pch=21,bg = rgb(1,0,0),cex=1.2
 )
 
 text(BDD_moy_esp$LMC_t0[esp_a_annoter] + 2,
      BDD_moy_esp$LMC_t24[esp_a_annoter] + 15,
-     labels = c("A. sp","A. bullatus","A. neocaledonica","B. asiatica","C. manghas","H. tiliaceus R","L. leucocephala","M. citrifolia","S. montana"),
+     labels = c("Acalypha sp","A. bullatus","A. neocaledonica","B. asiatica","C. manghas","L. leucocephala","M. citrifolia","S. montana"),
      cex = 1)
 
 
@@ -3784,6 +3956,55 @@ text(BDD_moy_esp$LMC_t0[esp_a_annoter] + 2,
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+plot(BDD_moy_esp$LMC_t0, BDD_moy_esp$LMC_t24, 
+     xlab = "LMC_t0 (%)", ylab = "LMC_t24 (%)", 
+     main = "Effet de LMC_t0 sur LMC_t24 selon gmin",
+     xlim = c(100,500), ylim = c(0,400))
+
+
+text(BDD_moy_esp$LMC_t0 + 2,
+     BDD_moy_esp$LMC_t24 + 15,
+     labels = BDD_moy_esp$Nom_scientifique,
+     cex = 1)
+
+
+
+
+
+
+
+
 ########################## PLOT GMIN LMC_t0 ###########################
 
 M_L2<-aggregate(BDD_moy_ech$LMC_t0,by=list(BDD_moy_ech$Nom_scientifique),mean)
@@ -3801,14 +4022,14 @@ plot(BDD_moy_esp$LMC_t0 ~ BDD_moy_esp$Gmin, type="n",
      main = "Relation entre Gmin et LMC_t0",ylim=c(0,450),xlim=c(0,100))
 
 esp_a_annoter <- BDD_moy_esp$Nom_scientifique == "Scaevola montana" | 
-  BDD_moy_esp$Nom_scientifique == "Hibiscus tiliaceus R" |
   BDD_moy_esp$Nom_scientifique== "Acropogon bullatus" |
   BDD_moy_esp$Nom_scientifique== "Leucaena leucocephala" | 
   BDD_moy_esp$Nom_scientifique== "Cerbera manghas" | 
   BDD_moy_esp$Nom_scientifique== "Diospyros fasciculosa" |
   BDD_moy_esp$Nom_scientifique== "Calophylum caledonicum" |
-  BDD_moy_esp$Nom_scientifique== "Alphitonia neocaledonica" |
+  BDD_moy_esp$Nom_scientifique== "Alphitonia neocaledonica" 
   
+
   segments(x0=BDD_moy_esp$Gmin[esp_a_annoter],x1=BDD_moy_esp$Gmin[esp_a_annoter],y0=BDD_moy_esp$LMC_t0[esp_a_annoter]-SD_L2$x[esp_a_annoter],y1=BDD_moy_esp$LMC_t0[esp_a_annoter]+SD_L2$x[esp_a_annoter])
 segments(x0=BDD_moy_esp$Gmin[esp_a_annoter]-SD_L1$x[esp_a_annoter],x1=BDD_moy_esp$Gmin[esp_a_annoter]+SD_L1$x[esp_a_annoter],y0=BDD_moy_esp$LMC_t0[esp_a_annoter],y1=BDD_moy_esp$LMC_t0[esp_a_annoter])
 points(M_L1$x,M_L2$x,pch=19,cex=0.8)
@@ -3877,386 +4098,9 @@ text(BDD_moy_esp$LMC_t0,BDD_moy_esp$LMC_t24,
 
 
 
-##### TEST LMC_t24 ###########
-hist(BDD_moy_esp$LMC_t24)
 
-BDD_moy_esp$LDMC_cr<-as.numeric(scale(BDD_moy_esp$LDMC))
-BDD_moy_esp$Gmin_cr<-as.numeric(scale(BDD_moy_esp$Gmin))
-BDD_moy_esp_netMT$LDMC_cr<-as.numeric(scale(BDD_moy_esp_netMT$LDMC))
-BDD_moy_esp_netMT$Gmin_cr<-as.numeric(scale(BDD_moy_esp_netMT$Gmin))
-BDD_moy_esp_net3$LDMC_cr<-as.numeric(scale(BDD_moy_esp_net3$LDMC))
-BDD_moy_esp_net3$Gmin_cr<-as.numeric(scale(BDD_moy_esp_net3$Gmin))
 
-#modèles
-m<-glm(BDD_moy_esp$LMC_t24~LDMC_cr+Gmin_cr,data=BDD_moy_esp,family=Gamma(link="log"))
-summary(m)
 
-
-################# Prédiction ########################
-# LDMC
-moy <- mean(BDD_moy_esp$LDMC, na.rm = TRUE)
-ecart <- sd(BDD_moy_esp$LDMC, na.rm = TRUE)
-
-# Valeurs de LDMC
-foo <- seq(min(BDD_moy_esp$LDMC_cr), max(BDD_moy_esp$LDMC_cr),length.out = 100)
-
-# on fait varier Gmin et on fixe LDMC
-pred_data1 <- data.frame(
-  LDMC_cr = foo,
-  Gmin_cr = rep(mean(BDD_moy_esp$Gmin_cr,na.rm = TRUE), length(foo))
-)
-
-pred_data2 <- data.frame(
-  LDMC_cr = foo,
-  Gmin_cr = rep(min(BDD_moy_esp$Gmin_cr,na.rm = TRUE), length(foo))
-)
-
-pred_data3 <- data.frame(
-  LDMC_cr = foo,
-  Gmin_cr = rep(max(BDD_moy_esp$Gmin_cr,na.rm = TRUE), length(foo))
-)
-
-
-
-
-# Prédictions avec m
-pred1 <- predict(m, type = "response", newdata = pred_data1, se.fit = TRUE, re.form = NA)
-pred2 <- predict(m, type = "response", newdata = pred_data2, se.fit = TRUE, re.form = NA)
-pred3 <- predict(m, type = "response", newdata = pred_data3, se.fit = TRUE, re.form = NA)
-
-
-# Plot des points observés
-plot(BDD_moy_esp$LDMC, BDD_moy_esp$LMC_t24, 
-     xlab = "LDMC (mg/g)", ylab = "LMC_t24 (%)", 
-     main = "Effet de LDMC sur LMC_t24 selon gmin ",ylim=c(0,700))
-
-# foo (centré-réduit) en valeurs originales de LDMC pour l'axe X
-foo_original <- foo * ecart + moy
-
-# Courbes de prédiction 
-lines(foo_original, pred1$fit, col = "#3B393B", lwd = 2)  # Gmin moyen
-lines(foo_original, pred2$fit, col = "#005ED1", lwd = 2)  # Gmin min
-lines(foo_original, pred3$fit, col = "#BD0000", lwd = 2)  # Gmin max
-
-
-
-
-
-
-
-
-
-
-
-
-
-############################ MODELES échelle esp ###############################
-
-#standardisation des données 
-BDD_moy_esp_net$SD_cr<-as.numeric(scale(BDD_moy_esp_net$SD))
-BDD_moy_esp_net$TD_cr<-as.numeric(scale(BDD_moy_esp_net$TD))
-BDD_moy_esp_net$LA_cr<-as.numeric(scale(BDD_moy_esp_net$Surface_F))
-BDD_moy_esp_net$LDMC_cr<-as.numeric(scale(BDD_moy_esp_net$LDMC))
-BDD_moy_esp_net$LMC_t24_cr<-as.numeric(scale(BDD_moy_esp_net$LMC_t24))
-BDD_moy_esp_net$Gmin_cr<-as.numeric(scale(BDD_moy_esp_net$Gmin))
-BDD_moy_esp_net$SLA_cr<-as.numeric(scale(BDD_moy_esp_net$SLA))
-BDD_moy_esp_net$Nb_rami_cr<-as.numeric(scale(BDD_moy_esp_net$Nb_rami))
-
-
-BDD_moy_esp_netMT$SD_cr<-as.numeric(scale(BDD_moy_esp_netMT$SD))
-BDD_moy_esp_netMT$TD_cr<-as.numeric(scale(BDD_moy_esp_netMT$TD))
-BDD_moy_esp_netMT$LA_cr<-as.numeric(scale(BDD_moy_esp_netMT$Surface_F))
-BDD_moy_esp_netMT$LDMC_cr<-as.numeric(scale(BDD_moy_esp_netMT$LDMC))
-BDD_moy_esp_netMT$LMC_t24_cr<-as.numeric(scale(BDD_moy_esp_netMT$LMC_t24))
-BDD_moy_esp_netMT$Gmin_cr<-as.numeric(scale(BDD_moy_esp_netMT$Gmin))
-BDD_moy_esp_netMT$SLA_cr<-as.numeric(scale(BDD_moy_esp_netMT$SLA))
-BDD_moy_esp_netMT$Nb_rami_cr<-as.numeric(scale(BDD_moy_esp_netMT$Nb_rami))
-
-BDD_moy_esp_net3$SD_cr<-as.numeric(scale(BDD_moy_esp_net3$SD))
-BDD_moy_esp_net3$TD_cr<-as.numeric(scale(BDD_moy_esp_net3$TD))
-BDD_moy_esp_net3$LA_cr<-as.numeric(scale(BDD_moy_esp_net3$Surface_F))
-BDD_moy_esp_net3$LDMC_cr<-as.numeric(scale(BDD_moy_esp_net3$LDMC))
-BDD_moy_esp_net3$LMC_t24_cr<-as.numeric(scale(BDD_moy_esp_net3$LMC_t24))
-BDD_moy_esp_net3$Gmin_cr<-as.numeric(scale(BDD_moy_esp_net3$Gmin))
-BDD_moy_esp_net3$SLA_cr<-as.numeric(scale(BDD_moy_esp_net3$SLA))
-BDD_moy_esp_net3$Nb_rami_cr<-as.numeric(scale(BDD_moy_esp_net3$Nb_rami))
-
-BDD_moy_score$SD_cr<-as.numeric(scale(BDD_moy_score$SD))
-BDD_moy_score$TD_cr<-as.numeric(scale(BDD_moy_score$TD))
-BDD_moy_score$LA_cr<-as.numeric(scale(BDD_moy_score$Surface_F))
-BDD_moy_score$LDMC_cr<-as.numeric(scale(BDD_moy_score$LDMC))
-BDD_moy_score$LMC_t24_cr<-as.numeric(scale(BDD_moy_score$LMC_t24))
-BDD_moy_score$Gmin_cr<-as.numeric(scale(BDD_moy_score$Gmin))
-BDD_moy_score$SLA_cr<-as.numeric(scale(BDD_moy_score$SLA))
-BDD_moy_score$Nb_rami_cr<-as.numeric(scale(BDD_moy_score$Nb_rami))
-
-
-
-#######################################################
-###### MT #########
-#######################################################
-
-#modèles
-MT1 <- glm (BDD_moy_esp_netMT$MT ~ SD_cr+TD_cr+SLA_cr+Nb_rami_cr+LDMC_cr*Gmin_cr, data = BDD_moy_esp_netMT)
-summary(MT1)
-
-
-###################### prédicion ############### 
-
-############  LDMC
-moy <- mean(BDD_moy_esp_netMT$LDMC, na.rm = TRUE)
-ecart <- sd(BDD_moy_esp_netMT$LDMC, na.rm = TRUE)
-
-# Valeurs de LDMC
-foo <- seq(min(BDD_moy_esp_netMT$LDMC_cr), max(BDD_moy_esp_netMT$LDMC_cr),length.out = 100)
-
-############## on fait varier LMDC
-pred_data1 <- data.frame(
-  LDMC_cr = foo,
-  SD_cr = rep(mean(BDD_moy_esp_netMT$SD_cr,na.rm = TRUE), length(foo)),
-  TD_cr = rep(mean(BDD_moy_esp_netMT$TD_cr), length(foo)),
-  Nb_rami_cr = rep(mean(BDD_moy_esp_netMT$Nb_rami_cr), length(foo)),
-  Gmin_cr = rep(mean(BDD_moy_esp_netMT$Gmin_cr), length(foo)),
-  SLA_cr = rep(mean(BDD_moy_esp_netMT$SLA_cr), length(foo))
-)
-
-
-# Prédictions
-pred1 <- predict(MT1, type = "response", newdata = pred_data1, se.fit = TRUE, re.form = NA)
-
-# Plot des points observés
-par(mar=c(4,5,4,4))
-plot(BDD_moy_esp_netMT$LDMC, BDD_moy_esp_netMT$MT,type="n", 
-     xlab = "LDMC (mg/g)", ylab = "Température maximum (°C)", 
-     main = "Effet de LDMC sur MT",ylim=c(500,850),xlim=c(175,550))
-
-# Courbes de prédiction
-lines((foo*ecart+moy), pred1$fit, col = "black", lwd = 2) 
-
-# Intervalle de confiance pour SD moyen
-lines((foo*ecart + moy), pred1$fit + 1.96 * pred1$se.fit, col = "blue", lty = 3)
-lines((foo*ecart + moy), pred1$fit - 1.96 * pred1$se.fit, col = "blue", lty = 3)
-
-
-
-
-
-
-
-
-##################################
-###### BB #########
-##################################
-
-#modèles
-BDD_moy_esp_net3$BB_prop <- BDD_moy_esp_net3$BB_test/100
-
-
-BB0 <- glm(BB_prop ~ SD_cr+TD_cr+SLA_cr+Nb_rami_cr+LDMC_cr*Gmin_cr, data = BDD_moy_esp_net3)    #### meilleur modèle 
-summary(BB0)
-r.squaredGLMM(BB0)
-
-
-
-################# Prédiction ########################
-# LDMC
-moy <- mean(BDD_moy_esp_net3$LDMC, na.rm = TRUE)
-ecart <- sd(BDD_moy_esp_net3$LDMC, na.rm = TRUE)
-
-# Valeurs de LDMC
-foo <- seq(min(BDD_moy_esp_net3$LDMC_cr), max(BDD_moy_esp_net3$LDMC_cr),length.out = 100)
-
-# on fait varier LMDC 
-par(mar=c(4,5,4,4))
-
-pred_data1 <- data.frame(
-  LDMC_cr = foo,
-  SD_cr = rep(mean(BDD_moy_esp_net3$SD_cr,na.rm = TRUE), length(foo)),
-  TD_cr = rep(mean(BDD_moy_esp_net3$TD_cr), length(foo)),
-  Nb_rami_cr = rep(mean(BDD_moy_esp_net3$Nb_rami_cr), length(foo)),
-  SLA_cr = rep(mean(BDD_moy_esp_net3$SLA_cr), length(foo))
-)
-
-# Prédictions
-pred1 <- predict(BB1, type = "response", newdata = pred_data1, se.fit = TRUE, re.form = NA)
-
-# Plot des points observés
-plot(BDD_moy_esp_net3$LDMC, BDD_moy_esp_net3$BB_prop,type="n", 
-     xlab = "LDMC", ylab = "Biomasse brûlée (%)", 
-     main = "Effet de LDMC sur BB ",ylim=c(0,1),xlim=c(175,550))
-
-# Courbes de prédiction
-lines((foo*ecart + moy), pmin(pmax(pred1$fit, 0), 1), col = "black", lwd = 2 )
-
-
-# Intervalle de confiance pour SD moyen
-lines((foo*ecart + moy), pred1$fit + 1.96 * pred1$se.fit, col = "blue", lty = 3)
-lines((foo*ecart + moy), pred1$fit - 1.96 * pred1$se.fit, col = "blue", lty = 3)
-
-
-
-
-
-
-
-#######################################
-###### BT #########
-######################################
-
-#modèles
-BT0 <- glm(BT_test ~ SD_cr+TD_cr+SLA_cr+Nb_rami_cr+LDMC_cr*Gmin_cr , family=Gamma(link="log"), data = BDD_moy_esp_net3)  #meilleur modèle
-summary(BT0)
-
-
-
-################# Prédiction ########################
-# LDMC
-moy <- mean(BDD_moy_esp_net3$LDMC, na.rm = TRUE)
-ecart <- sd(BDD_moy_esp_net3$LDMC, na.rm = TRUE)
-
-# Valeurs de LDMC
-foo <- seq(min(BDD_moy_esp_net3$LDMC_cr), max(BDD_moy_esp_net3$LDMC_cr),length.out = 100)
-
-# on fait varier LMDC 
-pred_data1 <- data.frame(
-  LDMC_cr = foo,
-  SD_cr = rep(mean(BDD_moy_esp_net3$SD_cr,na.rm = TRUE), length(foo)),
-  TD_cr = rep(mean(BDD_moy_esp_net3$TD_cr), length(foo)),
-  Nb_rami_cr = rep(mean(BDD_moy_esp_net3$Nb_rami_cr), length(foo)),
-  SLA_cr = rep(mean(BDD_moy_esp_net3$SLA_cr), length(foo))
-)
-
-# Prédictions
-pred1 <- predict(m_BT1, type = "response", newdata = pred_data1, se.fit = TRUE, re.form = NA)
-pred1
-
-# Plot des points observés
-plot(BDD_moy_esp_net3$LDMC, BDD_moy_esp_net3$BT_test,type="n", 
-     xlab = "LDMC", ylab = "Temps de combustion (s)", 
-     main = "Effet de LDMC sur BT ",ylim=c(0,80),xlim=c(175,550))
-
-# Courbes de prédiction
-lines((foo*ecart + moy), pred1$fit, col = "black", lwd = 2 )
-
-# Intervalle de confiance pour SD moyen
-lines((foo*ecart + moy), (pred1$fit + 1.96 * pred1$se.fit), col = "blue", lty = 3)
-lines((foo*ecart + moy), (pred1$fit - 1.96 * pred1$se.fit), col = "blue", lty = 3)
-
-range(pred1$se.fit)
-range(pred1$fit + 1.96 * pred1$se.fit - (pred1$fit - 1.96 * pred1$se.fit))
-
-
-
-###################
-###### DI ######################################################################
-###################
-
-#modèles
-
-DI0 <- glm(DI_test ~ SD_cr+TD_cr+SLA_cr+Nb_rami_cr+LDMC_cr+Gmin_cr , family=Gamma(link="log"), data = BDD_moy_esp_net3)  #meilleur modèle
-summary(DI0)
-
-
-
-################# Prédiction ########################
-# LDMC
-moy <- mean(BDD_moy_esp_net3$LDMC, na.rm = TRUE)
-ecart <- sd(BDD_moy_esp_net3$LDMC, na.rm = TRUE)
-
-# Valeurs de LDMC
-foo <- seq(min(BDD_moy_esp_net3$LDMC_cr), max(BDD_moy_esp_net3$LDMC_cr),length.out = 100)
-
-# on fait varier LMDC 
-pred_data1 <- data.frame(
-  LDMC_cr = foo,
-  SD_cr = rep(mean(BDD_moy_esp_net3$SD_cr,na.rm = TRUE), length(foo)),
-  TD_cr = rep(mean(BDD_moy_esp_net3$TD_cr), length(foo)),
-  Nb_rami_cr = rep(mean(BDD_moy_esp_net3$Nb_rami_cr), length(foo)),
-  SLA_cr = rep(mean(BDD_moy_esp_net3$SLA_cr), length(foo))
-)
-
-# Prédictions
-pred1 <- predict(m_DI1, type = "response", newdata = pred_data1, se.fit = TRUE, re.form = NA)
-
-# Plot des points observés
-plot(BDD_moy_esp_net3$LDMC, BDD_moy_esp_net3$DI_test,type="n", 
-     xlab = "LDMC", ylab = "Délai d'ignition (s)", 
-     main = "Effet de LDMC sur DI ",ylim=c(0.5,2),xlim=c(175,550))
-
-# Courbes de prédiction
-lines((foo*ecart + moy), pred1$fit, col = "black", lwd = 2 )
-
-
-# Intervalle de confiance pour SD moyen
-lines((foo*ecart + moy), pred1$fit + 1.96 * pred1$se.fit, col = "blue", lty = 3)
-lines((foo*ecart + moy), pred1$fit - 1.96 * pred1$se.fit, col = "blue", lty = 3)
-
-
-
-
-#####################
-###### Score ########
-#####################
-
-#modèles
-score1 <- glm(score ~ SD_cr+TD_cr+SLA_cr+Nb_rami_cr+LDMC_cr+Gmin_cr, data = BDD_moy_score)
-summary(score1)
-
-
-
-################# Prédiction ########################
-# LDMC
-moy <- mean(BDD_moy_ech$LDMC, na.rm = TRUE)
-ecart <- sd(BDD_moy_ech$LDMC, na.rm = TRUE)
-
-# Valeurs de LDMC
-foo <- seq(min(BDD_moy_ech$LDMC_cr), max(BDD_moy_ech$LDMC_cr),length.out = 100)
-
-# on fait varier LMDC 
-pred_data1 <- data.frame(
-  LDMC_cr = foo,
-  SD_cr = rep(mean(BDD_moy_ech$SD_cr,na.rm = TRUE), length(foo)),
-  TD_cr = rep(mean(BDD_moy_ech$TD_cr), length(foo)),
-  Nb_rami_cr = rep(mean(BDD_moy_ech$Nb_rami_cr), length(foo)),
-  SLA_cr = rep(mean(BDD_moy_ech$SLA_cr), length(foo))
-)
-
-# Prédictions
-pred1 <- predict(m_score1, type = "response", newdata = pred_data1, se.fit = TRUE, re.form = NA)
-
-#background transparent 
-par(bg = NA)
-
-# Plot des points observés
-plot(BDD_moy_ech$LDMC, BDD_moy_ech$score,type="n",cex.axis=1.2, 
-     xlab = "LDMC", ylab = "Flammability score", 
-     main = "Effet de LDMC sur score ",ylim=c(-4,4),xlim=c(150,600))
-box(lwd = 2)
-points(BDD_moy_ech$LDMC, BDD_moy_ech$score, pch=16, col="#634124")
-
-col_ic <- rgb(109/255, 168/255, 111/255)
-
-# Polygone de l'intervalle de confiance
-x_vals <- (foo * ecart + moy)
-
-polygon(
-  x = c(x_vals, rev(x_vals)),
-  y = c(pred1$fit + 1.96 * pred1$se.fit,
-        rev(pred1$fit - 1.96 * pred1$se.fit)),
-  col = col_ic,
-  border = NA
-)
-
-
-
-
-# Courbes de prédiction
-lines((foo*ecart + moy), pred1$fit, col = "#C94802", lwd = 3 )
-lines((foo*ecart + moy), pred1$fit,  lwd = 3 )
-
-# Intervalle de confiance pour SD moyen
-lines((foo*ecart + moy), pred1$fit + 1.96 * pred1$se.fit, col = "blue", lty = 3)
-lines((foo*ecart + moy), pred1$fit - 1.96 * pred1$se.fit, col = "blue", lty = 3)
 
 
 
